@@ -1,0 +1,3 @@
+import {notFound} from "next/navigation"; import Link from "next/link"; import ProductGrid from "@/components/ProductGrid"; import {categories,categoryProducts} from "@/lib/products";
+export function generateStaticParams(){return categories.map(c=>({slug:c.slug}))}
+export default function Category({params}){const c=categories.find(x=>x.slug===params.slug);if(!c)notFound();return <><div className="page-head"><div className="container"><div className="crumb"><Link href="/">Home</Link> / Categories / {c.name}</div><h1>{c.icon} {c.name}</h1><p className="muted">{c.description}</p></div></div><section className="section"><div className="container"><ProductGrid products={categoryProducts(c.slug)}/></div></section></>}

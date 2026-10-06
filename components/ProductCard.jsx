@@ -1,0 +1,6 @@
+"use client";
+import Link from "next/link"; import {Heart} from "lucide-react"; import {useStore} from "./StoreProvider";
+export default function ProductCard({product}){const {add,wishlist,toggleWish}=useStore();const active=wishlist.includes(product.slug);return <article className="card">
+ <Link href={`/product/${product.slug}`}><div className="product-img"><div className={`orb ${["spices"].includes(product.category)?"spice":product.category==="honey"?"honey":product.category.includes("seed")||product.category==="seeds"?"seed":"nut"}`}/></div></Link>
+ <div className="card-body"><div className="rating">★ {product.rating} · {product.reviews} reviews</div><Link href={`/product/${product.slug}`}><div className="product-name">{product.name}</div></Link><div className="muted">{product.short}</div><div style={{marginTop:10}}><span className="price">৳{product.price.toLocaleString()}</span>{product.oldPrice&&<span className="old">৳{product.oldPrice.toLocaleString()}</span>}</div>
+ <div className="card-actions"><button className="btn btn-primary" onClick={()=>add(product)}>Add to Cart</button><button className="iconbtn" onClick={()=>toggleWish(product.slug)} aria-label="Wishlist"><Heart size={18} fill={active?"currentColor":"none"}/></button></div></div></article>}
