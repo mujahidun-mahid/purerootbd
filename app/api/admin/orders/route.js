@@ -11,6 +11,9 @@ export async function GET(request) {
 
   try {
     const data = await getAdminDashboardData();
+    if (data.error) {
+      return NextResponse.json(data, { status: data.configured ? 500 : 503 });
+    }
     return NextResponse.json(data);
   } catch (error) {
     console.error('Admin orders GET error:', error);
@@ -34,23 +37,35 @@ export async function PATCH(request) {
       return NextResponse.json({ error: 'Database not configured' }, { status: 503 });
     }
 
+    const status = String(body.status).trim();
+    if (!status) {
+      return NextResponse.json({ error: 'Order ID and status are required' }, { status: 400 });
+    }
+
     const { data, error } = await supabase
       .from('orders')
-      .update({ status: body.status })
+      .update({ status })
       .eq('id', body.id)
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return NextResponse.json({ error: 'Order not found.' }, { status: 404 });
+      }
+      if (error.code === '22P02') {
+        return NextResponse.json({ error: 'Invalid order id.' }, { status: 400 });
+      }
+      throw error;
+    }
 
     // Record status history change
-    try {
-      await supabase.from('order_status_history').insert({
-        order_id: body.id,
-        status: body.status
-      });
-    } catch (histErr) {
-      console.warn('Status history insert error:', histErr);
+    const { error: historyError } = await supabase.from('order_status_history').insert({
+      order_id: body.id,
+      status
+    });
+    if (historyError) {
+      console.warn('Status history insert error:', historyError.message);
     }
 
     return NextResponse.json({ order: data });

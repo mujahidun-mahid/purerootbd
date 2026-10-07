@@ -11,6 +11,9 @@ export async function GET(request) {
 
   try {
     const data = await getAdminDashboardData();
+    if (data.error) {
+      return NextResponse.json(data, { status: data.configured ? 500 : 503 });
+    }
     return NextResponse.json(data);
   } catch (error) {
     console.error('Admin dashboard error:', error);

@@ -104,13 +104,12 @@ export async function POST(request) {
     }
 
     // Insert order status history entry
-    try {
-      await supabase.from('order_status_history').insert({
-        order_id: data.id,
-        status: initialStatus
-      });
-    } catch (histErr) {
-      console.warn('Status history logging warning:', histErr?.message);
+    const { error: historyError } = await supabase.from('order_status_history').insert({
+      order_id: data.id,
+      status: initialStatus
+    });
+    if (historyError) {
+      console.warn('Status history logging warning:', historyError.message);
     }
 
     return NextResponse.json({ 
