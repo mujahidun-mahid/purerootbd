@@ -12,7 +12,23 @@ export async function PUT(request) {
     const body = await request.json().catch(() => ({}));
     const key = String(body?.key || '').trim();
     const value = String(body?.value ?? '');
-    const allowed = ['hero_title', 'hero_subtitle', 'hero_image_url', 'announcement'];
+    const allowed = [
+      'site_name',
+      'site_tagline',
+      'logo_image_url',
+      'site_description',
+      'meta_title',
+      'meta_description',
+      'footer_text',
+      'contact_phone',
+      'contact_email',
+      'contact_address',
+      'announcement',
+      'announcement_enabled',
+      'hero_title',
+      'hero_subtitle',
+      'hero_image_url'
+    ];
     if (!allowed.includes(key)) {
       return NextResponse.json({ error: 'Unsupported setting key.' }, { status: 400 });
     }

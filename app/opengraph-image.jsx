@@ -47,12 +47,11 @@ export default function OpengraphImage() {
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-          <div style={{ fontSize: 78, fontWeight: 700, lineHeight: 1.1 }}>
-            Nature&rsquo;s Nutrition,
-            <br />
-            Delivered Pure
+          <div style={{ display: 'flex', flexDirection: 'column', fontSize: 78, fontWeight: 700, lineHeight: 1.1 }}>
+            <span>Nature&rsquo;s Nutrition,</span>
+            <span>Delivered Pure</span>
           </div>
-          <div style={{ fontSize: 32, color: '#bbf7d0' }}>
+          <div style={{ display: 'flex', fontSize: 32, color: '#bbf7d0' }}>
             Premium nuts, seeds, spices &amp; natural honey
           </div>
         </div>

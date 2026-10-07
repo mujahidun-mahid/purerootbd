@@ -4,10 +4,12 @@ import { usePathname } from "next/navigation";
 import { Search, UserRound, Heart, ShoppingBag, Menu, X } from "lucide-react";
 import { useState } from "react";
 import { useStore } from "./StoreProvider";
+import { useSiteSettings } from "./SiteSettingsProvider";
 
 export default function Header() {
   const pathname = usePathname();
   const { cartCount } = useStore();
+  const { settings } = useSiteSettings();
   const [open, setOpen] = useState(false);
   const close = () => setOpen(false);
 
@@ -26,50 +28,69 @@ export default function Header() {
     ["Contact", "/contact"]
   ];
 
+  const siteName = settings.site_name || "PURE ROOTS";
+  const tagline = settings.site_tagline || "NATURE'S NUTRITION";
+  const showAnnouncement =
+    settings.announcement_enabled === "true" && String(settings.announcement || "").trim() !== "";
+
   return (
-    <header className="header">
-      <div className="container nav">
-        <button className="iconbtn mobileMenu" onClick={() => setOpen((v) => !v)} aria-label={open ? "Close menu" : "Open menu"}>
-          {open ? <X size={20} /> : <Menu size={20} />}
-        </button>
-        <Link href="/" className="logo" onClick={close}>
-          PURE ROOTS<small>NATURE'S NUTRITION</small>
-        </Link>
-        <nav className="navlinks">
-          {links.map(([label, href]) => (
-            <Link key={href} href={href}>
-              {label}
-            </Link>
-          ))}
-        </nav>
-        <div className="actions">
-          <Link className="iconbtn" href="/search" aria-label="Search">
-            <Search size={19} />
-          </Link>
-          <Link className="iconbtn" href="/account" aria-label="Account">
-            <UserRound size={19} />
-          </Link>
-          <Link className="iconbtn" href="/wishlist" aria-label="Wishlist">
-            <Heart size={19} />
-          </Link>
-          <Link className="iconbtn" href="/cart" aria-label="Cart">
-            <ShoppingBag size={20} />
-            {cartCount > 0 && <span className="badge">{cartCount}</span>}
-          </Link>
-        </div>
-      </div>
-      {open && (
-        <div className="mobile-nav">
-          {links.map(([label, href]) => (
-            <Link key={href} href={href} onClick={close}>
-              {label}
-            </Link>
-          ))}
-          <Link href="/track-order" onClick={close}>
-            Track Order
-          </Link>
+    <>
+      {showAnnouncement && (
+        <div className="announcement-bar" role="status">
+          <div className="container">{settings.announcement}</div>
         </div>
       )}
-    </header>
+      <header className="header">
+        <div className="container nav">
+          <button className="iconbtn mobileMenu" onClick={() => setOpen((v) => !v)} aria-label={open ? "Close menu" : "Open menu"}>
+            {open ? <X size={20} /> : <Menu size={20} />}
+          </button>
+          <Link href="/" className="logo" onClick={close} aria-label={`${siteName} home`}>
+            {settings.logo_image_url ? (
+              <img className="logo-img" src={settings.logo_image_url} alt={siteName} />
+            ) : (
+              <>
+                {siteName}
+                <small>{tagline}</small>
+              </>
+            )}
+          </Link>
+          <nav className="navlinks">
+            {links.map(([label, href]) => (
+              <Link key={href} href={href}>
+                {label}
+              </Link>
+            ))}
+          </nav>
+          <div className="actions">
+            <Link className="iconbtn" href="/search" aria-label="Search">
+              <Search size={19} />
+            </Link>
+            <Link className="iconbtn" href="/account" aria-label="Account">
+              <UserRound size={19} />
+            </Link>
+            <Link className="iconbtn" href="/wishlist" aria-label="Wishlist">
+              <Heart size={19} />
+            </Link>
+            <Link className="iconbtn" href="/cart" aria-label="Cart">
+              <ShoppingBag size={20} />
+              {cartCount > 0 && <span className="badge">{cartCount}</span>}
+            </Link>
+          </div>
+        </div>
+        {open && (
+          <div className="mobile-nav">
+            {links.map(([label, href]) => (
+              <Link key={href} href={href} onClick={close}>
+                {label}
+              </Link>
+            ))}
+            <Link href="/track-order" onClick={close}>
+              Track Order
+            </Link>
+          </div>
+        )}
+      </header>
+    </>
   );
 }

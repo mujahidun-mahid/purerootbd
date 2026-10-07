@@ -14,7 +14,7 @@ export default async function Home() {
       <section className="hero">
         <div className="container hero-grid">
           <div>
-            <div className="kicker">Pure Roots · Bangladesh</div>
+            <div className="kicker">{settings.site_name || "Pure Roots"} · Bangladesh</div>
             <h1 className="serif">{settings.hero_title || "Nature’s Nutrition, Delivered Pure"}</h1>
             <p>
               {settings.hero_subtitle ||

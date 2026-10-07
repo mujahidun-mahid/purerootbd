@@ -184,6 +184,11 @@ create trigger site_events_admin_broadcast
 after insert on public.site_events
 for each row execute function public.broadcast_admin_data_change();
 
+drop trigger if exists site_settings_admin_broadcast on public.site_settings;
+create trigger site_settings_admin_broadcast
+after insert or update or delete on public.site_settings
+for each row execute function public.broadcast_admin_data_change();
+
 -- ---------------------------------------------------------
 -- 8. REALTIME REPLICATION PUBLICATION & PERMISSIONS
 -- ---------------------------------------------------------
@@ -208,6 +213,13 @@ begin
     where pubname='supabase_realtime' and schemaname='public' and tablename='order_status_history'
   ) then
     alter publication supabase_realtime add table public.order_status_history;
+  end if;
+
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname='supabase_realtime' and schemaname='public' and tablename='site_settings'
+  ) then
+    alter publication supabase_realtime add table public.site_settings;
   end if;
 exception when others then
   null;
