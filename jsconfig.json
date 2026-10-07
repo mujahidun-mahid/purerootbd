@@ -1,1 +1,10 @@
-{"compilerOptions":{"baseUrl":".","paths":{"@/*":["./*"]}}}
+{
+  "compilerOptions": {
+    "paths": {
+      "@/*": ["./*"]
+    },
+    "jsx": "preserve",
+    "ignoreDeprecations": "6.0"
+  },
+  "exclude": ["node_modules", ".next"]
+}
