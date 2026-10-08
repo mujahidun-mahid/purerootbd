@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Plus, Save, Eye, Edit3, Trash2, X, ChevronDown } from 'lucide-react';
-import { Alert, Field, ModalShell, Toggle, Panel, StatCard, EmptyState } from '../ui';
+import { Plus, Eye, Edit3, Trash2, FileText } from 'lucide-react';
+import { Alert, Field, ModalShell, Toggle, StatCard } from '../ui';
+import DataTable from '../DataTable';
 import { formatDateTime } from '../constants';
 
 const PAGE_TEMPLATES = [
