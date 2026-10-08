@@ -79,7 +79,7 @@ export default function Header() {
           </div>
         </div>
         {open && (
-          <div className="mobile-nav">
+          <nav className="container mobile-nav" aria-label="Mobile">
             {links.map(([label, href]) => (
               <Link key={href} href={href} onClick={close}>
                 {label}
@@ -88,7 +88,7 @@ export default function Header() {
             <Link href="/track-order" onClick={close}>
               Track Order
             </Link>
-          </div>
+          </nav>
         )}
       </header>
     </>

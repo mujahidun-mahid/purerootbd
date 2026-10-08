@@ -60,7 +60,7 @@ export default function Confirmation() {
               </p>
 
               <div className="notice" style={{ maxWidth: 520, margin: "0 auto 26px", textAlign: "left", background: "#f8faf8", border: "1px solid #dbe6dd", borderRadius: 14, padding: 18 }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, fontSize: 13 }}>
+                <div className="info-grid">
                   <div>
                     <span className="muted" style={{ display: 'block', fontSize: 11, textTransform: 'uppercase', letterSpacing: 1 }}>Order Number</span>
                     <strong>{order.order || order.order_number}</strong>

@@ -16,9 +16,9 @@ export default function Account() {
         </div>
       </div>
       <section className="section">
-        <div className="container account-layout" style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: 28, alignItems: 'start' }}>
+        <div className="container account-layout">
           <div>
-            <div className="section-head compact" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+            <div className="account-head">
               <div>
                 <div className="kicker">Purchase history</div>
                 <h2 style={{ margin: '4px 0 0' }}>Recent Orders</h2>
@@ -34,7 +34,6 @@ export default function Account() {
                   <article
                     className="order-card"
                     key={o.order || o.order_number}
-                    style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 0', borderBottom: '1px solid var(--border)' }}
                   >
                     <div>
                       <strong>{o.order || o.order_number}</strong>

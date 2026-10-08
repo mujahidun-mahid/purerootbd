@@ -37,4 +37,10 @@ export async function generateMetadata() {
   };
 }
 
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+};
+
 export default function RootLayout({children}){return <html lang="en"><body><StoreProvider><SiteSettingsProvider><AnalyticsTracker/><Header/><main>{children}</main><Footer/></SiteSettingsProvider></StoreProvider></body></html>}
