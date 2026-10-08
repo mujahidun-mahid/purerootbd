@@ -39,6 +39,50 @@ img,svg{max-width:100%}
 .announcement-bar{background:var(--dark);color:#eaf5ec;font-size:12px;padding:8px 0;letter-spacing:.2px}
 .announcement-bar .container{text-align:center}
 
+/* ---------- bottom navigation (mobile) ---------- */
+.bottom-nav{
+  position:fixed;bottom:0;left:0;right:0;z-index:60;
+  display:grid;grid-template-columns:repeat(5,1fr);
+  background:rgba(255,255,255,.98);backdrop-filter:blur(12px);
+  border-top:1px solid var(--border);
+  box-shadow:0 -4px 20px rgba(22,77,42,.08);
+  padding-bottom:env(safe-area-inset-bottom, 0);
+}
+.bottom-nav-item{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:2px;padding:8px 4px 6px;min-height:56px;
+  color:var(--muted);text-decoration:none;
+  transition:color .15s ease, background .15s ease;
+  position:relative;
+}
+.bottom-nav-item:active{background:var(--bg)}
+.bottom-nav-item:hover{color:var(--green)}
+.bottom-nav-item.active{color:var(--green)}
+.bottom-nav-icon{display:flex;line-height:1}
+.bottom-nav-label{font-size:10px;font-weight:600;letter-spacing:.3px;line-height:1}
+.bottom-nav-badge{
+  position:absolute;top:4px;right:8px;transform:translateX(50%);
+  background:var(--green);color:#fff;font-size:9px;font-weight:800;
+  min-width:16px;height:16px;border-radius:10px;display:grid;place-items:center;
+  padding:0 3px;
+}
+.bottom-nav-item.active .bottom-nav-icon svg{stroke:var(--green)}
+
+/* Hide on desktop */
+@media(min-width:981px){
+  .bottom-nav{display:none}
+}
+
+/* Add bottom padding to main to prevent content being covered by bottom nav */
+@media(max-width:980px){
+  main{padding-bottom:calc(70px + env(safe-area-inset-bottom, 0))}
+}
+
+/* Adjust footer to not be hidden behind bottom nav on mobile */
+@media(max-width:980px){
+  .footer{margin-bottom:calc(70px + env(safe-area-inset-bottom, 0))}
+}
+
 /* ---------- buttons / forms ---------- */
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid transparent;border-radius:9px;padding:12px 18px;font-weight:700;font-size:14px;transition:.2s}
 .btn-primary{background:var(--green);color:#fff}.btn-primary:hover{background:var(--dark)}

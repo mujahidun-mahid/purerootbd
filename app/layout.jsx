@@ -1,4 +1,4 @@
-import "./globals.css"; import Header from "@/components/Header"; import Footer from "@/components/Footer"; import {StoreProvider} from "@/components/StoreProvider"; import AnalyticsTracker from "@/components/AnalyticsTracker"; import SiteSettingsProvider from "@/components/SiteSettingsProvider";
+import "./globals.css"; import Header from "@/components/Header"; import Footer from "@/components/Footer"; import BottomNav from "@/components/BottomNav"; import {StoreProvider} from "@/components/StoreProvider"; import AnalyticsTracker from "@/components/AnalyticsTracker"; import SiteSettingsProvider from "@/components/SiteSettingsProvider";
 import { getSiteSettings } from "@/lib/site-settings";
 import { SITE_URL } from "@/lib/site-defaults";
 
@@ -43,4 +43,4 @@ export const viewport = {
   viewportFit: "cover",
 };
 
-export default function RootLayout({children}){return <html lang="en"><body><StoreProvider><SiteSettingsProvider><AnalyticsTracker/><Header/><main>{children}</main><Footer/></SiteSettingsProvider></StoreProvider></body></html>}
+export default function RootLayout({children}){return <html lang="en"><body><StoreProvider><SiteSettingsProvider><AnalyticsTracker/><Header/><main>{children}</main><Footer/><BottomNav/></SiteSettingsProvider></StoreProvider></body></html>}
