@@ -4,6 +4,7 @@ import {
   Boxes,
   ClipboardList,
   CreditCard,
+  FileText,
   Gift,
   Headphones,
   LayoutDashboard,
@@ -59,7 +60,8 @@ export const tabs = [
   ['payments', 'Payments & Taxes', CreditCard],
   ['roles', 'Roles', Shield],
   ['integrations', 'Integrations', Plug],
-  ['audit', 'Audit Log', ScrollText]
+  ['audit', 'Audit Log', ScrollText],
+  ['pages', 'Pages', FileText]
 ];
 
 export const navSections = [
@@ -69,6 +71,7 @@ export const navSections = [
   { label: 'Operations', items: ['fulfillment', 'delivery', 'drivers'] },
   { label: 'Marketing', items: ['promotions', 'loyalty'] },
   { label: 'Customers', items: ['customers', 'support'] },
+  { label: 'Content', items: ['pages'] },
   { label: 'System', items: ['settings', 'payments', 'roles', 'integrations', 'audit'] }
 ];
 

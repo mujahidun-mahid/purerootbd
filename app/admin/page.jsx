@@ -29,6 +29,7 @@ import PaymentsTab from '@/components/admin/tabs/PaymentsTab';
 import RolesTab from '@/components/admin/tabs/RolesTab';
 import IntegrationsTab from '@/components/admin/tabs/IntegrationsTab';
 import AuditTab from '@/components/admin/tabs/AuditTab';
+import PagesTab from '@/components/admin/tabs/PagesTab';
 
 const IDENTITY_KEYS = [
   'site_name',
@@ -662,6 +663,8 @@ export default function AdminPage() {
       {tab === 'integrations' && <IntegrationsTab password={sessionPassword} data={data} />}
 
       {tab === 'audit' && <AuditTab password={sessionPassword} />}
+
+      {tab === 'pages' && <PagesTab password={sessionPassword} />}
     </AdminShell>
   );
 }
