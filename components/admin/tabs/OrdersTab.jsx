@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronRight, Download } from 'lucide-react';
+import { ChevronRight, Download, Trash2 } from 'lucide-react';
 import { SearchField } from '../ui';
 import DataTable from '../DataTable';
 import { statuses, money, formatDateTime, formatDate } from '../constants';
@@ -31,7 +31,8 @@ export default function OrdersTab({
   setStatusFilter,
   onStatus,
   onOrder,
-  onExport
+  onExport,
+  password
 }) {
   const [dateRange, setDateRange] = useState('all');
   const rows = orders.filter((o) => inDateRange(o, dateRange));
@@ -109,14 +110,31 @@ export default function OrdersTab({
       header: '',
       align: 'right',
       render: (o) => (
-        <button
-          type="button"
-          className="icon-action"
-          onClick={() => onOrder(o)}
-          title="View Order Details"
-        >
-          <ChevronRight size={16} />
-        </button>
+        <span className="row-actions">
+          <button
+            type="button"
+            className="icon-action"
+            onClick={() => onOrder(o)}
+            title="View Order Details"
+          >
+            <ChevronRight size={16} />
+          </button>
+          <button
+            type="button"
+            className="icon-action danger"
+            onClick={() => {
+              if (window.confirm(`Delete order ${o.order_number}? This cannot be undone.`)) {
+                fetch('/api/admin/orders?id=' + encodeURIComponent(o.id), {
+                  method: 'DELETE',
+                  headers: { 'x-admin-password': password || '' }
+                }).then(() => window.location.reload());
+              }
+            }}
+            title="Delete Order"
+          >
+            <Trash2 size={16} />
+          </button>
+        </span>
       )
     }
   ];

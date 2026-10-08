@@ -74,3 +74,39 @@ export async function PATCH(request) {
     return NextResponse.json({ error: error.message || 'Unable to update order' }, { status: 500 });
   }
 }
+
+export async function DELETE(request) {
+  if (!adminAuthorized(request)) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+    if (!id) {
+      return NextResponse.json({ error: 'Order ID is required.' }, { status: 400 });
+    }
+
+    const supabase = getSupabaseAdmin();
+    if (!supabase) {
+      return NextResponse.json({ error: 'Database not configured' }, { status: 503 });
+    }
+
+    // Delete status history first (foreign key)
+    await supabase.from('order_status_history').delete().eq('order_id', id);
+
+    // Delete the order
+    const { error } = await supabase.from('orders').delete().eq('id', id);
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return NextResponse.json({ error: 'Order not found.' }, { status: 404 });
+      }
+      throw error;
+    }
+
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    console.error('Admin order delete error:', error);
+    return NextResponse.json({ error: error.message || 'Unable to delete order' }, { status: 500 });
+  }
+}

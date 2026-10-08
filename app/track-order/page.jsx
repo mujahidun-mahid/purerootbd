@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Search, PackageCheck, Truck, CheckCircle2, Clock3, ChevronRight } from "lucide-react";
+import { Search, PackageCheck, Truck, CheckCircle2, Clock3, ChevronRight, X } from "lucide-react";
 
 const steps = ["Order Placed", "Order Confirmed", "Processing", "Packed", "Shipped", "Out for Delivery", "Delivered"];
 
@@ -18,6 +18,17 @@ const indexForStatus = (status) => {
 
 const normalizePhone = (value) => String(value || '').replace(/\D/g, '').replace(/^880/, '0');
 
+const CANCELLABLE_STATUSES = new Set([
+  'order placed',
+  'awaiting payment',
+  'awaiting bank transfer',
+  'order confirmed'
+]);
+
+function isCancellable(status) {
+  return CANCELLABLE_STATUSES.has(String(status || '').toLowerCase());
+}
+
 function StatusIcon({ status }) {
   if (status === "Delivered") return <CheckCircle2 size={18} />;
   if (["Shipped", "Out for Delivery"].includes(status)) return <Truck size={18} />;
@@ -33,6 +44,27 @@ export default function Track() {
   const [error, setError] = useState("");
   const [searched, setSearched] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [cancelling, setCancelling] = useState(null);
+
+  async function cancelOrder(orderNum, phoneNum) {
+    if (!window.confirm('Cancel this order?')) return;
+    setCancelling(orderNum);
+    try {
+      const res = await fetch('/api/orders', {
+        method: 'PATCH',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ order_number: orderNum, phone: normalizePhone(phoneNum), status: 'Cancelled' })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Failed to cancel');
+      alert('Order cancelled.');
+      window.location.reload();
+    } catch (e) {
+      alert(e.message);
+    } finally {
+      setCancelling(null);
+    }
+  }
 
   useEffect(() => {
     try {
@@ -189,9 +221,22 @@ export default function Track() {
                         <strong>{o.items?.length || 0} item{(o.items?.length || 0) === 1 ? '' : 's'}</strong> •{' '}
                         <span className="muted">{o.customer?.address || 'Delivery address on record'}</span>
                       </div>
-                      <Link className="btn btn-outline" style={{ padding: '8px 14px', fontSize: 13 }} href={`/order-confirmation?order=${encodeURIComponent(o.order_number)}`}>
-                        View Order Details <ChevronRight size={14} />
-                      </Link>
+                      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                        {isCancellable(o.status) && (
+                          <button
+                            type="button"
+                            className="btn btn-outline danger"
+                            style={{ padding: '8px 14px', fontSize: 13 }}
+                            onClick={() => cancelOrder(o.order_number, o.phone)}
+                            disabled={cancelling === o.order_number}
+                          >
+                            {cancelling === o.order_number ? 'Cancelling…' : <><X size={14} /> Cancel</>}
+                          </button>
+                        )}
+                        <Link className="btn btn-outline" style={{ padding: '8px 14px', fontSize: 13 }} href={`/order-confirmation?order=${encodeURIComponent(o.order_number)}`}>
+                          View Order Details <ChevronRight size={14} />
+                        </Link>
+                      </div>
                     </div>
                   </article>
                 );

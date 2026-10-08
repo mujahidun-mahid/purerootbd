@@ -1,10 +1,47 @@
 "use client";
+import { useState } from "react";
 import Link from "next/link";
-import { Package, ArrowRight, Phone, ShoppingBag } from "lucide-react";
+import { Package, ArrowRight, Phone, ShoppingBag, X } from "lucide-react";
 import { useStore } from "@/components/StoreProvider";
+
+const CANCELLABLE_STATUSES = new Set([
+  'order placed',
+  'awaiting payment',
+  'awaiting bank transfer',
+  'order confirmed'
+]);
+
+function isCancellable(status) {
+  return CANCELLABLE_STATUSES.has(String(status || '').toLowerCase());
+}
+
+function normalizePhone(value) {
+  return String(value || '').replace(/\D/g, '').replace(/^880/, '0');
+}
 
 export default function Account() {
   const { orders } = useStore();
+  const [cancelling, setCancelling] = useState(null);
+
+  async function cancelOrder(orderNum, phone) {
+    if (!window.confirm('Cancel this order?')) return;
+    setCancelling(orderNum);
+    try {
+      const res = await fetch('/api/orders', {
+        method: 'PATCH',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ order_number: orderNum, phone: normalizePhone(phone), status: 'Cancelled' })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Failed to cancel');
+      alert('Order cancelled.');
+      window.location.reload();
+    } catch (e) {
+      alert(e.message);
+    } finally {
+      setCancelling(null);
+    }
+  }
 
   return (
     <>
@@ -30,28 +67,44 @@ export default function Account() {
 
             {orders && orders.length > 0 ? (
               <div className="order-list" style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 18, padding: 18 }}>
-                {orders.map((o) => (
-                  <article
-                    className="order-card"
-                    key={o.order || o.order_number}
-                  >
-                    <div>
-                      <strong>{o.order || o.order_number}</strong>
-                      <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>
-                        {o.date || new Date().toLocaleDateString('en-BD')} • {o.payment_method === 'cod' ? 'Cash on Delivery' : o.payment_method || 'COD'}
+                {orders.map((o) => {
+                  const canCancel = isCancellable(o.status);
+                  return (
+                    <article
+                      className="order-card"
+                      key={o.order || o.order_number}
+                    >
+                      <div>
+                        <strong>{o.order || o.order_number}</strong>
+                        <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>
+                          {o.date || new Date().toLocaleDateString('en-BD')} • {o.payment_method === 'cod' ? 'Cash on Delivery' : o.payment_method || 'COD'}
+                        </div>
                       </div>
-                    </div>
-                    <div style={{ textAlign: 'right' }}>
-                      <strong>৳{Number(o.total || 0).toLocaleString()}</strong>
-                      <div style={{ fontSize: 12, color: 'var(--green)', fontWeight: 700, marginTop: 4 }}>
-                        {o.status || 'Order Placed'}
+                      <div style={{ textAlign: 'right' }}>
+                        <strong>৳{Number(o.total || 0).toLocaleString()}</strong>
+                        <div style={{ fontSize: 12, color: 'var(--green)', fontWeight: 700, marginTop: 4 }}>
+                          {o.status || 'Order Placed'}
+                        </div>
                       </div>
-                    </div>
-                    <Link className="btn btn-outline" style={{ padding: '8px 12px', fontSize: 12 }} href={`/track-order?order=${encodeURIComponent(o.order || o.order_number)}`}>
-                      Track <ArrowRight size={14} />
-                    </Link>
-                  </article>
-                ))}
+                      <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 12 }}>
+                        <Link className="btn btn-outline" style={{ padding: '8px 12px', fontSize: 12 }} href={`/track-order?order=${encodeURIComponent(o.order || o.order_number)}`}>
+                          Track <ArrowRight size={14} />
+                        </Link>
+                        {canCancel && (
+                          <button
+                            type="button"
+                            className="btn btn-outline danger"
+                            style={{ padding: '8px 12px', fontSize: 12 }}
+                            onClick={() => cancelOrder(o.order || o.order_number, o.customer?.phone)}
+                            disabled={cancelling === (o.order || o.order_number)}
+                          >
+                            {cancelling === (o.order || o.order_number) ? 'Cancelling…' : <><X size={14} /> Cancel</>}
+                          </button>
+                        )}
+                      </div>
+                    </article>
+                  );
+                })}
               </div>
             ) : (
               <div className="empty" style={{ background: '#fff', border: '1px dashed var(--border)', borderRadius: 18, padding: '50px 20px', textAlign: 'center' }}>

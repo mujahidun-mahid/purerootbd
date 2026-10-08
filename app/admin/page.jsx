@@ -578,6 +578,7 @@ export default function AdminPage() {
           onStatus={updateStatus}
           onOrder={setSelected}
           onExport={exportOrdersCSV}
+          password={sessionPassword}
         />
       )}
 

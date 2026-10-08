@@ -7,6 +7,17 @@ function normalizePhone(value) {
   return String(value || '').replace(/\D/g, '').replace(/^880/, '0');
 }
 
+const CANCELLABLE_STATUSES = new Set([
+  'order placed',
+  'awaiting payment',
+  'awaiting bank transfer',
+  'order confirmed'
+]);
+
+function isCancellable(status) {
+  return CANCELLABLE_STATUSES.has(String(status || '').toLowerCase());
+}
+
 export async function POST(request) {
   try {
     const body = await request.json().catch(() => ({}));
@@ -30,8 +41,8 @@ export async function POST(request) {
     const config = getSupabaseConfig();
     if (!config.configured) {
       console.error('Supabase credentials missing during order checkout');
-      return NextResponse.json({ 
-        error: 'Database is not configured. Please set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in your environment.' 
+      return NextResponse.json({
+        error: 'Database is not configured. Please set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in your environment.'
       }, { status: 503 });
     }
 
@@ -99,8 +110,8 @@ export async function POST(request) {
 
     if (error) {
       console.error('Supabase order insert error details:', error);
-      return NextResponse.json({ 
-        error: `Database write failed: ${error.message || 'Check database permissions or schema.'}` 
+      return NextResponse.json({
+        error: `Database write failed: ${error.message || 'Check database permissions or schema.'}`
       }, { status: 500 });
     }
 
@@ -113,13 +124,13 @@ export async function POST(request) {
       console.warn('Status history logging warning:', historyError.message);
     }
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       order: {
         ...data,
         order: data.order_number,
         method: data.payment_method,
         date: new Date(data.placed_at).toLocaleDateString('en-BD')
-      } 
+      }
     }, { status: 201 });
   } catch (error) {
     console.error('Order creation general error:', error);
@@ -173,5 +184,60 @@ export async function GET(request) {
   } catch (error) {
     console.error('Orders query error:', error);
     return NextResponse.json({ error: error.message || 'Unable to retrieve orders.' }, { status: 500 });
+  }
+}
+
+export async function PATCH(request) {
+  try {
+    const body = await request.json().catch(() => ({}));
+    const { order_number, phone, status } = body;
+
+    if (!order_number || !phone) {
+      return NextResponse.json({ error: 'Order number and phone are required.' }, { status: 400 });
+    }
+    if (status !== 'Cancelled') {
+      return NextResponse.json({ error: 'Only cancellation is supported.' }, { status: 400 });
+    }
+
+    const supabase = getSupabaseAdmin();
+    if (!supabase) {
+      return NextResponse.json({ error: 'Database is not configured.' }, { status: 503 });
+    }
+
+    const cleanPhone = normalizePhone(phone);
+    const { data: order, error: fetchError } = await supabase
+      .from('orders')
+      .select('id, status')
+      .eq('order_number', order_number.trim())
+      .eq('phone', cleanPhone)
+      .single();
+
+    if (fetchError || !order) {
+      return NextResponse.json({ error: 'Order not found.' }, { status: 404 });
+    }
+
+    if (!isCancellable(order.status)) {
+      return NextResponse.json({ error: `Order cannot be cancelled (current status: ${order.status}).` }, { status: 400 });
+    }
+
+    const { data: updated, error: updateError } = await supabase
+      .from('orders')
+      .update({ status: 'Cancelled', updated_at: new Date().toISOString() })
+      .eq('id', order.id)
+      .select()
+      .single();
+
+    if (updateError) throw updateError;
+
+    // Record status history
+    const { error: historyError } = await supabase
+      .from('order_status_history')
+      .insert({ order_id: order.id, status: 'Cancelled' });
+    if (historyError) console.warn('Status history insert error:', historyError.message);
+
+    return NextResponse.json({ order: updated });
+  } catch (error) {
+    console.error('Order cancellation error:', error);
+    return NextResponse.json({ error: error.message || 'Unable to cancel order' }, { status: 500 });
   }
 }
