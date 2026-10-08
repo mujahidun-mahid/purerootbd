@@ -1,5 +1,5 @@
 'use client';
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Pencil, Plus, Trash2 } from 'lucide-react';
 import DataTable from '../DataTable';
 import { Alert, SearchField } from '../ui';
@@ -8,18 +8,63 @@ import useAdminProducts from '../useAdminProducts';
 import ProductEditor from '../ProductEditor';
 
 export default function ProductsTab({ password }) {
-  const { items, loading, saving, error, setError, save, remove } = useAdminProducts(password);
+  const { items, loading, saving, error, setError, save, remove, reorder } = useAdminProducts(password);
   const [query, setQuery] = useState('');
   const [editing, setEditing] = useState(null);
   const [notice, setNotice] = useState('');
+  const [sortOrder, setSortOrder] = useState([]);
+  const dragId = useRef(null);
+
+  const sorted = useMemo(() => {
+    if (sortOrder.length) {
+      const pos = new Map(sortOrder.map((id, i) => [id, i]));
+      return [...items].sort(
+        (a, b) => (pos.get(a.id) ?? 999) - (pos.get(b.id) ?? 999)
+      );
+    }
+    return [...items].sort(
+      (a, b) => (a.sort_order ?? a.sortOrder ?? 0) - (b.sort_order ?? b.sortOrder ?? 0)
+    );
+  }, [items, sortOrder]);
 
   const rows = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return items;
-    return items.filter((p) =>
+    if (!q) return sorted;
+    return sorted.filter((p) =>
       [p.name, p.slug, p.category, p.short].join(' ').toLowerCase().includes(q)
     );
-  }, [items, query]);
+  }, [sorted, query]);
+
+  const startDrag = (id) => (e) => {
+    dragId.current = id;
+    e.dataTransfer.effectAllowed = 'move';
+    try { e.dataTransfer.setData('text/plain', id); } catch {}
+  };
+
+  const allowDrop = (e) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const onDrop = (targetId) => async (e) => {
+    e.preventDefault();
+    const sourceId = dragId.current || e.dataTransfer.getData('text/plain');
+    dragId.current = null;
+    if (!sourceId || sourceId === targetId) return;
+    const list = [...sorted];
+    const from = list.findIndex((p) => p.id === sourceId);
+    const to = list.findIndex((p) => p.id === targetId);
+    if (from < 0 || to < 0) return;
+    const [moved] = list.splice(from, 1);
+    list.splice(to, 0, moved);
+    setSortOrder(list.map((p) => p.id));
+    const updates = list.map((p, i) => ({ id: p.id, sort_order: i + 1 }));
+    const result = await reorder(updates);
+    if (result.ok) {
+      setSortOrder([]);
+      setNotice('Display order saved.');
+    }
+  };
 
   const startAdd = () => {
     setNotice('');
@@ -48,7 +93,26 @@ export default function ProductsTab({ password }) {
     if (result.ok) setNotice(`"${p.name}" deleted.`);
   };
 
+  const rowProps = (p) => ({
+    draggable: true,
+    onDragStart: startDrag(p.id),
+    onDragOver: allowDrop,
+    onDrop: onDrop(p.id),
+    className: 'drag-row'
+  });
+
   const columns = [
+    {
+      key: 'handle',
+      header: '',
+      headerClassName: 'col-drag',
+      className: 'col-drag',
+      render: () => (
+        <span className="drag-handle" title="Drag to reorder" aria-label="Drag to reorder">
+          ⠿
+        </span>
+      )
+    },
     {
       key: 'art',
       header: '',
@@ -146,6 +210,7 @@ export default function ProductsTab({ password }) {
         columns={columns}
         rows={rows}
         rowKey={(p) => p.id}
+        rowProps={rowProps}
         minWidth={860}
         emptyText={loading ? 'Loading products…' : 'No products yet.'}
         filtered={Boolean(query.trim())}

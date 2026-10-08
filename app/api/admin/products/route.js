@@ -4,14 +4,15 @@ import { getSupabaseAdmin, adminAuthorized } from '@/lib/supabaseServer';
 export const dynamic = 'force-dynamic';
 
 const COLUMNS =
-  'id,name,slug,category,price,old_price,image,stock,packages,rating,reviews,short,description,ingredients,nutrition,benefits,use,storage,related,active,created_at,updated_at';
+  'id,name,slug,category,price,old_price,image,stock,packages,rating,reviews,short,description,ingredients,nutrition,benefits,use,storage,related,active,sort_order,created_at,updated_at';
 
 const FIELDS = {
   name: 'name', slug: 'slug', category: 'category', price: 'price',
   oldPrice: 'old_price', image: 'image', stock: 'stock', packages: 'packages',
   rating: 'rating', reviews: 'reviews', short: 'short', description: 'description',
   ingredients: 'ingredients', nutrition: 'nutrition', benefits: 'benefits',
-  use: 'use', storage: 'storage', related: 'related', active: 'active'
+  use: 'use', storage: 'storage', related: 'related', active: 'active',
+  sortOrder: 'sort_order'
 };
 
 function slugify(value) {
@@ -139,5 +140,24 @@ export async function DELETE(request) {
     return NextResponse.json({ deleted: data[0].id });
   } catch (error) {
     return fail(error, 'Unable to delete product.');
+  }
+}
+
+export async function PUT(request) {
+  const supabase = guard(request);
+  if (supabase instanceof NextResponse) return supabase;
+  try {
+    const body = await request.json().catch(() => ({}));
+    const updates = body?.updates;
+    if (!Array.isArray(updates) || !updates.length) {
+      return NextResponse.json({ error: 'Updates array is required.' }, { status: 400 });
+    }
+    for (const u of updates) {
+      if (!u.id || typeof u.sort_order !== 'number') continue;
+      await supabase.from('products').update({ sort_order: u.sort_order, updated_at: new Date().toISOString() }).eq('id', u.id);
+    }
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    return fail(error, 'Unable to reorder products.');
   }
 }

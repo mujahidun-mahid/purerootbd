@@ -1,9 +1,9 @@
-import {notFound} from "next/navigation"; import Link from "next/link"; import ProductGrid from "@/components/ProductGrid"; import {categories} from "@/lib/products"; import {loadProducts} from "@/lib/products-server";
+import {notFound} from "next/navigation"; import Link from "next/link"; import ProductGrid from "@/components/ProductGrid"; import {loadProducts, loadCategory} from "@/lib/products-server";
 
 export const dynamic = "force-dynamic";
 
 export default async function Category({params}){
-  const c=categories.find(x=>x.slug===params.slug);
+  const c=await loadCategory(params.slug);
   if(!c) notFound();
   const all=await loadProducts();
   const items=all.filter(p=>p.category===c.slug);

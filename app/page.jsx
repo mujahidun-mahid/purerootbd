@@ -1,7 +1,6 @@
 import Link from "next/link";
 import ProductGrid from "@/components/ProductGrid";
-import { categories } from "@/lib/products";
-import { loadProducts } from "@/lib/products-server";
+import { loadProducts, loadCategories } from "@/lib/products-server";
 import { getSiteSettings } from "@/lib/site-settings";
 import NewsletterForm from "@/components/NewsletterForm";
 
@@ -10,6 +9,7 @@ export const dynamic = 'force-dynamic';
 export default async function Home() {
   const settings = await getSiteSettings();
   const products = await loadProducts();
+  const categories = await loadCategories({ featuredOnly: true });
 
   return (
     <>
@@ -68,7 +68,13 @@ export default async function Home() {
           <div className="grid cat-grid">
             {categories.map((c) => (
               <Link className="cat" href={`/category/${c.slug}`} key={c.slug}>
-                <div className="cat-icon">{c.icon}</div>
+                {c.image ? (
+                  <div className="cat-art">
+                    <img src={c.image} alt={c.name} />
+                  </div>
+                ) : (
+                  <div className="cat-icon">{c.icon}</div>
+                )}
                 <strong>{c.name}</strong>
                 <span className="muted">{c.description}</span>
               </Link>

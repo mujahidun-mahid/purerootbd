@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Plus, Trash2, ImageIcon } from 'lucide-react';
-import { categories } from '@/lib/products';
+import useCategories from '@/components/useCategories';
 import { Field } from './ui';
 
 function buildState(product) {
@@ -34,7 +34,7 @@ function buildState(product) {
     slug: product.slug || '',
     category: product.category || 'nuts',
     price: product.price ?? '',
-    oldPrice: product.oldPrice ?? '',
+    oldPrice: product.oldPrice ?? product.old_price ?? '',
     stock: product.stock ?? '',
     image: product.image || '',
     short: product.short || '',
@@ -56,12 +56,16 @@ function slugify(value) {
 
 export default function ProductEditor({ product, saving, onClose, onSave, error }) {
   const [form, setForm] = useState(() => buildState(product));
+  const { items: categories } = useCategories({ all: true });
   const [slugTouched, setSlugTouched] = useState(Boolean(product));
   const [localError, setLocalError] = useState('');
 
   const isNew = !product;
   const [previewSrc, setPreviewSrc] = useState('');
   const previewTimer = useRef(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState('');
+  const fileRef = useRef(null);
 
   useEffect(() => {
     const value = String(form.image || '').trim();
@@ -82,6 +86,26 @@ export default function ProductEditor({ product, saving, onClose, onSave, error 
   }, [product]);
 
   const set = (key, value) => setForm((f) => ({ ...f, [key]: value }));
+
+  const uploadFile = async (file) => {
+    if (!file) return;
+    setUploadError('');
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      const res = await fetch('/api/admin/images', { method: 'POST', body: fd });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Upload failed.');
+      set('image', data.url);
+      setPreviewSrc(data.url);
+    } catch (e) {
+      setUploadError(e.message);
+    } finally {
+      setUploading(false);
+      if (fileRef.current) fileRef.current.value = '';
+    }
+  };
 
   const shownSlug = useMemo(() => {
     if (!slugTouched) return slugify(form.name);
@@ -156,14 +180,32 @@ export default function ProductEditor({ product, saving, onClose, onSave, error 
         </p>
 
         <div className="editor-grid">
-          <Field label="Product image (URL)" hint="full">
-            <input
-              className="input"
-              type="url"
-              placeholder="https://…/product-image.jpg"
-              value={form.image}
-              onChange={(e) => set('image', e.target.value)}
-            />
+          <Field label="Product image" hint="full">
+            <div className="img-row">
+              <input
+                className="input"
+                type="url"
+                placeholder="https://…/product-image.jpg"
+                value={form.image}
+                onChange={(e) => set('image', e.target.value)}
+              />
+              <button
+                type="button"
+                className="btn btn-outline"
+                disabled={uploading}
+                onClick={() => fileRef.current && fileRef.current.click()}
+              >
+                {uploading ? 'Uploading…' : 'Upload from device'}
+              </button>
+              <input
+                ref={fileRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/svg+xml"
+                style={{ display: 'none' }}
+                onChange={(e) => uploadFile(e.target.files && e.target.files[0])}
+              />
+            </div>
+            {uploadError && <div className="admin-alert error">{uploadError}</div>}
           </Field>
 
           <div className="editor-preview full">
@@ -200,6 +242,9 @@ export default function ProductEditor({ product, saving, onClose, onSave, error 
 
           <Field label="Category">
             <select className="input" value={form.category} onChange={(e) => set('category', e.target.value)}>
+              {!categories.some((c) => c.slug === form.category) && form.category && (
+                <option value={form.category}>{form.category}</option>
+              )}
               {categories.map((c) => (
                 <option key={c.slug} value={c.slug}>
                   {c.name}

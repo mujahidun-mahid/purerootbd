@@ -11,7 +11,8 @@ export default function DataTable({
   emptyIcon,
   compact = false,
   minWidth,
-  footer
+  footer,
+  rowProps
 }) {
   const keyOf = (row, i) =>
     rowKey ? rowKey(row, i) : (row.id ?? row.key ?? i);
@@ -37,11 +38,14 @@ export default function DataTable({
             </tr>
           </thead>
           <tbody>
-            {rows.map((row, i) => (
+            {rows.map((row, i) => {
+              const { className: extraClass, ...rest } = rowProps ? rowProps(row, i) : {};
+              return (
               <tr
                 key={keyOf(row, i)}
-                className={onRowClick ? 'clickable' : undefined}
+                className={[(onRowClick ? 'clickable' : ''), extraClass].filter(Boolean).join(' ') || undefined}
                 onClick={onRowClick ? () => onRowClick(row) : undefined}
+                {...rest}
               >
                 {columns.map((col) => (
                   <td
@@ -53,7 +57,8 @@ export default function DataTable({
                   </td>
                 ))}
               </tr>
-            ))}
+              );
+            })}
           </tbody>
         </table>
       </div>

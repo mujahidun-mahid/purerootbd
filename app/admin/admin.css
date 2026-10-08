@@ -2342,3 +2342,28 @@
   .pkg-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 34px; }
   .row-actions { justify-content: flex-start; }
 }
+
+/* ===== Drag-to-reorder (products / categories) ===== */
+.drag-row { cursor: grab; }
+.drag-row:active { cursor: grabbing; }
+.drag-row.drag-over { outline: 2px dashed var(--a-brand-2); outline-offset: -2px; }
+.col-drag { width: 34px; }
+.drag-handle { display: inline-block; color: var(--a-muted); font-size: 15px; letter-spacing: -1px; user-select: none; }
+.drag-row:hover .drag-handle { color: var(--a-brand); }
+
+/* ===== Image URL + device upload row ===== */
+.img-row { display: flex; gap: 8px; align-items: center; }
+.img-row .input { flex: 1; min-width: 0; }
+.img-row .btn { white-space: nowrap; }
+
+/* ===== Featured / star pills ===== */
+.pill-star { background: #fdf3e2; color: #b7791f; display: inline-flex; align-items: center; gap: 4px; border: 0; cursor: pointer; font: inherit; }
+button.pill { display: inline-flex; align-items: center; gap: 4px; border: 0; cursor: pointer; font: inherit; font-size: 11.5px; font-weight: 700; }
+
+/* ===== Category editor extras ===== */
+.category-editor .editor-preview { display: flex; align-items: center; justify-content: center; min-height: 90px; background: var(--a-line-soft); border-radius: var(--a-radius); overflow: hidden; }
+.category-editor .editor-preview img { width: 100%; max-height: 180px; object-fit: cover; }
+.cat-emoji-preview { font-size: 44px; }
+.cat-emoji { font-size: 24px; }
+.editor-toggles { display: flex; flex-direction: column; gap: 8px; }
+.admin-sub { margin-top: 4px; font-size: 13px; }

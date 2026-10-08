@@ -12,6 +12,7 @@ import OrdersTab from '@/components/admin/tabs/OrdersTab';
 import CustomersTab from '@/components/admin/tabs/CustomersTab';
 import CatalogTab from '@/components/admin/tabs/CatalogTab';
 import ProductsTab from '@/components/admin/tabs/ProductsTab';
+import FeaturedCategoriesTab from '@/components/admin/tabs/FeaturedCategoriesTab';
 import AnalyticsTab from '@/components/admin/tabs/AnalyticsTab';
 import SettingsTab from '@/components/admin/tabs/SettingsTab';
 
@@ -548,6 +549,8 @@ export default function AdminPage() {
       {tab === 'catalog' && <CatalogTab password={sessionPassword} />}
 
       {tab === 'products' && <ProductsTab password={sessionPassword} />}
+
+      {tab === 'featured-categories' && <FeaturedCategoriesTab password={sessionPassword} />}
 
       {tab === 'analytics' && <AnalyticsTab data={data} />}
 

@@ -5,6 +5,7 @@ import {
   Package,
   Settings,
   ShoppingBag,
+  Sparkles,
   Users
 } from 'lucide-react';
 import { categories } from '@/lib/products';
@@ -28,6 +29,7 @@ export const tabs = [
   ['customers', 'Customers', Users],
   ['catalog', 'Catalog', LayoutGrid],
   ['products', 'Products', Package],
+  ['featured-categories', 'Featured Categories', Sparkles],
   ['analytics', 'Live Analytics', Activity],
   ['settings', 'Site Controls', Settings]
 ];
