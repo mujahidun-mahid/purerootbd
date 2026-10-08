@@ -143,7 +143,7 @@ export async function GET(request) {
     const supabase = getSupabaseAdmin();
     if (!supabase) return NextResponse.json({ error: 'Database is not configured.' }, { status: 503 });
 
-    const searchParams = new URL(request.url).searchParams;
+    const searchParams = request.nextUrl.searchParams;
     const phone = searchParams.get('phone');
     const orderNumber = searchParams.get('order');
 
