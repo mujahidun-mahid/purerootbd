@@ -80,3 +80,74 @@ export function Field({ label, hint, children }) {
     </div>
   );
 }
+
+export function ModalShell({ kicker, title, onClose, children, actions }) {
+  return (
+    <div className="modal-backdrop" onClick={onClose}>
+      <div className="detail-modal" onClick={(e) => e.stopPropagation()}>
+        <button type="button" className="modal-close" onClick={onClose} aria-label="Close">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round">
+            <path d="M18 6L6 18M6 6l12 12" />
+          </svg>
+        </button>
+        <div className="admin-kicker">{kicker || 'Editor'}</div>
+        <h2>{title}</h2>
+        <div className="editor-grid">{children}</div>
+        {actions && <div className="modal-actions">{actions}</div>}
+      </div>
+    </div>
+  );
+}
+
+export function Toggle({ checked, onChange, label }) {
+  return (
+    <button
+      type="button"
+      className={`a-switch ${checked ? 'on' : ''}`}
+      onClick={() => onChange(!checked)}
+      aria-pressed={checked}
+      aria-label={label}
+    >
+      <i />
+    </button>
+  );
+}
+
+export function SegTabs({ items = [], value, onChange }) {
+  return (
+    <div className="seg-tabs">
+      {items.map((item) => (
+        <button
+          key={item.id}
+          type="button"
+          className={`seg-tab ${value === item.id ? 'on' : ''}`}
+          onClick={() => onChange(item.id)}
+        >
+          {item.label}
+          {item.count != null ? <span className="seg-count">{item.count}</span> : null}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+export function Chip({ active, onClick, children }) {
+  return (
+    <button type="button" className={`chip ${active ? 'on' : ''}`} onClick={onClick}>
+      {children}
+    </button>
+  );
+}
+
+export function KV({ items = [] }) {
+  return (
+    <dl className="kv">
+      {items.map((item) => (
+        <div key={item[0]}>
+          <dt>{item[0]}</dt>
+          <dd>{item[1]}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+}

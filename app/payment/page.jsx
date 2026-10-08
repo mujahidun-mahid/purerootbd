@@ -1,16 +1,34 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useStore } from "@/components/StoreProvider";
+import { useSiteSettings } from "@/components/SiteSettingsProvider";
 import Link from "next/link";
 import { ShieldCheck, Truck, CreditCard, Building2, Smartphone } from "lucide-react";
 
+const PAYMENT_METHODS = [
+  ["cod", "Cash on Delivery", "Pay in cash when your fresh products arrive at your doorstep."],
+  ["bkash", "bKash Payment", "Send payment to our official merchant account (Order recorded as Awaiting Verification)."],
+  ["nagad", "Nagad Payment", "Send payment to our official merchant account (Order recorded as Awaiting Verification)."],
+  ["bank", "Bank Transfer", "Direct bank transfer to our corporate account (Account details shown upon order)."]
+];
+
 export default function Payment() {
   const { cart, total, clearCart, saveOrderLocally, hydrated } = useStore();
+  const { settings } = useSiteSettings();
   const [method, setMethod] = useState("cod");
   const [state, setState] = useState("");
   const [error, setError] = useState("");
   const [customer, setCustomer] = useState(null);
-  const delivery = total >= 2000 || total === 0 ? 0 : 80;
+
+  const feeDefault = Number(settings.delivery_fee_default || 80);
+  const threshold = Number(settings.free_delivery_threshold || 2000);
+  const delivery = total >= threshold || total === 0 ? 0 : feeDefault;
+  const taxRate = settings.tax_enabled === "true" ? Number(settings.tax_rate || 0) : 0;
+  const tax = taxRate > 0 ? Math.round(total * taxRate) / 100 : 0;
+  const grand = total + delivery + tax;
+
+  const methods = PAYMENT_METHODS.filter(([id]) => settings[`payment_${id}_enabled`] !== "false");
+  const activeMethod = methods.some(([id]) => id === method) ? method : (methods[0]?.[0] || "cod");
 
   useEffect(() => {
     try {
@@ -40,8 +58,8 @@ export default function Payment() {
         items: cart,
         subtotal: total,
         delivery_fee: delivery,
-        total: total + delivery,
-        payment_method: method
+        total: grand,
+        payment_method: activeMethod
       };
 
       const res = await fetch("/api/orders", {
@@ -59,7 +77,7 @@ export default function Payment() {
       const savedOrder = data.order || payload;
       const orderSummary = {
         order: savedOrder.order_number || savedOrder.order || orderNumber,
-        method,
+        method: activeMethod,
         total: savedOrder.total,
         status: savedOrder.status || "Order Placed",
         date: savedOrder.placed_at ? new Date(savedOrder.placed_at).toLocaleDateString("en-BD") : new Date().toLocaleDateString("en-BD")
@@ -108,19 +126,14 @@ export default function Payment() {
               </div>
             )}
 
-            {[
-              ["cod", "Cash on Delivery", "Pay in cash when your fresh products arrive at your doorstep."],
-              ["bkash", "bKash Payment", "Send payment to our official merchant account (Order recorded as Awaiting Verification)."],
-              ["nagad", "Nagad Payment", "Send payment to our official merchant account (Order recorded as Awaiting Verification)."],
-              ["bank", "Bank Transfer", "Direct bank transfer to our corporate account (Account details shown upon order)."]
-            ].map(([id, title, desc]) => (
+            {(methods.length ? methods : PAYMENT_METHODS.slice(0, 1)).map(([id, title, desc]) => (
               <div
                 key={id}
-                className={`payment-option ${method === id ? "selected" : ""}`}
+                className={`payment-option ${activeMethod === id ? "selected" : ""}`}
                 onClick={() => setMethod(id)}
                 style={{ cursor: "pointer" }}
               >
-                <input type="radio" checked={method === id} onChange={() => setMethod(id)} />
+                <input type="radio" checked={activeMethod === id} onChange={() => setMethod(id)} />
                 <div>
                   <strong>{title}</strong>
                   <div className="muted">{desc}</div>
@@ -128,17 +141,23 @@ export default function Payment() {
               </div>
             ))}
 
-            {method === "bkash" && (
+            {settings.payment_instructions && (
+              <div className="notice" style={{ marginTop: 14 }}>
+                <strong>Payment Note:</strong> {settings.payment_instructions}
+              </div>
+            )}
+
+            {activeMethod === "bkash" && (
               <div className="notice" style={{ marginTop: 14 }}>
                 <strong>bKash Merchant Instruction:</strong> Your order will be stored in our database. Once placed, send the order total to our official bKash Merchant number with your Order Number as the reference.
               </div>
             )}
-            {method === "nagad" && (
+            {activeMethod === "nagad" && (
               <div className="notice" style={{ marginTop: 14 }}>
                 <strong>Nagad Instruction:</strong> Your order will be stored in our database. Send payment to our official Nagad number using your Order Number as reference.
               </div>
             )}
-            {method === "bank" && (
+            {activeMethod === "bank" && (
               <div className="notice" style={{ marginTop: 14 }}>
                 <strong>Bank Transfer Instruction:</strong> Your order will be saved as Awaiting Bank Payment. Our team will verify and confirm once transfer is completed.
               </div>
@@ -150,7 +169,7 @@ export default function Payment() {
               onClick={pay}
               disabled={state === "processing"}
             >
-              {state === "processing" ? "Storing Order…" : method === "cod" ? "Place COD Order" : `Place ${method.toUpperCase()} Order`}
+              {state === "processing" ? "Storing Order…" : activeMethod === "cod" ? "Place COD Order" : `Place ${activeMethod.toUpperCase()} Order`}
             </button>
           </div>
 
@@ -164,9 +183,15 @@ export default function Payment() {
               <span>Delivery</span>
               <span>{delivery ? "৳" + delivery : "Free"}</span>
             </div>
+            {taxRate > 0 && (
+              <div className="sumline">
+                <span>Tax ({taxRate}%)</span>
+                <span>৳{tax.toLocaleString()}</span>
+              </div>
+            )}
             <div className="sumline sumtotal">
               <span>Total</span>
-              <span>৳{(total + delivery).toLocaleString()}</span>
+              <span>৳{grand.toLocaleString()}</span>
             </div>
             {customer && (
               <div style={{ marginTop: 16, paddingTop: 14, borderTop: "1px solid var(--border)", fontSize: 12 }}>

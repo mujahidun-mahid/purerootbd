@@ -18,6 +18,7 @@ export default function AdminShell({
   error,
   onDismissError,
   modal,
+  counts,
   children
 }) {
   return (
@@ -29,6 +30,7 @@ export default function AdminShell({
         onLogout={onLogout}
         open={navOpen}
         onClose={onCloseNav}
+        counts={counts}
       />
 
       <section className="admin-main">

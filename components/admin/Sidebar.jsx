@@ -1,7 +1,9 @@
 import { ShieldCheck, LogOut } from 'lucide-react';
-import { tabs } from './constants';
+import { tabs, navSections } from './constants';
 
-export default function Sidebar({ tab, onSelect, connected, onLogout, open, onClose }) {
+export default function Sidebar({ tab, onSelect, connected, onLogout, open, onClose, counts = {} }) {
+  const lookup = Object.fromEntries(tabs.map(([id, label, Icon]) => [id, { label, Icon }]));
+
   return (
     <>
       {open && <div className="admin-scrim" onClick={onClose} />}
@@ -17,21 +19,36 @@ export default function Sidebar({ tab, onSelect, connected, onLogout, open, onCl
         </div>
 
         <nav className="admin-side-nav">
-          <div className="admin-side-label">Workspace</div>
-          {tabs.map(([id, label, Icon]) => (
-            <button
-              key={id}
-              type="button"
-              className={tab === id ? 'active' : ''}
-              onClick={() => {
-                onSelect(id);
-                if (onClose) onClose();
-              }}
-            >
-              <Icon size={17} />
-              <span>{label}</span>
-            </button>
-          ))}
+          {navSections.map((section) => {
+            const total = section.items.reduce((sum, id) => sum + (Number(counts[id]) || 0), 0);
+            return (
+              <div key={section.label} className="admin-side-group">
+                <div className="admin-side-label">
+                  {section.label}
+                  {total > 0 ? <span className="nav-badge">{total > 99 ? '99+' : total}</span> : null}
+                </div>
+                {section.items.map((id) => {
+                  const entry = lookup[id];
+                  if (!entry) return null;
+                  const { label, Icon } = entry;
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      className={tab === id ? 'active' : ''}
+                      onClick={() => {
+                        onSelect(id);
+                        if (onClose) onClose();
+                      }}
+                    >
+                      <Icon size={17} />
+                      <span>{label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            );
+          })}
         </nav>
 
         <div className="admin-side-bottom">

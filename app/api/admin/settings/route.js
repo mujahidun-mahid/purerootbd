@@ -27,7 +27,16 @@ export async function PUT(request) {
       'announcement_enabled',
       'hero_title',
       'hero_subtitle',
-      'hero_image_url'
+      'hero_image_url',
+      'payment_cod_enabled',
+      'payment_bkash_enabled',
+      'payment_nagad_enabled',
+      'payment_bank_enabled',
+      'payment_instructions',
+      'tax_enabled',
+      'tax_rate',
+      'delivery_fee_default',
+      'free_delivery_threshold'
     ];
     if (!allowed.includes(key)) {
       return NextResponse.json({ error: 'Unsupported setting key.' }, { status: 400 });

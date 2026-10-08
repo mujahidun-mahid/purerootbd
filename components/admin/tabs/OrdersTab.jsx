@@ -1,7 +1,26 @@
+import { useState } from 'react';
 import { ChevronRight, Download } from 'lucide-react';
 import { SearchField } from '../ui';
 import DataTable from '../DataTable';
 import { statuses, money, formatDateTime, formatDate } from '../constants';
+
+const DATE_RANGES = [
+  ['all', 'All Time'],
+  ['today', 'Today'],
+  ['7d', 'Last 7 Days'],
+  ['30d', 'Last 30 Days']
+];
+
+function inDateRange(order, range) {
+  if (range === 'all') return true;
+  const placed = new Date(order.placed_at).getTime();
+  if (Number.isNaN(placed)) return true;
+  if (range === 'today') {
+    return new Date(order.placed_at).toDateString() === new Date().toDateString();
+  }
+  const days = range === '7d' ? 7 : 30;
+  return Date.now() - placed <= days * 86400000;
+}
 
 export default function OrdersTab({
   orders,
@@ -14,7 +33,9 @@ export default function OrdersTab({
   onOrder,
   onExport
 }) {
-  const filtered = query || statusFilter !== 'all';
+  const [dateRange, setDateRange] = useState('all');
+  const rows = orders.filter((o) => inDateRange(o, dateRange));
+  const filtered = Boolean(query) || statusFilter !== 'all' || dateRange !== 'all';
 
   const columns = [
     {
@@ -106,11 +127,24 @@ export default function OrdersTab({
         <div>
           <div className="admin-kicker">Orders Database</div>
           <h2>
-            All Orders <em>({orders.length} of {allOrdersCount})</em>
+            All Orders <em>({rows.length} of {allOrdersCount})</em>
           </h2>
         </div>
 
         <div className="admin-toolbar-right">
+          <select
+            className="filter"
+            value={dateRange}
+            onChange={(e) => setDateRange(e.target.value)}
+            aria-label="Date range"
+          >
+            {DATE_RANGES.map(([id, label]) => (
+              <option key={id} value={id}>
+                {label}
+              </option>
+            ))}
+          </select>
+
           <select
             className="filter"
             value={statusFilter}
@@ -138,11 +172,12 @@ export default function OrdersTab({
 
       <DataTable
         columns={columns}
-        rows={orders}
+        rows={rows}
         rowKey={(o) => o.id}
         filtered={filtered}
+        pageSize={20}
         emptyText="No orders in database yet."
-        emptyFilteredText="No matching orders found. Try clearing the search or status filter."
+        emptyFilteredText="No matching orders found. Try clearing the search, status, or date filter."
       />
     </div>
   );

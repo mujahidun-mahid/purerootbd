@@ -61,6 +61,7 @@ export default function CustomersTab({ customers, query, setQuery, onCustomer })
         rowKey={(c) => c.phone}
         onRowClick={onCustomer}
         filtered={Boolean(query)}
+        pageSize={20}
         emptyText="Customer profiles appear automatically after orders are created."
         emptyFilteredText="No matching customers found."
       />

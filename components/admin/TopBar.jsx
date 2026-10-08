@@ -1,8 +1,9 @@
 import { Menu, RefreshCw } from 'lucide-react';
-import { tabs } from './constants';
+import { tabs, sectionForTab } from './constants';
 
 export default function TopBar({ tab, connected, lastSync, loading, onRefresh, onMenu }) {
   const current = tabs.find((x) => x[0] === tab);
+  const section = sectionForTab(tab);
 
   return (
     <header className="admin-header">
@@ -12,7 +13,8 @@ export default function TopBar({ tab, connected, lastSync, loading, onRefresh, o
         </button>
         <div>
           <div className="admin-breadcrumb">
-            Control Center <span>/</span> <b>{current?.[1]}</b>
+            Control Center <span>/</span> {section ? <>{section.label} <span>/</span> </> : null}
+            <b>{current?.[1]}</b>
           </div>
           <div className="admin-kicker">PURE ROOTS ADMIN</div>
           <h1>{current?.[1]}</h1>

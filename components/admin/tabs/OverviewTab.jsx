@@ -1,6 +1,20 @@
 import { Eye, ShoppingBag, TrendingUp, Users } from 'lucide-react';
 import { Panel, StatCard, StatusPill, EmptyState } from '../ui';
 import { money, phoneMask } from '../constants';
+import { AreaChart, DonutChart } from '../charts';
+
+const DONUT_COLORS = [
+  '#2e8b57',
+  '#f5a623',
+  '#3f8fd1',
+  '#e2543a',
+  '#8b5cf6',
+  '#14b8a6',
+  '#ec4899',
+  '#84cc16',
+  '#f97316',
+  '#64748b'
+];
 
 export default function OverviewTab({ data, onOrder, onOrders }) {
   const k = data?.kpis || {};
@@ -8,6 +22,10 @@ export default function OverviewTab({ data, onOrder, onOrders }) {
   const orders = data?.orders || [];
   const topProducts = data?.topProducts || [];
   const topPages = data?.topPages || [];
+  const dailySales = data?.dailySales || [];
+  const statusMix = Object.entries(statusCounts)
+    .filter(([, n]) => n > 0)
+    .map(([label, value], i) => ({ label, value, color: DONUT_COLORS[i % DONUT_COLORS.length] }));
 
   return (
     <div className="admin-content">
@@ -45,6 +63,24 @@ export default function OverviewTab({ data, onOrder, onOrders }) {
           icon={Eye}
           tone="gold"
         />
+      </div>
+
+      <div className="admin-grid-2">
+        <Panel kicker="Revenue" title="Daily revenue · last 14 days">
+          {dailySales.length ? (
+            <AreaChart data={dailySales.map((d) => ({ label: d.date.slice(5), value: d.total }))} format={money} />
+          ) : (
+            <EmptyState text="Revenue trends appear once orders are placed." />
+          )}
+        </Panel>
+
+        <Panel kicker="Orders" title="Pipeline mix">
+          {statusMix.length ? (
+            <DonutChart data={statusMix} />
+          ) : (
+            <EmptyState text="Status breakdown appears with your first orders." />
+          )}
+        </Panel>
       </div>
 
       <div className="admin-grid-2">

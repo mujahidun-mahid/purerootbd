@@ -2,9 +2,11 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useStore } from "@/components/StoreProvider";
+import { useSiteSettings } from "@/components/SiteSettingsProvider";
 
 export default function Checkout() {
   const { cart, total } = useStore();
+  const { settings } = useSiteSettings();
   const [form, setForm] = useState({
     name: "",
     phone: "",
@@ -18,7 +20,9 @@ export default function Checkout() {
     notes: ""
   });
   const [error, setError] = useState("");
-  const delivery = total >= 2000 || total === 0 ? 0 : 80;
+  const delivery = total >= Number(settings.free_delivery_threshold || 2000) || total === 0
+    ? 0
+    : Number(settings.delivery_fee_default || 80);
 
   useEffect(() => {
     try {
@@ -205,7 +209,11 @@ export default function Checkout() {
             ))}
             <div className="sumline">
               <span>Delivery Fee</span>
-              <span>{delivery ? "৳" + delivery : "Free (Orders ৳2000+)"}</span>
+              <span>
+                {delivery
+                  ? "৳" + delivery
+                  : `Free (Orders ৳${Number(settings.free_delivery_threshold || 2000).toLocaleString()}+)`}
+              </span>
             </div>
             <div className="sumline sumtotal">
               <span>Total Payable</span>

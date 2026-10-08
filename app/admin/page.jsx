@@ -15,6 +15,20 @@ import ProductsTab from '@/components/admin/tabs/ProductsTab';
 import FeaturedCategoriesTab from '@/components/admin/tabs/FeaturedCategoriesTab';
 import AnalyticsTab from '@/components/admin/tabs/AnalyticsTab';
 import SettingsTab from '@/components/admin/tabs/SettingsTab';
+import ReportsTab from '@/components/admin/tabs/ReportsTab';
+import ReturnsTab from '@/components/admin/tabs/ReturnsTab';
+import InventoryTab from '@/components/admin/tabs/InventoryTab';
+import SuppliersTab from '@/components/admin/tabs/SuppliersTab';
+import FulfillmentTab from '@/components/admin/tabs/FulfillmentTab';
+import DeliveryTab from '@/components/admin/tabs/DeliveryTab';
+import DriversTab from '@/components/admin/tabs/DriversTab';
+import PromotionsTab from '@/components/admin/tabs/PromotionsTab';
+import LoyaltyTab from '@/components/admin/tabs/LoyaltyTab';
+import SupportTab from '@/components/admin/tabs/SupportTab';
+import PaymentsTab from '@/components/admin/tabs/PaymentsTab';
+import RolesTab from '@/components/admin/tabs/RolesTab';
+import IntegrationsTab from '@/components/admin/tabs/IntegrationsTab';
+import AuditTab from '@/components/admin/tabs/AuditTab';
 
 const IDENTITY_KEYS = [
   'site_name',
@@ -79,6 +93,25 @@ export default function AdminPage() {
     () => (sessionPassword ? { 'x-admin-password': sessionPassword } : {}),
     [sessionPassword]
   );
+
+  const recordAudit = useCallback(
+    (action, detail = {}) => {
+      if (!sessionPassword) return;
+      fetch('/api/admin/audit', {
+        method: 'POST',
+        headers: { 'x-admin-password': sessionPassword, 'content-type': 'application/json' },
+        body: JSON.stringify({ action, detail })
+      }).catch(() => {});
+    },
+    [sessionPassword]
+  );
+
+  // Success banners fade out on their own; errors stay until dismissed.
+  useEffect(() => {
+    if (!message) return undefined;
+    const timer = setTimeout(() => setMessage(''), 6000);
+    return () => clearTimeout(timer);
+  }, [message]);
 
   const load = useCallback(
     async (showLoading = false, pw = sessionPassword) => {
@@ -231,6 +264,8 @@ export default function AdminPage() {
       const d = await res.json();
       if (!res.ok) throw new Error(d.error || 'Could not update status');
       setMessage(`Order status updated to "${newStatus}".`);
+      const orderNo = orders.find((o) => o.id === id)?.order_number || id;
+      recordAudit('order.status', { order: orderNo, status: newStatus });
 
       // Optimistic update
       setData((prev) =>
@@ -293,6 +328,7 @@ export default function AdminPage() {
         ['hero_subtitle', heroSubtitle]
       ]);
       setMessage('Homepage copy saved.');
+      recordAudit('settings.copy', { hero_title: heroTitle });
       load(false);
     } catch (e) {
       setMessage(e.message);
@@ -306,6 +342,7 @@ export default function AdminPage() {
     try {
       await putSettings(IDENTITY_KEYS.map((k) => [k, identity[k] ?? '']));
       setMessage('Site identity saved. The storefront updates instantly.');
+      recordAudit('settings.identity', { keys: IDENTITY_KEYS.join(',') });
       load(false);
     } catch (e) {
       setMessage(e.message);
@@ -396,6 +433,12 @@ export default function AdminPage() {
     setTab(id);
     setQuery('');
   }
+
+  const navCounts = useMemo(() => {
+    const openOrders = orders.filter((o) => !['Delivered', 'Cancelled'].includes(o.status)).length;
+    const cancelled = orders.filter((o) => o.status === 'Cancelled').length;
+    return { orders: openOrders, returns: cancelled };
+  }, [orders]);
 
   // -------------------------------------------------------------
   // LOGIN SCREEN
@@ -508,6 +551,7 @@ export default function AdminPage() {
       onDismissMessage={() => setMessage('')}
       error={error}
       onDismissError={() => setError('')}
+      counts={navCounts}
       modal={
         selected && (
           <DetailModal
@@ -574,6 +618,49 @@ export default function AdminPage() {
           loading={loading || saving}
         />
       )}
+
+      {tab === 'reports' && (
+        <ReportsTab
+          data={data}
+          orders={orders}
+          customers={customers}
+          onExportOrders={exportOrdersCSV}
+        />
+      )}
+
+      {tab === 'returns' && (
+        <ReturnsTab password={sessionPassword} orders={orders} onStatus={updateStatus} />
+      )}
+
+      {tab === 'inventory' && <InventoryTab password={sessionPassword} />}
+
+      {tab === 'suppliers' && <SuppliersTab password={sessionPassword} />}
+
+      {tab === 'fulfillment' && (
+        <FulfillmentTab orders={orders} onStatus={updateStatus} onOrder={setSelected} />
+      )}
+
+      {tab === 'delivery' && <DeliveryTab password={sessionPassword} />}
+
+      {tab === 'drivers' && (
+        <DriversTab password={sessionPassword} orders={orders} onStatus={updateStatus} />
+      )}
+
+      {tab === 'promotions' && <PromotionsTab password={sessionPassword} />}
+
+      {tab === 'loyalty' && <LoyaltyTab password={sessionPassword} customers={customers} />}
+
+      {tab === 'support' && <SupportTab password={sessionPassword} />}
+
+      {tab === 'payments' && (
+        <PaymentsTab password={sessionPassword} data={data} saveSetting={putSettings} />
+      )}
+
+      {tab === 'roles' && <RolesTab password={sessionPassword} />}
+
+      {tab === 'integrations' && <IntegrationsTab password={sessionPassword} data={data} />}
+
+      {tab === 'audit' && <AuditTab password={sessionPassword} />}
     </AdminShell>
   );
 }
