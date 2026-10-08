@@ -1,8 +1,9 @@
-import { useState, useEffect, useCallback } from 'react';
-import { Plus, Eye, Edit3, Trash2, FileText } from 'lucide-react';
-import { Alert, Field, ModalShell, Toggle, StatCard } from '../ui';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { Plus, Eye, Edit3, Trash2, FileText, GripVertical, X, ChevronDown, ChevronUp, Copy } from 'lucide-react';
+import { Alert, Field, ModalShell, Toggle, StatCard, Panel } from '../ui';
 import DataTable from '../DataTable';
 import { formatDateTime } from '../constants';
+import { SECTION_TYPES, getDefaultSectionData, sectionRenderers } from '../../PageSections';
 
 const PAGE_TEMPLATES = [
   { slug: 'home', label: 'Home Page', description: 'Main landing page with hero, featured categories, best sellers' },
@@ -45,6 +46,12 @@ export default function PagesTab({ password }) {
   const [form, setForm] = useState({ ...DEFAULT_PAGE_DATA, slug: '' });
   const [showCreate, setShowCreate] = useState(false);
 
+  // Section management state
+  const [sections, setSections] = useState([]);
+  const [editingSection, setEditingSection] = useState(null);
+  const [sectionForm, setSectionForm] = useState({ type: '', data: {} });
+  const [dragSectionId, setDragSectionId] = useState(null);
+
   const authHeaders = () => ({ 'x-admin-password': password, 'content-type': 'application/json' });
 
   const load = useCallback(async () => {
@@ -71,12 +78,14 @@ export default function PagesTab({ password }) {
     try {
       const method = editing ? 'PUT' : 'POST';
       const url = editing ? `/api/admin/pages/${editing}` : '/api/admin/pages';
-      const res = await fetch(url, { method, headers: authHeaders(), body: JSON.stringify(form) });
+      const payload = { ...form, sections };
+      const res = await fetch(url, { method, headers: authHeaders(), body: JSON.stringify(payload) });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || 'Failed to save');
       setNotice({ type: 'success', text: editing ? 'Page updated' : 'Page created' });
       setEditing(null);
       setForm({ ...DEFAULT_PAGE_DATA, slug: '' });
+      setSections([]);
       setShowCreate(false);
       load();
     } catch (e) {
@@ -101,9 +110,83 @@ export default function PagesTab({ password }) {
   const openEdit = (page) => {
     setEditing(page.slug);
     setForm({ ...DEFAULT_PAGE_DATA, ...page });
+    setSections(page.sections || []);
   };
 
   const openView = (page) => setViewing(page);
+
+  // Section management functions
+  const addSection = (type) => {
+    const newSection = {
+      id: `section-${Date.now()}`,
+      type,
+      enabled: true,
+      order: sections.length,
+      data: getDefaultSectionData(type),
+    };
+    setSections([...sections, newSection]);
+    setNotice({ type: 'success', text: 'Section added' });
+  };
+
+  const editSection = (section) => {
+    setEditingSection(section.id);
+    setSectionForm({ type: section.type, data: { ...section.data } });
+  };
+
+  const saveSection = () => {
+    setSections(sections.map(s => s.id === editingSection ? { ...s, data: sectionForm.data } : s));
+    setEditingSection(null);
+    setNotice({ type: 'success', text: 'Section updated' });
+  };
+
+  const removeSection = (id) => {
+    if (!window.confirm('Remove this section?')) return;
+    setSections(sections.filter(s => s.id !== id));
+    setNotice({ type: 'success', text: 'Section removed' });
+  };
+
+  const toggleSection = (id) => {
+    setSections(sections.map(s => s.id === id ? { ...s, enabled: !s.enabled } : s));
+  };
+
+  const duplicateSection = (section) => {
+    const newSection = {
+      ...section,
+      id: `section-${Date.now()}`,
+      order: sections.length,
+    };
+    setSections([...sections, newSection]);
+    setNotice({ type: 'success', text: 'Section duplicated' });
+  };
+
+  const moveSection = (fromIndex, toIndex) => {
+    const newSections = [...sections];
+    const [moved] = newSections.splice(fromIndex, 1);
+    newSections.splice(toIndex, 0, moved);
+    setSections(newSections.map((s, i) => ({ ...s, order: i })));
+  };
+
+  const startDrag = (id) => (e) => {
+    dragSectionId.current = id;
+    e.dataTransfer.effectAllowed = 'move';
+    try { e.dataTransfer.setData('text/plain', id); } catch {}
+  };
+
+  const allowDrop = (e) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const onDrop = (targetId) => (e) => {
+    e.preventDefault();
+    const sourceId = dragSectionId.current || e.dataTransfer.getData('text/plain');
+    dragSectionId.current = null;
+    if (!sourceId || sourceId === targetId) return;
+    const fromIndex = sections.findIndex(s => s.id === sourceId);
+    const toIndex = sections.findIndex(s => s.id === targetId);
+    if (fromIndex < 0 || toIndex < 0) return;
+    moveSection(fromIndex, toIndex);
+  };
 
   const templateFields = [
     { key: 'slug', label: 'Slug (URL path)', type: 'text', placeholder: 'e.g. about-us' },
@@ -117,7 +200,138 @@ export default function PagesTab({ password }) {
     { key: 'hero_cta_link', label: 'CTA Button Link', type: 'text', placeholder: '/shop' },
     { key: 'content_markdown', label: 'Content (Markdown)', type: 'textarea', placeholder: 'Page body content in Markdown', full: true },
     { key: 'content_html', label: 'Content (HTML)', type: 'textarea', placeholder: 'Page body content in HTML', full: true },
-  ];
+];
+
+  const renderSectionFormFields = (type, data) => {
+    if (!type) return null;
+    const fields = [];
+    switch (type) {
+      case 'hero':
+        fields.push(
+          { key: 'title', label: 'Hero Title', type: 'text', placeholder: 'Main heading' },
+          { key: 'subtitle', label: 'Subtitle', type: 'textarea', placeholder: 'Supporting text' },
+          { key: 'image', label: 'Hero Image URL', type: 'text', placeholder: 'https://...' },
+          { key: 'cta_text', label: 'CTA Button Text', type: 'text', placeholder: 'Shop Now' },
+          { key: 'cta_link', label: 'CTA Button Link', type: 'text', placeholder: '/shop' },
+          { key: 'alignment', label: 'Alignment', type: 'select', options: ['left', 'center', 'right'] },
+          { key: 'height', label: 'Height', type: 'select', options: ['small', 'medium', 'large'] },
+        );
+        break;
+      case 'richtext':
+        fields.push(
+          { key: 'content', label: 'Content (HTML)', type: 'textarea', placeholder: 'HTML content', full: true },
+        );
+        break;
+      case 'image_text':
+        fields.push(
+          { key: 'image', label: 'Image URL', type: 'text', placeholder: 'https://...' },
+          { key: 'title', label: 'Title', type: 'text', placeholder: 'Section title' },
+          { key: 'content', label: 'Content (HTML)', type: 'textarea', placeholder: 'Text content', full: true },
+          { key: 'image_position', label: 'Image Position', type: 'select', options: ['left', 'right'] },
+          { key: 'alignment', label: 'Alignment', type: 'select', options: ['left', 'center', 'right'] },
+        );
+        break;
+      case 'products':
+        fields.push(
+          { key: 'source', label: 'Source', type: 'select', options: ['featured', 'category', 'manual'] },
+          { key: 'category', label: 'Category (if source=category)', type: 'text', placeholder: 'e.g. nuts' },
+          { key: 'product_ids', label: 'Product IDs (comma-separated, if source=manual)', type: 'text', placeholder: 'PR-NUT-001, PR-NUT-002' },
+          { key: 'limit', label: 'Limit', type: 'number', placeholder: '8' },
+          { key: 'title', label: 'Section Title', type: 'text', placeholder: 'Featured Products' },
+          { key: 'show_view_all', label: 'Show View All Link', type: 'checkbox' },
+          { key: 'view_all_link', label: 'View All Link', type: 'text', placeholder: '/shop' },
+        );
+        break;
+      case 'categories':
+        fields.push(
+          { key: 'category_ids', label: 'Category Slugs (comma-separated)', type: 'text', placeholder: 'nuts, seeds, spices' },
+          { key: 'title', label: 'Section Title', type: 'text', placeholder: 'Shop by Category' },
+          { key: 'show_all_link', label: 'Show View All Link', type: 'checkbox' },
+          { key: 'all_link', label: 'View All Link', type: 'text', placeholder: '/shop' },
+        );
+        break;
+      case 'faq':
+        fields.push(
+          { key: 'title', label: 'Section Title', type: 'text', placeholder: 'Frequently Asked Questions' },
+          { key: 'items', label: 'FAQ Items (JSON)', type: 'textarea', placeholder: '[{"question": "Q1", "answer": "A1"}]', full: true },
+        );
+        break;
+      case 'reviews':
+        fields.push(
+          { key: 'title', label: 'Section Title', type: 'text', placeholder: 'Customer Reviews' },
+          { key: 'items', label: 'Reviews (JSON)', type: 'textarea', placeholder: '[{"author": "John", "rating": 5, "text": "Great!", "date": "2024-01-15"}]', full: true },
+        );
+        break;
+      case 'image_gallery':
+        fields.push(
+          { key: 'title', label: 'Section Title', type: 'text', placeholder: 'Gallery' },
+          { key: 'images', label: 'Images (JSON)', type: 'textarea', placeholder: '[{"url": "...", "caption": "...", "alt": "..."}]', full: true },
+          { key: 'columns', label: 'Columns', type: 'select', options: ['2', '3', '4'] },
+        );
+        break;
+      case 'video':
+        fields.push(
+          { key: 'url', label: 'Video URL (YouTube/Vimeo)', type: 'text', placeholder: 'https://...' },
+          { key: 'title', label: 'Title', type: 'text', placeholder: 'Video title' },
+          { key: 'description', label: 'Description', type: 'textarea', placeholder: 'Video description' },
+          { key: 'aspect_ratio', label: 'Aspect Ratio', type: 'select', options: ['16:9', '4:3', '1:1', '21:9'] },
+        );
+        break;
+      case 'cta_banner':
+        fields.push(
+          { key: 'title', label: 'Title', type: 'text', placeholder: 'Banner title' },
+          { key: 'description', label: 'Description', type: 'textarea', placeholder: 'Supporting text' },
+          { key: 'button_text', label: 'Button Text', type: 'text', placeholder: 'Shop Now' },
+          { key: 'button_link', label: 'Button Link', type: 'text', placeholder: '/shop' },
+          { key: 'background', label: 'Background Image URL', type: 'text', placeholder: 'https://...' },
+          { key: 'text_color', label: 'Text Color', type: 'select', options: ['white', 'dark', 'primary'] },
+          { key: 'alignment', label: 'Alignment', type: 'select', options: ['left', 'center', 'right'] },
+        );
+        break;
+      case 'divider':
+        fields.push(
+          { key: 'label', label: 'Label', type: 'text', placeholder: 'Section divider' },
+          { key: 'style', label: 'Style', type: 'select', options: ['line', 'dashed', 'none'] },
+        );
+        break;
+      case 'spacer':
+        fields.push(
+          { key: 'height', label: 'Height', type: 'select', options: ['small', 'medium', 'large'] },
+        );
+        break;
+      default:
+        fields.push({ key: 'data', label: 'Data (JSON)', type: 'textarea', placeholder: '{}', full: true });
+    }
+
+    const renderField = (f) => {
+      if (f.type === 'textarea') {
+        return (
+          <textarea className="input" rows={f.full ? 12 : 4} value={data[f.key] || ''}
+            onChange={(e) => setSectionForm({ ...sectionForm, data: { ...data, [f.key]: e.target.value } })} placeholder={f.placeholder} />
+        );
+      }
+      if (f.type === 'select') {
+        return (
+          <select className="input" value={data[f.key] || ''} onChange={(e) => setSectionForm({ ...sectionForm, data: { ...data, [f.key]: e.target.value } })}>
+            {f.options?.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+          </select>
+        );
+      }
+      if (f.type === 'checkbox') {
+        return (
+          <label className="editor-toggle">
+            <Toggle checked={data[f.key] === true} onChange={(v) => setSectionForm({ ...sectionForm, data: { ...data, [f.key]: v } })} />
+            {f.label}
+          </label>
+        );
+      }
+      return (
+        <input className="input" type="text" value={data[f.key] || ''} onChange={(e) => setSectionForm({ ...sectionForm, data: { ...data, [f.key]: e.target.value } })} placeholder={f.placeholder} />
+      );
+    };
+
+    return fields.map(f => <Field key={f.key} label={f.label} hint={f.full ? 'full' : undefined}>{renderField(f)}</Field>);
+    };
 
   return (
     <div className="admin-content">
@@ -227,9 +441,22 @@ export default function PagesTab({ password }) {
           actions={<button type="button" className="btn" onClick={() => setViewing(null)}>Close</button>}
         >
           <div style={{ padding: 16 }}>
-            <h3>{viewing.hero_title}</h3>
-            {viewing.hero_subtitle && <p className="muted">{viewing.hero_subtitle}</p>}
-            <div dangerouslySetInnerHTML={{ __html: viewing.content_html || viewing.content_markdown }} />
+            {(viewing.sections || []).map((section, index) => {
+              if (!section.enabled) return null;
+              const Renderer = sectionRenderers[section.type];
+              return Renderer ? <Renderer key={index} data={section.data} /> : (
+                <div key={index} className="muted" style={{ padding: 16, border: '1px dashed var(--border)', borderRadius: 8 }}>
+                  Unknown section type: {section.type}
+                </div>
+              );
+            })}
+            {!viewing.sections?.length && (
+              <div>
+                <h3>{viewing.hero_title}</h3>
+                {viewing.hero_subtitle && <p className="muted">{viewing.hero_subtitle}</p>}
+                <div dangerouslySetInnerHTML={{ __html: viewing.content_html || viewing.content_markdown }} />
+              </div>
+            )}
           </div>
         </ModalShell>
       )}
