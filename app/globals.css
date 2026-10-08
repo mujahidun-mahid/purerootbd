@@ -255,3 +255,10 @@ label{font-size:13px;font-weight:700;color:#344038;display:block;margin-bottom:6
 
 /* ---- live brand settings (controlled from /admin) ---- */
 .logo-img{height:30px;width:auto;display:block;object-fit:contain}
+
+/* ---- product photos (admin managed) ---- */
+.product-img .product-photo,.gallery-main .gallery-photo,.mini-img img,.catalog-art img{width:100%;height:100%;display:block;object-fit:cover}
+.gallery-main .gallery-photo{object-fit:contain;padding:16px;background:#fff}
+.catalog-art img{object-fit:contain;padding:4px;border-radius:10px}
+.mini-img img{border-radius:10px}
+

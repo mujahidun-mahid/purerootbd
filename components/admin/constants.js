@@ -1,11 +1,13 @@
 import {
   Activity,
   LayoutDashboard,
+  LayoutGrid,
   Package,
   Settings,
   ShoppingBag,
   Users
 } from 'lucide-react';
+import { categories } from '@/lib/products';
 
 export const statuses = [
   'Order Placed',
@@ -24,10 +26,14 @@ export const tabs = [
   ['overview', 'Overview', LayoutDashboard],
   ['orders', 'Orders', ShoppingBag],
   ['customers', 'Customers', Users],
-  ['catalog', 'Catalog', Package],
+  ['catalog', 'Catalog', LayoutGrid],
+  ['products', 'Products', Package],
   ['analytics', 'Live Analytics', Activity],
   ['settings', 'Site Controls', Settings]
 ];
+
+export const catIcon = (slug) =>
+  (categories.find((c) => c.slug === slug) || {}).icon || '📦';
 
 export const money = (n) => `৳${Number(n || 0).toLocaleString('en-BD')}`;
 

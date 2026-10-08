@@ -1,6 +1,7 @@
 import Link from "next/link";
 import ProductGrid from "@/components/ProductGrid";
-import { products, categories } from "@/lib/products";
+import { categories } from "@/lib/products";
+import { loadProducts } from "@/lib/products-server";
 import { getSiteSettings } from "@/lib/site-settings";
 import NewsletterForm from "@/components/NewsletterForm";
 
@@ -8,6 +9,7 @@ export const dynamic = 'force-dynamic';
 
 export default async function Home() {
   const settings = await getSiteSettings();
+  const products = await loadProducts();
 
   return (
     <>

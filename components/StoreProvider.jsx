@@ -71,7 +71,8 @@ export function StoreProvider({ children }) {
           size: pkg.size,
           price: pkg.price,
           qty: amount,
-          imageType: product.category || "nuts"
+          imageType: product.category || "nuts",
+          image: product.image || ""
         }
       ];
     });

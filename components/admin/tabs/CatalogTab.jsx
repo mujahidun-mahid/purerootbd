@@ -1,15 +1,45 @@
-import { Database, Package } from 'lucide-react';
-import { money } from '../constants';
-import { products as catalogProducts } from '@/lib/products';
+'use client';
+import { useState } from 'react';
+import { Database, Package, Pencil, Plus, Trash2 } from 'lucide-react';
+import { Alert } from '../ui';
+import { catIcon, money } from '../constants';
+import useAdminProducts from '../useAdminProducts';
+import ProductEditor from '../ProductEditor';
 
-const categoryArt = {
-  nuts: '🥜',
-  seeds: '🌱',
-  spices: '🌿',
-  honey: '🍯'
-};
+export default function CatalogTab({ password }) {
+  const { items, loading, saving, error, setError, save, remove } = useAdminProducts(password);
+  const [editing, setEditing] = useState(null);
+  const [notice, setNotice] = useState('');
 
-export default function CatalogTab() {
+  const categories = [...new Set(items.map((p) => p.category))].length;
+
+  const startAdd = () => {
+    setNotice('');
+    setError('');
+    setEditing({ __new: true });
+  };
+
+  const startEdit = (p) => {
+    setNotice('');
+    setError('');
+    setEditing(p);
+  };
+
+  const onSave = async (payload, isNew) => {
+    const result = await save(payload, isNew);
+    if (result.ok) {
+      setNotice(isNew ? `"${payload.name}" added to the storefront.` : `"${payload.name}" updated.`);
+      setEditing(null);
+    }
+    return result;
+  };
+
+  const onDelete = async (p) => {
+    if (!window.confirm(`Delete "${p.name}"? It will be removed from the storefront.`)) return;
+    const result = await remove(p.id);
+    if (result.ok) setNotice(`"${p.name}" deleted.`);
+  };
+
   return (
     <div className="admin-content">
       <div className="admin-live-banner">
@@ -17,23 +47,54 @@ export default function CatalogTab() {
           <Package size={16} /> Storefront Product Catalog
         </div>
         <span>
-          {catalogProducts.length} Active Nutrition Products across 7 Categories
+          {loading
+            ? 'Loading catalog…'
+            : `${items.length} Products across ${categories} Categories`}
         </span>
+        <button type="button" className="btn btn-primary" onClick={startAdd}>
+          <Plus size={15} /> Add Product
+        </button>
       </div>
 
+      {notice && <Alert type="success" onClose={() => setNotice('')}>{notice}</Alert>}
+      {error && !editing && <Alert type="error" onClose={() => setError('')}>{error}</Alert>}
+
       <div className="catalog-grid">
-        {catalogProducts.map((p) => (
+        {items.map((p) => (
           <div className="catalog-card" key={p.id}>
-            <div className="catalog-art">{categoryArt[p.category] || '✨'}</div>
+            <div className="catalog-art">
+              {p.image ? <img src={p.image} alt="" /> : catIcon(p.category)}
+            </div>
             <div>
               <strong>{p.name}</strong>
               <span>
                 {money(p.price)} • {(p.packages || []).map((x) => x.size).join(', ')}
               </span>
+              <span className={p.active === false ? 'pill pill-off' : 'pill pill-on'}>
+                {p.active === false ? 'Hidden' : 'Active'}
+              </span>
             </div>
-            <b>Active</b>
+            <div className="row-actions">
+              <button type="button" className="btn btn-outline btn-sm" onClick={() => startEdit(p)}>
+                <Pencil size={13} /> Edit
+              </button>
+              <button
+                type="button"
+                className="btn btn-outline btn-sm danger"
+                onClick={() => onDelete(p)}
+              >
+                <Trash2 size={13} />
+              </button>
+            </div>
           </div>
         ))}
+
+        {!items.length && !loading && (
+          <div className="empty">
+            <Package size={20} />
+            <span>No products yet. Use “Add Product” to create the first one.</span>
+          </div>
+        )}
       </div>
 
       <div className="admin-note">
@@ -41,11 +102,21 @@ export default function CatalogTab() {
         <div>
           <strong>Catalog Architecture</strong>
           <p>
-            Products are powered by the Pure Roots product registry. All order purchases, customer
-            data, and status changes are dynamically saved to Supabase in real time.
+            Products are stored in Supabase and served live to the storefront. Image, name,
+            quantities, stock and price can be edited here — changes publish immediately.
           </p>
         </div>
       </div>
+
+      {editing && (
+        <ProductEditor
+          product={editing.__new ? null : editing}
+          saving={saving}
+          error={error}
+          onClose={() => setEditing(null)}
+          onSave={onSave}
+        />
+      )}
     </div>
   );
 }

@@ -74,7 +74,8 @@ export async function POST(request) {
       size: x.size || '500g',
       price: Number(x.price || 0),
       qty: Math.max(1, Number(x.qty || 1)),
-      imageType: x.imageType || x.category || 'nuts'
+      imageType: x.imageType || x.category || 'nuts',
+      image: x.image || ''
     }));
 
     const orderRow = {

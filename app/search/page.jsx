@@ -3,14 +3,15 @@ import { useMemo, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import ProductGrid from "@/components/ProductGrid";
-import { products } from "@/lib/products";
+import { useProducts } from "@/components/useProducts";
 
 function SearchContent() {
   const searchParams = useSearchParams();
   const q = searchParams.get("q") || "";
+  const { products } = useProducts();
   const results = useMemo(
     () => products.filter((p) => (p.name + " " + p.category + " " + (p.short || "")).toLowerCase().includes(q.toLowerCase())),
-    [q]
+    [q, products]
   );
 
   return (
