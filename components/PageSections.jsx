@@ -192,7 +192,7 @@ export function CategoriesSection({ data, categories = [] }) {
           {filteredCategories.map(c => (
             <Link key={c.slug} href={`/category/${c.slug}`} className="cat">
               <div className="cat-art">
-                {c.image ? <Image src={c.image} alt="" fill className="object-cover" /> : <span className="cat-icon">{c.icon || "📦"}</span>}
+                {c.image ? <img src={c.image} alt={c.name} /> : <span className="cat-icon">{c.icon || "📦"}</span>}
               </div>
               <div>
                 <strong>{c.name}</strong>
