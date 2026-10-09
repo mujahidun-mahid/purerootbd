@@ -1,1 +1,55 @@
-export default function About(){return <><div className="page-head"><div className="container"><h1>About Pure Roots</h1><p className="muted">Natural nutrition, thoughtful sourcing and customer trust.</p></div></div><section className="section"><div className="container split"><div><div className="kicker">Our story</div><h2 className="serif">Good food starts with good choices.</h2><p className="muted">Pure Roots is a premium nutrition and natural-food concept built around quality sourcing, freshness, transparency and a clean shopping experience.</p><p className="muted">Our range focuses on nuts, seeds, spices, natural honey and nutritious mixes that fit naturally into everyday routines.</p></div><div className="hero-art"><div className="food a"/><div className="food b"/><div className="food c"/></div></div></section></>}
+import { getPage } from "@/lib/pages";
+import { sectionRenderers } from "@/components/PageSections";
+import { notFound } from "next/navigation";
+
+export const dynamic = "force-dynamic";
+
+export async function generateMetadata() {
+  const page = await getPage("about");
+  if (!page) return {};
+  return {
+    title: page.meta_title || page.title,
+    description: page.meta_description || "",
+    openGraph: {
+      title: page.meta_title || page.title,
+      description: page.meta_description || "",
+      type: "website",
+      ...(page.hero_image && { images: [{ url: page.hero_image }] }),
+    },
+  };
+}
+
+export default async function About() {
+  const page = await getPage("about");
+
+  if (!page) {
+    notFound();
+  }
+
+  return (
+    <>
+      <div className="page-head">
+        <div className="container">
+          <h1>{page.title}</h1>
+          {page.meta_description && <p className="muted">{page.meta_description}</p>}
+        </div>
+      </div>
+      <main style={{ minHeight: "60vh" }}>
+        {(page.sections || []).map((section, index) => {
+          if (!section.enabled) return null;
+          const Renderer = sectionRenderers[section.type];
+          return Renderer ? <Renderer key={index} data={section.data} /> : (
+            <div key={index} className="muted" style={{ padding: 16, border: '1px dashed var(--border)', borderRadius: 8 }}>
+              Unknown section type: {section.type}
+            </div>
+          );
+        })}
+        {!page.sections?.length && (
+          <div className="container section">
+            <div className="prose prose-green max-w-none" dangerouslySetInnerHTML={{ __html: page.content_html || page.content_markdown || "" }} />
+          </div>
+        )}
+      </main>
+    </>
+  );
+}
