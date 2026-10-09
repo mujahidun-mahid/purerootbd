@@ -378,14 +378,6 @@ label{font-size:13px;font-weight:700;color:#344038;display:block;margin-bottom:6
 .acct-switch.on{background:var(--green);border-color:var(--green)}
 .acct-switch-knob{position:absolute;top:2px;left:2px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.25);transition:.2s}
 .acct-switch.on .acct-switch-knob{left:22px}
-.acct-wallet{background:linear-gradient(135deg,var(--dark),var(--green));color:#fff;border-radius:22px;padding:24px;display:flex;justify-content:space-between;align-items:center}
-.acct-wallet small{display:block;font-size:12px;letter-spacing:1px;text-transform:uppercase;opacity:.8}
-.acct-wallet strong{font-size:clamp(28px,5vw,36px)}
-.acct-voucher{display:flex;flex-direction:column;gap:10px}
-.acct-card-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
-.acct-saved-card{display:flex;align-items:center;gap:12px;border:1px solid var(--border);border-radius:16px;padding:14px}
-.acct-saved-card>div{flex:1;min-width:0;display:flex;flex-direction:column}
-.acct-saved-card strong{color:var(--dark);font-size:14px}
 .acct-wish-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .acct-wish{border:1px solid var(--border);border-radius:18px;padding:12px;display:flex;flex-direction:column;gap:6px}
 .acct-wish-img{position:relative;border-radius:14px;overflow:hidden;background:linear-gradient(145deg,#f3f8f3,#faf5eb);aspect-ratio:1}
@@ -413,8 +405,6 @@ label{font-size:13px;font-weight:700;color:#344038;display:block;margin-bottom:6
   .acct-filters{grid-template-columns:2fr 1fr 1fr}
   .acct-form-grid{grid-template-columns:1fr 1fr}
   .acct-addr-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .acct-voucher{flex-direction:row}
-  .acct-voucher .input{flex:1}
   .acct-wish-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
 }
 @media(min-width:981px){

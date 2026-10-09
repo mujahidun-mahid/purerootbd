@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   Package, Truck, RefreshCw, Download, Undo2, MapPin, Plus, Trash2,
-  CreditCard, Wallet, Heart, Bell, ShieldCheck, UserRound, Check, X,
+  Heart, Bell, ShieldCheck, UserRound, Check, X,
   ShoppingBag, ChevronDown
 } from "lucide-react";
 import { useStore } from "@/components/StoreProvider";
@@ -92,7 +92,6 @@ function Modal({ title, onClose, children }) {
 const NAV = [
   { id: "orders", label: "Orders & Tracking", icon: Package },
   { id: "details", label: "Personal Details", icon: UserRound },
-  { id: "payments", label: "Payments & Wallet", icon: Wallet },
   { id: "wishlist", label: "Wishlist & Alerts", icon: Heart },
 ];
 
@@ -231,48 +230,6 @@ export default function Account() {
     }
     setPw({ current: "", next: "", confirm: "" });
     showToast("Password changed successfully");
-  }
-
-  // ---- Module C: cards / wallet ----
-  const [cards, setCards] = useState([]);
-  const [showCardModal, setShowCardModal] = useState(false);
-  const [cardForm, setCardForm] = useState({ brand: "Visa", last4: "", name: "" });
-  const [balance, setBalance] = useState(0);
-  const [voucher, setVoucher] = useState("");
-
-  useEffect(() => {
-    const stored = readJSON("pr-cards", null);
-    setCards(stored === null ? [{ id: "card-seed", brand: "Visa", last4: "4321", name: "Primary", isDefault: true }] : stored);
-    setBalance(Number(readJSON("pr-wallet", 0)) || 0);
-  }, []);
-
-  function persistCards(next) {
-    setCards(next);
-    writeJSON("pr-cards", next);
-  }
-
-  function addCard(e) {
-    e.preventDefault();
-    if (!/^\d{4}$/.test(cardForm.last4)) {
-      showToast("Enter the last 4 digits of the card", "error");
-      return;
-    }
-    persistCards([...cards, { id: `card-${Date.now()}`, ...cardForm, isDefault: cards.length === 0 }]);
-    setCardForm({ brand: "Visa", last4: "", name: "" });
-    setShowCardModal(false);
-    showToast("Card saved");
-  }
-
-  function redeemVoucher(e) {
-    e.preventDefault();
-    const code = voucher.trim().toUpperCase();
-    if (!code) return;
-    const amount = 500;
-    const next = balance + amount;
-    setBalance(next);
-    writeJSON("pr-wallet", next);
-    setVoucher("");
-    showToast(`Voucher redeemed: ৳${amount.toLocaleString()} added`);
   }
 
   // ---- Module D: wishlist / notifications ----
@@ -499,57 +456,10 @@ export default function Account() {
             </section>
 
             {/* MODULE C */}
-            <section id="payments" className="acct-module" aria-labelledby="payments-h">
-              <div className="acct-module-head">
-                <div>
-                  <div className="kicker">Module C</div>
-                  <h2 id="payments-h">Payments & Wallet Balance</h2>
-                </div>
-                <button type="button" className="btn btn-outline btn-sm" onClick={() => setShowCardModal(true)}><Plus size={14} /> Add Card</button>
-              </div>
-
-              <div className="acct-wallet">
-                <div>
-                  <small>Store Credit Balance</small>
-                  <strong>৳{Number(balance).toLocaleString()}</strong>
-                </div>
-                <Wallet size={32} aria-hidden="true" />
-              </div>
-              <form onSubmit={redeemVoucher} className="acct-voucher">
-                <input className="input" value={voucher} onChange={(e) => setVoucher(e.target.value)} placeholder="Enter gift voucher code" aria-label="Gift voucher code" />
-                <button type="submit" className="btn btn-primary">Redeem Gift Voucher</button>
-              </form>
-
-              <div className="acct-card">
-                <h3>Saved Cards</h3>
-                {cards.length ? (
-                  <ul className="acct-card-list">
-                    {cards.map((c) => (
-                      <li key={c.id} className="acct-saved-card">
-                        <CreditCard size={22} aria-hidden="true" />
-                        <div>
-                          <strong>{c.brand} ending in {c.last4}</strong>
-                          <span className="muted">{c.name}</span>
-                        </div>
-                        {c.isDefault && <span className="acct-badge">Default</span>}
-                        {!c.isDefault && (
-                          <button type="button" className="acct-link" onClick={() => persistCards(cards.map((x) => ({ ...x, isDefault: x.id === c.id })))}>Set default</button>
-                        )}
-                        <button type="button" className="iconbtn danger" onClick={() => { if (window.confirm("Delete this card?")) persistCards(cards.filter((x) => x.id !== c.id)); }} aria-label={`Delete ${c.brand} ending in ${c.last4}`}><Trash2 size={16} /></button>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="muted">No saved cards.</p>
-                )}
-              </div>
-            </section>
-
-            {/* MODULE D */}
             <section id="wishlist" className="acct-module" aria-labelledby="wishlist-h">
               <div className="acct-module-head">
                 <div>
-                  <div className="kicker">Module D</div>
+                  <div className="kicker">Module C</div>
                   <h2 id="wishlist-h">Wishlist & Communication</h2>
                 </div>
                 <Link className="btn btn-outline btn-sm" href="/wishlist">Open Wishlist</Link>
@@ -628,23 +538,6 @@ export default function Account() {
         </Modal>
       )}
 
-      {showCardModal && (
-        <Modal title="Add Card" onClose={() => setShowCardModal(false)}>
-          <form onSubmit={addCard} className="acct-modal-form">
-            <div><label htmlFor="card-brand">Brand</label>
-              <select id="card-brand" className="input" value={cardForm.brand} onChange={(e) => setCardForm({ ...cardForm, brand: e.target.value })}>
-                <option>Visa</option><option>Mastercard</option><option>Amex</option><option>Nagad</option><option>bKash</option>
-              </select>
-            </div>
-            <div><label htmlFor="card-last4">Last 4 Digits</label><input id="card-last4" className="input" inputMode="numeric" maxLength={4} value={cardForm.last4} onChange={(e) => setCardForm({ ...cardForm, last4: e.target.value.replace(/\D/g, "") })} placeholder="4321" /></div>
-            <div><label htmlFor="card-name">Card Label</label><input id="card-name" className="input" value={cardForm.name} onChange={(e) => setCardForm({ ...cardForm, name: e.target.value })} placeholder="Primary" /></div>
-            <div className="acct-modal-actions">
-              <button type="button" className="btn" onClick={() => setShowCardModal(false)}>Cancel</button>
-              <button type="submit" className="btn btn-primary">Save Card</button>
-            </div>
-          </form>
-        </Modal>
-      )}
     </>
   );
 }
