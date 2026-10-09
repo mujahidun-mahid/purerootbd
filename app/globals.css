@@ -31,6 +31,11 @@ img,svg{max-width:100%}
 .actions{display:flex;align-items:center;gap:2px;margin-left:auto;flex:0 0 auto}
 .iconbtn{border:0;background:transparent;width:36px;height:36px;border-radius:50%;display:grid;place-items:center;position:relative;color:#344038;flex:0 0 auto}
 .iconbtn:hover{background:var(--bg)}
+/* Hide duplicative utility icons on mobile (covered by bottom nav); keep hamburger + logo + cart */
+.action-hide-mobile{display:none}
+@media(min-width:981px){
+  .action-hide-mobile{display:grid}
+}
 .badge{position:absolute;right:0;top:0;background:var(--green);color:#fff;font-size:9px;min-width:16px;height:16px;border-radius:10px;display:grid;place-items:center}
 .mobileMenu{display:grid}
 .mobile-nav{display:grid;background:#fff;border-top:1px solid var(--border);padding:4px 0 14px;box-shadow:0 16px 30px rgba(22,77,42,.10)}

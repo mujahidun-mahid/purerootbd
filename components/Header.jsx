@@ -63,13 +63,13 @@ export default function Header() {
             ))}
           </nav>
           <div className="actions">
-            <Link className="iconbtn" href="/search" aria-label="Search">
+            <Link className="iconbtn action-hide-mobile" href="/search" aria-label="Search">
               <Search size={19} />
             </Link>
-            <Link className="iconbtn" href="/account" aria-label="Account">
+            <Link className="iconbtn action-hide-mobile" href="/account" aria-label="Account">
               <UserRound size={19} />
             </Link>
-            <Link className="iconbtn" href="/wishlist" aria-label="Wishlist">
+            <Link className="iconbtn action-hide-mobile" href="/wishlist" aria-label="Wishlist">
               <Heart size={19} />
             </Link>
             <Link className="iconbtn" href="/cart" aria-label="Cart">
