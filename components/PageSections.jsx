@@ -116,27 +116,11 @@ export function ImageTextSection({ data }) {
   );
 }
 
-// ProductsSection - accepts products as prop, filters based on config
+// ProductsSection - accepts products as prop, no data fetching
 export function ProductsSection({ data, products = [] }) {
   const { source = "featured", category, product_ids = [], limit = 8, title, show_view_all = true, view_all_link = "/shop" } = data;
 
-  let filteredProducts = [...products];
-
-  if (source === "category" && category) {
-    filteredProducts = filteredProducts.filter(p => p.category === category);
-  } else if (source === "manual" && Array.isArray(product_ids) && product_ids.length > 0) {
-    const ids = product_ids.map(id => id.trim()).filter(Boolean);
-    filteredProducts = filteredProducts.filter(p => ids.includes(p.id));
-  } else if (source === "featured") {
-    // Featured products are typically the first N products or those with high ratings
-    filteredProducts = filteredProducts.filter(p => p.rating >= 4).slice(0, limit || 8);
-  }
-
-  if (limit && limit > 0) {
-    filteredProducts = filteredProducts.slice(0, limit);
-  }
-
-  if (!filteredProducts.length && !title) return null;
+  if (!products.length && !title) return null;
 
   return (
     <section className="section">
@@ -151,8 +135,8 @@ export function ProductsSection({ data, products = [] }) {
             )}
           </div>
         )}
-        <ProductGrid products={filteredProducts} />
-        {!filteredProducts.length && (
+        <ProductGrid products={products} />
+        {!products.length && (
           <div className="empty">
             <p className="muted">No products found for this section.</p>
           </div>
@@ -162,18 +146,11 @@ export function ProductsSection({ data, products = [] }) {
   );
 }
 
-// CategoriesSection - accepts categories as prop, filters based on config
+// CategoriesSection - accepts categories as prop, no data fetching
 export function CategoriesSection({ data, categories = [] }) {
   const { category_ids = [], title, show_all_link = true, all_link = "/shop" } = data;
 
-  let filteredCategories = [...categories];
-
-  if (Array.isArray(category_ids) && category_ids.length > 0) {
-    const ids = category_ids.map(id => id.trim()).filter(Boolean);
-    filteredCategories = filteredCategories.filter(c => ids.includes(c.slug));
-  }
-
-  if (!filteredCategories.length && !title) return null;
+  if (!categories.length && !title) return null;
 
   return (
     <section className="section">
@@ -189,10 +166,10 @@ export function CategoriesSection({ data, categories = [] }) {
           </div>
         )}
         <div className="cat-grid">
-          {filteredCategories.map(c => (
+          {categories.map(c => (
             <Link key={c.slug} href={`/category/${c.slug}`} className="cat">
               <div className="cat-art">
-                {c.image ? <img src={c.image} alt={c.name} /> : <span className="cat-icon">{c.icon || "📦"}</span>}
+                {c.image ? <Image src={c.image} alt="" fill className="object-cover" /> : <span className="cat-icon">{c.icon || "📦"}</span>}
               </div>
               <div>
                 <strong>{c.name}</strong>
@@ -201,7 +178,7 @@ export function CategoriesSection({ data, categories = [] }) {
             </Link>
           ))}
         </div>
-        {!filteredCategories.length && <div className="empty"><p className="muted">No categories to display.</p></div>}
+        {!categories.length && <div className="empty"><p className="muted">No categories to display.</p></div>}
         {show_all_link && all_link && (
           <div style={{ textAlign: "center", marginTop: 20 }}>
             <Link href={all_link} className="btn btn-outline">View All Categories</Link>
