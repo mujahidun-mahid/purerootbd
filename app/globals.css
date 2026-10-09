@@ -328,8 +328,8 @@ label{font-size:13px;font-weight:700;color:#344038;display:block;margin-bottom:6
 .fp-wish{border:0;background:transparent;padding:4px;color:#9ca3af;display:grid;place-items:center;transition:.2s}
 .fp-wish:hover{color:var(--green)}
 .fp-wish.active{color:#dc2626}
-.fp-img{display:grid;place-items:center;background:linear-gradient(145deg,#f3f8f3,#faf5eb);border-radius:12px;min-height:150px;padding:16px;overflow:hidden}
-.fp-img img{width:100%;height:150px;object-fit:contain;display:block}
+.fp-img{display:grid;place-items:center;background:linear-gradient(145deg,#f3f8f3,#faf5eb);border-radius:12px;width:100%;aspect-ratio:1/1;overflow:hidden;position:relative}
+.fp-img img{width:100%;height:100%;object-fit:cover;display:block}
 .fp-img .orb{width:104px;height:104px;border-radius:50%;box-shadow:inset -12px -16px 30px rgba(0,0,0,.15),0 12px 25px rgba(0,0,0,.08)}
 .fp-variants{display:flex;gap:6px;flex-wrap:wrap}
 .fp-variant{border:1px solid #e5e7eb;background:#f9fafb;border-radius:6px;font-size:12px;padding:4px 8px;color:#374151;transition:.15s}

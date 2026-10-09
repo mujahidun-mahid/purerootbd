@@ -95,7 +95,7 @@ export default function ProductCard({ product }) {
       </div>
 
       <button type="button" className="fp-cta" onClick={() => add(product, selected.size)}>
-        <ShoppingBasket size={16} /> Select Options
+        <ShoppingBasket size={16} /> Add to cart
       </button>
     </article>
   );
