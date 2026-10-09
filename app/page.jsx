@@ -1,5 +1,5 @@
 import Link from "next/link";
-import ProductGrid from "@/components/ProductGrid";
+import FeaturedProducts from "@/components/FeaturedProducts";
 import { loadProducts, loadCategories } from "@/lib/products-server";
 import { getSiteSettings } from "@/lib/site-settings";
 import NewsletterForm from "@/components/NewsletterForm";
@@ -83,20 +83,7 @@ export default async function Home() {
         </div>
       </section>
 
-      <section className="section soft">
-        <div className="container">
-          <div className="section-head">
-            <div>
-              <div className="kicker">Popular</div>
-              <h2>Best Sellers</h2>
-            </div>
-            <Link className="btn btn-outline" href="/shop">
-              Shop all
-            </Link>
-          </div>
-          <ProductGrid products={products.slice(0, 8)} />
-        </div>
-      </section>
+      <FeaturedProducts products={products} limit={10} />
 
       <section className="section">
         <div className="container">
