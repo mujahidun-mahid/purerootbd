@@ -1,6 +1,6 @@
+import { notFound } from "next/navigation";
 import { getPage } from "@/lib/pages";
 import { sectionRenderers } from "@/components/PageSections";
-import { notFound } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
@@ -38,8 +38,8 @@ export default async function Reviews() {
         {(page.sections || []).map((section, index) => {
           if (!section.enabled) return null;
           const Renderer = sectionRenderers[section.type];
-          return Renderer ? <Renderer key={index} data={section.data} /> : (
-            <div key={index} className="muted" style={{ padding: 16, border: '1px dashed var(--border)', borderRadius: 8 }}>
+          return Renderer ? <Renderer key={`${section.id}-${index}`} data={section.data} /> : (
+            <div key={`${section.id}-${index}`} className="muted" style={{ padding: 16, border: "1px dashed var(--border)", borderRadius: 8 }}>
               Unknown section type: {section.type}
             </div>
           );

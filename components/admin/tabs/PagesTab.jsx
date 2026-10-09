@@ -1,11 +1,12 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Plus, Eye, Edit3, Trash2, FileText, GripVertical, X, ChevronDown, ChevronUp, Copy } from 'lucide-react';
-import { Alert, Field, ModalShell, Toggle, StatCard, Panel } from '../ui';
+import { Plus, Eye, Edit3, Trash2, FileText, GripVertical, X, ChevronDown, ChevronUp, Copy, Shield, Lock, Unlock, Globe, LayoutDashboard } from 'lucide-react';
+import { Alert, Field, ModalShell, Toggle, StatCard, Panel, Textarea } from '../ui';
 import DataTable from '../DataTable';
 import { formatDateTime } from '../constants';
 import { SECTION_TYPES, getDefaultSectionData, sectionRenderers } from '../../PageSections';
 
 const PAGE_TEMPLATES = [
+  { slug: 'custom', label: 'Custom Page', description: 'Blank page with full section builder' },
   { slug: 'home', label: 'Home Page', description: 'Main landing page with hero, featured categories, best sellers' },
   { slug: 'about', label: 'About Us', description: 'Company story, mission, values' },
   { slug: 'contact', label: 'Contact', description: 'Contact form, address, phone, email, map' },
@@ -17,6 +18,7 @@ const PAGE_TEMPLATES = [
   { slug: 'shop', label: 'Shop Page', description: 'Product listing page, filters, sorting' },
   { slug: 'category', label: 'Category Template', description: 'Dynamic category pages (slug-based)' },
   { slug: 'product', label: 'Product Template', description: 'Dynamic product detail pages (slug-based)' },
+  { slug: 'landing', label: 'Landing Page', description: 'Marketing landing page with hero, features, CTA' },
 ];
 
 const DEFAULT_PAGE_DATA = {
@@ -34,6 +36,7 @@ const DEFAULT_PAGE_DATA = {
   is_active: true,
   show_in_nav: false,
   nav_order: 0,
+  template: 'custom',
 };
 
 export default function PagesTab({ password }) {
@@ -45,12 +48,13 @@ export default function PagesTab({ password }) {
   const [viewing, setViewing] = useState(null);
   const [form, setForm] = useState({ ...DEFAULT_PAGE_DATA, slug: '' });
   const [showCreate, setShowCreate] = useState(false);
+  const [activeTab, setActiveTab] = useState('system');
 
   // Section management state
   const [sections, setSections] = useState([]);
   const [editingSection, setEditingSection] = useState(null);
   const [sectionForm, setSectionForm] = useState({ type: '', data: {} });
-  const [dragSectionId, setDragSectionId] = useState(null);
+  const dragSectionId = useRef(null);
 
   const authHeaders = () => ({ 'x-admin-password': password, 'content-type': 'application/json' });
 
@@ -96,6 +100,10 @@ export default function PagesTab({ password }) {
   };
 
   const deletePage = async (slug) => {
+    const page = pages.find(p => p.slug === slug);
+    if (page?.page_type === 'system') {
+      return setNotice({ type: 'error', text: 'System pages cannot be deleted. Deactivate instead.' });
+    }
     if (!window.confirm(`Delete page "${slug}"? This cannot be undone.`)) return;
     try {
       const res = await fetch(`/api/admin/pages/${slug}`, { method: 'DELETE', headers: authHeaders() });
@@ -107,9 +115,32 @@ export default function PagesTab({ password }) {
     }
   };
 
+  const duplicatePage = async (page) => {
+    const newSlug = `${page.slug}-copy-${Date.now()}`;
+    try {
+      const res = await fetch('/api/admin/pages', {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify({
+          ...page,
+          slug: newSlug,
+          title: `${page.title} (Copy)`,
+          is_active: false,
+          show_in_nav: false,
+          nav_order: 0,
+        }),
+      });
+      if (!res.ok) throw new Error('Failed to duplicate');
+      setNotice({ type: 'success', text: 'Page duplicated' });
+      load();
+    } catch (e) {
+      setNotice({ type: 'error', text: e.message });
+    }
+  };
+
   const openEdit = (page) => {
     setEditing(page.slug);
-    setForm({ ...DEFAULT_PAGE_DATA, ...page });
+    setForm({ ...DEFAULT_PAGE_DATA, ...page, slug: page.slug });
     setSections(page.sections || []);
   };
 
@@ -189,10 +220,11 @@ export default function PagesTab({ password }) {
   };
 
   const templateFields = [
-    { key: 'slug', label: 'Slug (URL path)', type: 'text', placeholder: 'e.g. about-us' },
+    { key: 'slug', label: 'Slug (URL path)', type: 'text', placeholder: 'e.g. about-us', help: 'Unique URL identifier. Lowercase, hyphens only.' },
     { key: 'title', label: 'Page Title', type: 'text', placeholder: 'Page title shown on site' },
+    { key: 'template', label: 'Template', type: 'select', options: PAGE_TEMPLATES.map(t => t.slug), help: 'Page template determines layout and available features' },
     { key: 'meta_title', label: 'Meta Title (SEO)', type: 'text', placeholder: 'Browser tab title' },
-    { key: 'meta_description', label: 'Meta Description (SEO)', type: 'textarea', placeholder: 'Search result snippet' },
+    { key: 'meta_description', label: 'Meta Description (SEO)', type: 'textarea', placeholder: 'Search result snippet (150-160 chars)', full: true },
     { key: 'hero_title', label: 'Hero Title', type: 'text', placeholder: 'Large heading on page' },
     { key: 'hero_subtitle', label: 'Hero Subtitle', type: 'textarea', placeholder: 'Supporting text under hero title' },
     { key: 'hero_image', label: 'Hero Image URL', type: 'text', placeholder: 'https://...' },
@@ -200,7 +232,7 @@ export default function PagesTab({ password }) {
     { key: 'hero_cta_link', label: 'CTA Button Link', type: 'text', placeholder: '/shop' },
     { key: 'content_markdown', label: 'Content (Markdown)', type: 'textarea', placeholder: 'Page body content in Markdown', full: true },
     { key: 'content_html', label: 'Content (HTML)', type: 'textarea', placeholder: 'Page body content in HTML', full: true },
-];
+  ];
 
   const renderSectionFormFields = (type, data) => {
     if (!type) return null;
@@ -233,7 +265,7 @@ export default function PagesTab({ password }) {
         break;
       case 'products':
         fields.push(
-          { key: 'source', label: 'Source', type: 'select', options: ['featured', 'category', 'manual'] },
+          { key: 'source', label: 'Source', type: 'select', options: ['featured', 'category', 'manual'], help: 'featured = high-rated, category = filter by category, manual = specific product IDs' },
           { key: 'category', label: 'Category (if source=category)', type: 'text', placeholder: 'e.g. nuts' },
           { key: 'product_ids', label: 'Product IDs (comma-separated, if source=manual)', type: 'text', placeholder: 'PR-NUT-001, PR-NUT-002' },
           { key: 'limit', label: 'Limit', type: 'number', placeholder: '8' },
@@ -244,7 +276,7 @@ export default function PagesTab({ password }) {
         break;
       case 'categories':
         fields.push(
-          { key: 'category_ids', label: 'Category Slugs (comma-separated)', type: 'text', placeholder: 'nuts, seeds, spices' },
+          { key: 'category_ids', label: 'Category Slugs (comma-separated)', type: 'text', placeholder: 'nuts, seeds, spices', help: 'Leave empty to show all categories' },
           { key: 'title', label: 'Section Title', type: 'text', placeholder: 'Shop by Category' },
           { key: 'show_all_link', label: 'Show View All Link', type: 'checkbox' },
           { key: 'all_link', label: 'View All Link', type: 'text', placeholder: '/shop' },
@@ -253,7 +285,7 @@ export default function PagesTab({ password }) {
       case 'faq':
         fields.push(
           { key: 'title', label: 'Section Title', type: 'text', placeholder: 'Frequently Asked Questions' },
-          { key: 'items', label: 'FAQ Items (JSON)', type: 'textarea', placeholder: '[{"question": "Q1", "answer": "A1"}]', full: true },
+          { key: 'items', label: 'FAQ Items (JSON)', type: 'textarea', placeholder: '[{"question": "Q1", "answer": "A1"}]', full: true, help: 'Array of objects with question and answer' },
         );
         break;
       case 'reviews':
@@ -330,8 +362,12 @@ export default function PagesTab({ password }) {
       );
     };
 
-    return fields.map(f => <Field key={f.key} label={f.label} hint={f.full ? 'full' : undefined}>{renderField(f)}</Field>);
-    };
+    return fields.map(f => <Field key={f.key} label={f.label} hint={f.full ? 'full' : f.help}>{renderField(f)}</Field>);
+  };
+
+  const systemPages = pages.filter(p => p.page_type === 'system');
+  const customPages = pages.filter(p => p.page_type === 'custom');
+  const displayPages = activeTab === 'system' ? systemPages : customPages;
 
   return (
     <div className="admin-content">
@@ -351,9 +387,19 @@ export default function PagesTab({ password }) {
 
       <div className="kpi-row">
         <StatCard label="Total Pages" value={pages.length} icon={FileText} />
+        <StatCard label="System Pages" value={systemPages.length} icon={Shield} tone="blue" />
+        <StatCard label="Custom Pages" value={customPages.length} icon={LayoutDashboard} tone="purple" />
         <StatCard label="Active" value={pages.filter(p => p.is_active).length} tone="green" />
         <StatCard label="In Navigation" value={pages.filter(p => p.show_in_nav).length} />
-        <StatCard label="Templates Available" value={PAGE_TEMPLATES.length} tone="gold" />
+      </div>
+
+      <div className="tab-switcher" style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+        <button className={`btn ${activeTab === 'system' ? 'btn-primary' : 'btn-outline'}`} onClick={() => setActiveTab('system')}>
+          <Shield size={16} /> System Pages ({systemPages.length})
+        </button>
+        <button className={`btn ${activeTab === 'custom' ? 'btn-primary' : 'btn-outline'}`} onClick={() => setActiveTab('custom')}>
+          <LayoutDashboard size={16} /> Custom Pages ({customPages.length})
+        </button>
       </div>
 
       <DataTable
@@ -361,7 +407,7 @@ export default function PagesTab({ password }) {
           { key: 'slug', header: 'Slug', render: (p) => <strong>{p.slug}</strong> },
           { key: 'title', header: 'Title', render: (p) => <span>{p.title || '—'}</span> },
           { key: 'template', header: 'Template', render: (p) => <span className="pill">{p.template || 'Custom'}</span> },
-          { key: 'status', header: 'Status', render: (p) => <span className={`pill ${p.is_active ? 'pill-on' : 'pill-off'}`}>{p.is_active ? 'Active' : 'Draft'}</span> },
+          { key: 'status', header: 'Status', render: (p) => <span className={`pill ${p.is_active ? 'pill-on' : 'pill-off'}`}>{p.is_active ? 'Published' : 'Draft'}</span> },
           { key: 'nav', header: 'In Nav', render: (p) => <span className={`pill ${p.show_in_nav ? 'pill-on' : 'pill-off'}`}>{p.show_in_nav ? 'Yes' : 'No'}</span> },
           { key: 'updated', header: 'Updated', render: (p) => p.updated_at ? formatDateTime(p.updated_at) : '—' },
           {
@@ -372,14 +418,22 @@ export default function PagesTab({ password }) {
               <span className="row-actions">
                 <button type="button" className="icon-action" onClick={() => openView(p)} title="Preview"><Eye size={16} /></button>
                 <button type="button" className="icon-action" onClick={() => openEdit(p)} title="Edit"><Edit3 size={16} /></button>
-                <button type="button" className="icon-action danger" onClick={() => deletePage(p.slug)} title="Delete"><Trash2 size={16} /></button>
+                {p.page_type === 'custom' && (
+                  <>
+                    <button type="button" className="icon-action" onClick={() => duplicatePage(p)} title="Duplicate"><Copy size={16} /></button>
+                    <button type="button" className="icon-action danger" onClick={() => deletePage(p.slug)} title="Delete"><Trash2 size={16} /></button>
+                  </>
+                )}
+                {p.page_type === 'system' && (
+                  <button type="button" className="icon-action" disabled title="System pages cannot be deleted"><Lock size={16} /></button>
+                )}
               </span>
             )
           }
         ]}
-        rows={pages}
+        rows={displayPages}
         rowKey={(p) => p.slug}
-        emptyText="No pages yet. Create your first page."
+        emptyText={activeTab === 'system' ? 'No system pages found.' : 'No custom pages yet. Create your first page.'}
         loading={loading}
         pageSize={20}
       />
@@ -402,33 +456,88 @@ export default function PagesTab({ password }) {
         >
           {notice && <Alert type={notice.type} onClose={() => setNotice(null)}>{notice.text}</Alert>}
           <div className="editor-grid" style={{ maxHeight: '70vh', overflow: 'auto' }}>
-            {templateFields.map((f) => (
-              <Field key={f.key} label={f.label} hint={f.full ? 'full' : undefined}>
-                {f.type === 'textarea' ? (
-                  <textarea className="input" rows={f.full ? 12 : 4} value={form[f.key] || ''}
-                    onChange={(e) => setForm({ ...form, [f.key]: e.target.value })} placeholder={f.placeholder} />
-                ) : (
-                  <input className="input" type="text" value={form[f.key] || ''}
-                    onChange={(e) => setForm({ ...form, [f.key]: e.target.value })} placeholder={f.placeholder} />
-                )}
+            <Panel title="Page Settings" icon={FileText}>
+              {templateFields.map((f) => (
+                <Field key={f.key} label={f.label} hint={f.full ? 'full' : f.help}>
+                  {f.type === 'textarea' ? (
+                    <textarea className="input" rows={f.full ? 12 : 4} value={form[f.key] || ''}
+                      onChange={(e) => setForm({ ...form, [f.key]: e.target.value })} placeholder={f.placeholder} />
+                  ) : f.type === 'select' ? (
+                    <select className="input" value={form[f.key] || ''} onChange={(e) => setForm({ ...form, [f.key]: e.target.value })}>
+                      {f.options?.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                    </select>
+                  ) : (
+                    <input className="input" type="text" value={form[f.key] || ''}
+                      onChange={(e) => setForm({ ...form, [f.key]: e.target.value })} placeholder={f.placeholder} />
+                  )}
+                </Field>
+              ))}
+              <Field label="Active" hint="Page is published and accessible">
+                <label className="editor-toggle">
+                  <Toggle checked={form.is_active} onChange={(v) => setForm({ ...form, is_active: v })} />
+                  Published
+                </label>
               </Field>
-            ))}
-            <Field label="Active" hint="full">
-              <label className="editor-toggle">
-                <Toggle checked={form.is_active} onChange={(v) => setForm({ ...form, is_active: v })} />
-                Page is published and accessible
-              </label>
-            </Field>
-            <Field label="Show in Navigation" hint="full">
-              <label className="editor-toggle">
-                <Toggle checked={form.show_in_nav} onChange={(v) => setForm({ ...form, show_in_nav: v })} />
-                Display in site header/footer navigation
-              </label>
-            </Field>
-            <Field label="Navigation Order" hint="full">
-              <input className="input" type="number" min="0" value={form.nav_order || 0}
-                onChange={(e) => setForm({ ...form, nav_order: Number(e.target.value) })} />
-            </Field>
+              <Field label="Show in Navigation" hint="Display in site header/footer navigation">
+                <label className="editor-toggle">
+                  <Toggle checked={form.show_in_nav} onChange={(v) => setForm({ ...form, show_in_nav: v })} />
+                  In Navigation
+                </label>
+              </Field>
+              <Field label="Navigation Order" hint="Lower numbers appear first">
+                <input className="input" type="number" min="0" value={form.nav_order || 0}
+                  onChange={(e) => setForm({ ...form, nav_order: Number(e.target.value) })} />
+              </Field>
+            </Panel>
+            <Panel title="Content Sections" icon={LayoutDashboard} style={{ marginTop: 20 }}>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
+                {SECTION_TYPES.map(t => (
+                  <button key={t.type} type="button" className="btn btn-outline" onClick={() => addSection(t.type)} title={t.description}>
+                    <span style={{ fontSize: 18 }}>{t.icon}</span> {t.label}
+                  </button>
+                ))}
+              </div>
+              {sections.length === 0 ? (
+                <div className="empty" style={{ textAlign: 'center', padding: 40 }}>
+                  <p className="muted">No sections yet. Add sections above to build your page content.</p>
+                </div>
+              ) : (
+                <div className="sections-list">
+                  {sections.map((section, index) => {
+                    const typeInfo = SECTION_TYPES.find(t => t.type === section.type);
+                    const isEditing = editingSection === section.id;
+                    return (
+                      <div key={section.id} className="section-item" style={{ border: '1px solid var(--border)', borderRadius: 8, marginBottom: 12, background: 'var(--card)' }}>
+                        <div className="section-header" style={{ display: 'flex', alignItems: 'center', padding: 12, gap: 12, cursor: 'grab' }}>
+                          <button type="button" className="drag-handle" onDragStart={startDrag(section.id)} onDragOver={allowDrop} onDrop={onDrop(section.id)} draggable title="Drag to reorder"><GripVertical size={20} className="muted" /></button>
+                          <span style={{ fontSize: 20 }}>{typeInfo?.icon || '📦'}</span>
+                          <strong>{typeInfo?.label || section.type}</strong>
+                          <span className={`pill ${section.enabled ? 'pill-on' : 'pill-off'}`} style={{ fontSize: 12 }}>{section.enabled ? 'Visible' : 'Hidden'}</span>
+                          <div style={{ flex: 1 }} />
+                          {!isEditing ? (
+                            <>
+                              <button type="button" className="icon-action" onClick={() => editSection(section)} title="Edit"><Edit3 size={16} /></button>
+                              <button type="button" className="icon-action" onClick={() => duplicateSection(section)} title="Duplicate"><Copy size={16} /></button>
+                              <button type="button" className="icon-action" onClick={() => toggleSection(section.id)} title={section.enabled ? 'Hide' : 'Show'}><Eye size={16} /></button>
+                              <button type="button" className="icon-action danger" onClick={() => removeSection(section.id)} title="Remove"><Trash2 size={16} /></button>
+                            </>
+                          ) : (
+                            <button type="button" className="btn btn-primary btn-sm" onClick={saveSection}>Save</button>
+                          )}
+                        </div>
+                        {isEditing && (
+                          <div className="section-editor" style={{ padding: 16, borderTop: '1px solid var(--border)', background: 'var(--bg)' }}>
+                            <div className="editor-grid">
+                              {renderSectionFormFields(section.type, sectionForm.data)}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </Panel>
           </div>
         </ModalShell>
       )}
@@ -440,7 +549,7 @@ export default function PagesTab({ password }) {
           onClose={() => setViewing(null)}
           actions={<button type="button" className="btn" onClick={() => setViewing(null)}>Close</button>}
         >
-          <div style={{ padding: 16 }}>
+          <div style={{ padding: 16, maxHeight: '70vh', overflow: 'auto' }}>
             {(viewing.sections || []).map((section, index) => {
               if (!section.enabled) return null;
               const Renderer = sectionRenderers[section.type];
