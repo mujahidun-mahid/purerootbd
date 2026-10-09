@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Plus, Eye, Edit3, Trash2, FileText, GripVertical, X, ChevronDown, ChevronUp, Copy, Shield, Lock, Unlock, Globe, LayoutDashboard } from 'lucide-react';
+import { Plus, Eye, Edit3, Trash2, FileText, GripVertical, X, ChevronDown, ChevronUp, Copy, Shield, Lock, Unlock, Globe, LayoutDashboard, Grid, Clock } from 'lucide-react';
 import { Alert, Field, ModalShell, Toggle, StatCard, Panel, Textarea } from '../ui';
 import DataTable from '../DataTable';
 import { formatDateTime } from '../constants';
@@ -49,12 +49,51 @@ export default function PagesTab({ password }) {
   const [form, setForm] = useState({ ...DEFAULT_PAGE_DATA, slug: '' });
   const [showCreate, setShowCreate] = useState(false);
   const [activeTab, setActiveTab] = useState('system');
+  const [activeSettingsTab, setActiveSettingsTab] = useState('general');
+  const [showSectionToolbar, setShowSectionToolbar] = useState(false);
 
   // Section management state
   const [sections, setSections] = useState([]);
   const [editingSection, setEditingSection] = useState(null);
   const [sectionForm, setSectionForm] = useState({ type: '', data: {} });
   const dragSectionId = useRef(null);
+  const searchInputRef = useRef(null);
+  const firstSectionRef = useRef(null);
+  const editorModalRef = useRef(null);
+
+  // Phase 5: CSS Animations & Focus Management
+  useEffect(() => {
+    const styleId = 'pages-tab-animations';
+    if (document.getElementById(styleId)) return;
+    const style = document.createElement('style');
+    style.id = styleId;
+    style.textContent = `
+      @keyframes slideIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+      @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+      @keyframes pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(var(--primary-rgb), 0.4); } 50% { box-shadow: 0 0 0 8px rgba(var(--primary-rgb), 0); } }
+      @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+      .section-item { animation: slideIn 0.25s ease-out; }
+      .section-item.removing { animation: slideIn 0.2s ease-in reverse; }
+      .section-editor { animation: fadeIn 0.2s ease-out; }
+      .section-toolbar-btn { animation: fadeIn 0.15s ease-out; }
+      .drag-over { animation: pulse 1s infinite; }
+      .invalid-field { animation: shake 0.4s ease-in-out; }
+      @media (prefers-reduced-motion: reduce) { .section-item, .section-editor, .section-toolbar-btn { animation: none !important; } .drag-over { animation: none !important; } .invalid-field { animation: none !important; } }
+    `;
+    document.head.appendChild(style);
+    return () => { const el = document.getElementById(styleId); if (el) el.remove(); };
+  }, []);
+
+  // Focus management for editor modal
+  useEffect(() => {
+    if (editing || showCreate) {
+      const modal = editorModalRef.current;
+      if (modal) {
+        const focusable = modal.querySelector('input, select, textarea, button');
+        focusable?.focus();
+      }
+    }
+  }, [editing, showCreate]);
 
   const authHeaders = () => ({ 'x-admin-password': password, 'content-type': 'application/json' });
 
@@ -365,6 +404,457 @@ export default function PagesTab({ password }) {
     return fields.map(f => <Field key={f.key} label={f.label} hint={f.full ? 'full' : f.help}>{renderField(f)}</Field>);
   };
 
+  // Settings tab renderer
+  const renderSettingsTab = (tab) => {
+    const generalFields = templateFields.filter(f => ['slug', 'title', 'template'].includes(f.key));
+    const seoFields = templateFields.filter(f => ['meta_title', 'meta_description'].includes(f.key));
+    const heroFields = templateFields.filter(f => ['hero_title', 'hero_subtitle', 'hero_image', 'hero_cta_text', 'hero_cta_link'].includes(f.key));
+    const contentFields = templateFields.filter(f => ['content_markdown', 'content_html'].includes(f.key));
+
+    const fieldGroups = {
+      general: [
+        ...generalFields,
+        { key: 'is_active', label: 'Published', type: 'checkbox', hint: 'Page is published and accessible' },
+      ],
+      seo: seoFields,
+      hero: heroFields,
+      content: contentFields,
+      navigation: [
+        { key: 'show_in_nav', label: 'Show in Navigation', type: 'checkbox', hint: 'Display in site header/footer navigation' },
+        { key: 'nav_order', label: 'Navigation Order', type: 'number', placeholder: '0', hint: 'Lower numbers appear first' },
+      ],
+    };
+
+    const fields = fieldGroups[tab] || [];
+    const requiredFields = ['slug', 'title'];
+    const hasValue = (key) => form[key] && String(form[key]).trim().length > 0;
+
+    return fields.map((f) => {
+      const isRequired = requiredFields.includes(f.key);
+      const isValid = !isRequired || hasValue(f.key);
+      return (
+        <Field key={f.key} label={f.label} hint={f.full ? 'full' : f.hint}>
+          <div style={{ position: 'relative' }}>
+            {f.type === 'textarea' ? (
+              <textarea className="input" rows={f.full ? 12 : 4} value={form[f.key] || ''}
+                onChange={(e) => setForm({ ...form, [f.key]: e.target.value })} placeholder={f.placeholder} />
+            ) : f.type === 'select' ? (
+              <select className="input" value={form[f.key] || ''} onChange={(e) => setForm({ ...form, [f.key]: e.target.value })}>
+                {f.options?.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+              </select>
+            ) : f.type === 'checkbox' ? (
+              <label className="editor-toggle">
+                <Toggle checked={form[f.key] === true} onChange={(v) => setForm({ ...form, [f.key]: v })} />
+                {f.label}
+              </label>
+            ) : f.type === 'number' ? (
+              <input className="input" type="number" min="0" value={form[f.key] || 0}
+                onChange={(e) => setForm({ ...form, [f.key]: Number(e.target.value) })} placeholder={f.placeholder} />
+            ) : (
+              <input className="input" type="text" value={form[f.key] || ''}
+                onChange={(e) => setForm({ ...form, [f.key]: e.target.value })} placeholder={f.placeholder} />
+            )}
+            {isRequired && !isValid && (
+              <span style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--danger)', fontSize: 12 }}>
+                Required
+              </span>
+            )}
+          </div>
+        </Field>
+      );
+    });
+  };
+
+  // Section type color map
+  const SECTION_COLORS = {
+    hero: '#22c55e',
+    richtext: '#3b82f6',
+    image_text: '#8b5cf6',
+    products: '#f59e0b',
+    categories: '#ec4899',
+    faq: '#06b6d4',
+    reviews: '#ef4444',
+    image_gallery: '#84cc16',
+    video: '#f97316',
+    cta_banner: '#6366f1',
+    divider: '#64748b',
+    spacer: '#94a3b8',
+  };
+
+  // Section Toolbar Component - Enhanced with Search, Recently Used, Shortcuts
+  const SectionToolbar = ({ onAddSection }) => {
+    const [searchQuery, setSearchQuery] = useState('');
+    const [viewMode, setViewMode] = useState('categorized'); // 'categorized' | 'grid' | 'recent'
+    const [recentlyUsed, setRecentlyUsed] = useState(() => {
+      try {
+        const stored = localStorage.getItem('pages-recent-sections');
+        return stored ? JSON.parse(stored) : [];
+      } catch { return []; }
+    });
+
+    const categories = [
+      { label: 'Layout', types: ['hero', 'image_text', 'divider', 'spacer'] },
+      { label: 'Content', types: ['richtext', 'faq', 'reviews'] },
+      { label: 'Dynamic', types: ['products', 'categories'] },
+      { label: 'Media', types: ['image_gallery', 'video'] },
+      { label: 'Marketing', types: ['cta_banner'] },
+    ];
+
+    const allTypes = SECTION_TYPES.map(t => t.type);
+    const filteredTypes = searchQuery
+      ? allTypes.filter(t => {
+          const info = SECTION_TYPES.find(st => st.type === t);
+          return info && (info.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         info.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         t.includes(searchQuery.toLowerCase()));
+        })
+      : allTypes;
+
+    const handleAddSection = (type) => {
+      onAddSection(type);
+      setShowSectionToolbar(false);
+      // Update recently used
+      setRecentlyUsed(prev => {
+        const filtered = prev.filter(t => t !== type);
+        const updated = [type, ...filtered].slice(0, 5);
+        try { localStorage.setItem('pages-recent-sections', JSON.stringify(updated)); } catch {}
+        return updated;
+      });
+    };
+
+    const renderSectionButton = (type, color) => {
+      const typeInfo = SECTION_TYPES.find(st => st.type === type);
+      if (!typeInfo) return null;
+      return (
+        <button
+          key={type}
+          type="button"
+          className="btn btn-outline section-toolbar-btn"
+          onClick={() => handleAddSection(type)}
+          title={`${typeInfo.description} ${viewMode === 'grid' ? '' : '(Click to add)'}`}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 8, padding: viewMode === 'grid' ? '12px' : '8px 12px',
+            borderLeft: `3px solid ${color}`, background: 'var(--card)',
+            transition: 'all 0.15s',
+            flexDirection: viewMode === 'grid' ? 'column' : 'row',
+            textAlign: viewMode === 'grid' ? 'center' : 'left',
+            minWidth: viewMode === 'grid' ? 100 : undefined,
+          }}
+          onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg)'}
+          onMouseLeave={(e) => e.currentTarget.style.background = 'var(--card)'}
+        >
+          <span style={{ fontSize: viewMode === 'grid' ? 24 : 18 }}>{typeInfo.icon}</span>
+          <span style={{ fontSize: 13, fontWeight: 500 }}>{typeInfo.label}</span>
+          {viewMode === 'grid' && (
+            <span style={{ fontSize: 10, color: 'var(--muted)', marginTop: 4, whiteSpace: 'normal', lineHeight: 1.3 }}>
+              {typeInfo.description}
+            </span>
+          )}
+        </button>
+      );
+    };
+
+    // Keyboard shortcut handler
+    useEffect(() => {
+      const handleKeyDown = (e) => {
+        if (!showSectionToolbar) return;
+        // Number keys 1-9 for quick add
+        if (e.key >= '1' && e.key <= '9') {
+          const idx = parseInt(e.key) - 1;
+          if (filteredTypes[idx]) handleAddSection(filteredTypes[idx]);
+        }
+        // Escape to close
+        if (e.key === 'Escape') setShowSectionToolbar(false);
+        // / to focus search
+        if (e.key === '/' && document.activeElement.tagName !== 'INPUT') {
+          e.preventDefault();
+          searchInputRef.current?.focus();
+        }
+      };
+      window.addEventListener('keydown', handleKeyDown);
+      return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [showSectionToolbar, filteredTypes]);
+
+    const searchInputRef = useRef(null);
+
+    return (
+      <div style={{ marginBottom: 16 }}>
+        {/* Toolbar Header with Search & View Toggle */}
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 12, flexWrap: 'wrap' }}>
+          <div style={{ flex: 1, minWidth: 200, position: 'relative' }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+              style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--muted)', pointerEvents: 'none' }}>
+              <circle cx="11" cy="11" r="8" />
+              <path d="M21 21l-4.35-4.35" />
+            </svg>
+            <input
+              ref={searchInputRef}
+              type="text"
+              placeholder="Search sections... (press / to focus)"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="input"
+              style={{ paddingLeft: 36, width: '100%' }}
+              autoFocus
+            />
+          </div>
+          <div style={{ display: 'flex', gap: 4, background: 'var(--card)', padding: 4, borderRadius: 6, border: '1px solid var(--border)' }}>
+            {['categorized', 'grid', 'recent'].map(mode => (
+              <button
+                key={mode}
+                type="button"
+                onClick={() => setViewMode(mode)}
+                style={{
+                  padding: '6px 10px',
+                  border: 'none',
+                  background: viewMode === mode ? 'var(--primary)' : 'transparent',
+                  color: viewMode === mode ? 'white' : 'var(--text)',
+                  borderRadius: 4,
+                  fontSize: 12,
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                  transition: 'all 0.15s',
+                }}
+                title={mode === 'categorized' ? 'Categorized view' : mode === 'grid' ? 'Grid view' : 'Recently used'}
+              >
+                {mode === 'categorized' && <LayoutDashboard size={14} />}
+                {mode === 'grid' && <Grid size={14} />}
+                {mode === 'recent' && <Clock size={14} />}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Recently Used - always show at top if available */}
+        {viewMode === 'recent' || (recentlyUsed.length > 0 && viewMode !== 'grid' && !searchQuery) ? (
+          <div style={{ marginBottom: viewMode === 'recent' ? 0 : 16 }}>
+            {viewMode !== 'recent' && (
+              <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 8, letterSpacing: 0.5, display: 'flex', alignItems: 'center', gap: 6 }}>
+                <Clock size={12} /> Recently Used
+              </div>
+            )}
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+              {recentlyUsed.map(t => {
+                const color = SECTION_COLORS[t] || '#64748b';
+                return renderSectionButton(t, color);
+              })}
+            </div>
+          </div>
+        ) : null}
+
+        {/* Categorized View */}
+        {viewMode === 'categorized' && (
+          <div>
+            {categories.map((cat) => (
+              <div key={cat.label} style={{ marginBottom: 12 }}>
+                <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 8, letterSpacing: 0.5, display: 'flex', alignItems: 'center', gap: 6 }}>
+                  {cat.label}
+                  <span style={{ fontSize: 10, color: 'var(--muted)', fontWeight: 400, textTransform: 'none' }}>
+                    ({cat.types.filter(t => filteredTypes.includes(t)).length})
+                  </span>
+                </div>
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                  {cat.types.filter(t => filteredTypes.includes(t)).map(t => {
+                    const color = SECTION_COLORS[t] || '#64748b';
+                    return renderSectionButton(t, color);
+                  })}
+                </div>
+              </div>
+            ))}
+            {searchQuery && filteredTypes.length === 0 && (
+              <div style={{ textAlign: 'center', padding: 20, color: 'var(--muted)' }}>
+                No sections match "{searchQuery}"
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Grid View */}
+        {viewMode === 'grid' && (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 8 }}>
+            {filteredTypes.map(t => {
+              const color = SECTION_COLORS[t] || '#64748b';
+              return renderSectionButton(t, color);
+            })}
+            {filteredTypes.length === 0 && (
+              <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: 20, color: 'var(--muted)' }}>
+                No sections match "{searchQuery}"
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Keyboard Shortcuts Hint */}
+        <details style={{ marginTop: 16 }}>
+          <summary style={{ cursor: 'pointer', color: 'var(--muted)', fontSize: 12, padding: '8px 0' }}>
+            Keyboard Shortcuts
+          </summary>
+          <div style={{ fontSize: 11, color: 'var(--muted)', lineHeight: 2, fontFamily: 'monospace' }}>
+            <div><kbd style={{ padding: '2px 6px', background: 'var(--bg)', borderRadius: 3, border: '1px solid var(--border)' }}>1-9</kbd> Add section by number</div>
+            <div><kbd style={{ padding: '2px 6px', background: 'var(--bg)', borderRadius: 3, border: '1px solid var(--border)' }}>/</kbd> Focus search</div>
+            <div><kbd style={{ padding: '2px 6px', background: 'var(--bg)', borderRadius: 3, border: '1px solid var(--border)' }}>Esc</kbd> Close toolbar</div>
+          </div>
+        </details>
+      </div>
+    );
+  };
+
+  // Helper: Get section summary for preview
+  const getSectionSummary = (section) => {
+    const data = section.data || {};
+    switch (section.type) {
+      case 'hero': return data.title || data.subtitle ? `${data.title || ''} ${data.subtitle || ''}`.trim() : 'Hero banner';
+      case 'richtext': return data.content ? 'Rich text content' : 'Empty';
+      case 'image_text': return data.title || 'Image + Text';
+      case 'products': return data.title || `${data.source || 'featured'} products`;
+      case 'categories': return data.title || `Categories (${data.category_ids?.split(',').filter(Boolean).length || 'all'})`;
+      case 'faq': return `${data.items?.length || 0} FAQs`;
+      case 'reviews': return `${data.items?.length || 0} Reviews`;
+      case 'image_gallery': return `${data.images?.length || 0} Images`;
+      case 'video': return data.title || 'Video embed';
+      case 'cta_banner': return data.title || data.button_text ? `CTA: ${data.button_text}` : 'CTA Banner';
+      case 'divider': return data.label || 'Divider';
+      case 'spacer': return `${data.height || 'medium'} spacer`;
+      default: return 'Custom section';
+    }
+  };
+
+  // Section List Component - Enhanced
+  const SectionList = ({
+    sections, editingSection, sectionForm, onEditSection, onSaveSection,
+    onRemoveSection, onToggleSection, onDuplicateSection, onMoveSection,
+    onStartDrag, onAllowDrop, onDrop, renderSectionFields
+  }) => {
+    const [dragOverId, setDragOverId] = useState(null);
+    const editorRef = useRef(null);
+
+    // Focus first input when section editor opens
+    useEffect(() => {
+      if (editingSection && editorRef.current) {
+        const input = editorRef.current.querySelector('input, select, textarea');
+        input?.focus();
+      }
+    }, [editingSection]);
+
+    if (sections.length === 0) {
+      return (
+        <div className="empty" style={{ textAlign: 'center', padding: 60, color: 'var(--muted)' }}>
+          <div style={{ 
+            width: 80, height: 80, borderRadius: '50%', background: 'rgba(var(--primary-rgb), 0.1)', 
+            display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px' 
+          }}>
+            <LayoutDashboard size={40} style={{ color: 'var(--primary)' }} />
+          </div>
+          <h3 style={{ marginBottom: 8, fontSize: 18, fontWeight: 600 }}>No sections yet</h3>
+          <p style={{ marginBottom: 24, maxWidth: 300, margin: '0 auto 24px', lineHeight: 1.6 }}>
+            Build your page by adding content sections. Each section type serves a different purpose — 
+            from hero banners to product grids.
+          </p>
+          <button type="button" className="btn btn-primary" onClick={() => setShowSectionToolbar(true)}>
+            <Plus size={16} /> Add First Section
+          </button>
+          <p style={{ marginTop: 16, fontSize: 12, color: 'var(--muted)' }}>
+            Tip: Press <kbd style={{ padding: '2px 6px', background: 'var(--bg)', borderRadius: 3, border: '1px solid var(--border)' }}>/</kbd> to search sections
+          </p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="sections-list" role="list" aria-label="Page sections">
+        {sections.map((section, index) => {
+          const typeInfo = SECTION_TYPES.find(t => t.type === section.type);
+          const isEditing = editingSection === section.id;
+          const sectionColor = SECTION_COLORS[section.type] || '#64748b';
+          const summary = getSectionSummary(section);
+          const isDragOver = dragOverId === section.id;
+
+          return (
+            <div
+              key={section.id}
+              className="section-item"
+              role="listitem"
+              aria-label={`${typeInfo?.label || section.type} section, ${section.enabled ? 'visible' : 'hidden'}, order ${section.order ?? index + 1}`}
+              style={{
+                border: '1px solid var(--border)',
+                borderLeft: `4px solid ${section.enabled ? sectionColor : 'var(--border)'}`,
+                borderRadius: 8,
+                marginBottom: 12,
+                background: 'var(--card)',
+                overflow: 'hidden',
+                opacity: section.enabled ? 1 : 0.6,
+                transition: 'all 0.15s',
+                boxShadow: isDragOver ? '0 0 0 2px var(--primary)' : 'none',
+              }}
+            >
+              <div
+                className="section-header"
+                style={{
+                  display: 'flex', alignItems: 'center', padding: 12, gap: 12,
+                  cursor: 'grab', borderBottom: isEditing ? 'none' : '1px solid var(--border)',
+                  background: isDragOver ? 'rgba(var(--primary-rgb), 0.05)' : 'transparent',
+                }}
+                onDragOver={(e) => { e.preventDefault(); setDragOverId(section.id); }}
+                onDragLeave={() => setDragOverId(null)}
+                onDrop={(e) => { e.preventDefault(); setDragOverId(null); onDrop(section.id)(e); }}
+              >
+                <button
+                  type="button"
+                  className="drag-handle"
+                  onDragStart={onStartDrag(section.id)}
+                  onDragOver={onAllowDrop}
+                  draggable
+                  title="Drag to reorder"
+                  style={{ padding: 4, borderRadius: 4, color: 'var(--muted)', flexShrink: 0 }}
+                  aria-label="Drag to reorder"
+                  aria-grabbed="false"
+                >
+                  <GripVertical size={20} />
+                </button>
+                <span style={{ fontSize: 20, flexShrink: 0 }} aria-hidden="true">{typeInfo?.icon || '📦'}</span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <strong style={{ display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontSize: 14 }}>
+                    {typeInfo?.label || section.type}
+                  </strong>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4, flexWrap: 'wrap' }}>
+                    <span className={`pill ${section.enabled ? 'pill-on' : 'pill-off'}`} style={{ fontSize: 11 }}>
+                      {section.enabled ? 'Visible' : 'Hidden'}
+                    </span>
+                    <span style={{ fontSize: 11, color: 'var(--muted)', fontFamily: 'monospace' }}>
+                      Order: {section.order ?? index + 1}
+                    </span>
+                    {summary && (
+                      <span style={{ fontSize: 11, color: 'var(--muted)', maxWidth: 300, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'inline-block' }}>
+                        {summary}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                {!isEditing ? (
+                  <>
+                    <button type="button" className="icon-action" onClick={() => onEditSection(section)} title="Edit" style={{ padding: 6 }} aria-label="Edit section"><Edit3 size={16} /></button>
+                    <button type="button" className="icon-action" onClick={() => onDuplicateSection(section)} title="Duplicate" style={{ padding: 6 }} aria-label="Duplicate section"><Copy size={16} /></button>
+                    <button type="button" className="icon-action" onClick={() => onToggleSection(section.id)} title={section.enabled ? 'Hide' : 'Show'} style={{ padding: 6 }} aria-label={section.enabled ? 'Hide section' : 'Show section'}><Eye size={16} /></button>
+                    <button type="button" className="icon-action danger" onClick={() => onRemoveSection(section.id)} title="Remove" style={{ padding: 6 }} aria-label="Remove section"><Trash2 size={16} /></button>
+                  </>
+                ) : (
+                  <button type="button" className="btn btn-primary btn-sm" onClick={onSaveSection} style={{ marginLeft: 8 }}>Save</button>
+                )}
+              </div>
+              {isEditing && (
+                <div ref={editorRef} className="section-editor" role="region" aria-label="Section editor" style={{ padding: 16, borderTop: '1px solid var(--border)', background: 'var(--bg)' }}>
+                  <div className="editor-grid" style={{ display: 'grid', gap: 16 }}>
+                    {renderSectionFields(section.type, sectionForm.data)}
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
   const systemPages = pages.filter(p => p.page_type === 'system');
   const customPages = pages.filter(p => p.page_type === 'custom');
   const displayPages = activeTab === 'system' ? systemPages : customPages;
@@ -440,6 +930,7 @@ export default function PagesTab({ password }) {
 
       {(editing || showCreate) && (
         <ModalShell
+          ref={editorModalRef}
           kicker={editing ? 'Page Editor' : 'New Page'}
           title={editing ? editing : 'Create New Page'}
           onClose={() => { setEditing(null); setShowCreate(false); setForm({ ...DEFAULT_PAGE_DATA, slug: '' }); }}
@@ -455,89 +946,65 @@ export default function PagesTab({ password }) {
           }
         >
           {notice && <Alert type={notice.type} onClose={() => setNotice(null)}>{notice.text}</Alert>}
-          <div className="editor-grid" style={{ maxHeight: '70vh', overflow: 'auto' }}>
-            <Panel title="Page Settings" icon={FileText}>
-              {templateFields.map((f) => (
-                <Field key={f.key} label={f.label} hint={f.full ? 'full' : f.help}>
-                  {f.type === 'textarea' ? (
-                    <textarea className="input" rows={f.full ? 12 : 4} value={form[f.key] || ''}
-                      onChange={(e) => setForm({ ...form, [f.key]: e.target.value })} placeholder={f.placeholder} />
-                  ) : f.type === 'select' ? (
-                    <select className="input" value={form[f.key] || ''} onChange={(e) => setForm({ ...form, [f.key]: e.target.value })}>
-                      {f.options?.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                    </select>
-                  ) : (
-                    <input className="input" type="text" value={form[f.key] || ''}
-                      onChange={(e) => setForm({ ...form, [f.key]: e.target.value })} placeholder={f.placeholder} />
-                  )}
-                </Field>
-              ))}
-              <Field label="Active" hint="Page is published and accessible">
-                <label className="editor-toggle">
-                  <Toggle checked={form.is_active} onChange={(v) => setForm({ ...form, is_active: v })} />
-                  Published
-                </label>
-              </Field>
-              <Field label="Show in Navigation" hint="Display in site header/footer navigation">
-                <label className="editor-toggle">
-                  <Toggle checked={form.show_in_nav} onChange={(v) => setForm({ ...form, show_in_nav: v })} />
-                  In Navigation
-                </label>
-              </Field>
-              <Field label="Navigation Order" hint="Lower numbers appear first">
-                <input className="input" type="number" min="0" value={form.nav_order || 0}
-                  onChange={(e) => setForm({ ...form, nav_order: Number(e.target.value) })} />
-              </Field>
-            </Panel>
-            <Panel title="Content Sections" icon={LayoutDashboard} style={{ marginTop: 20 }}>
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
-                {SECTION_TYPES.map(t => (
-                  <button key={t.type} type="button" className="btn btn-outline" onClick={() => addSection(t.type)} title={t.description}>
-                    <span style={{ fontSize: 18 }}>{t.icon}</span> {t.label}
+          <div className="editor-layout" style={{ maxHeight: '75vh', overflow: 'hidden', display: 'flex' }}>
+            <aside className="editor-sidebar" style={{ width: 380, flexShrink: 0, overflow: 'auto', borderRight: '1px solid var(--border)', background: 'var(--card)', padding: 16 }}>
+              <Panel title="Page Settings" icon={FileText}>
+                <nav className="settings-tabs" style={{ display: 'flex', gap: 4, marginBottom: 16, borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>
+                  {['general', 'seo', 'hero', 'content', 'navigation'].map(tab => (
+                    <button key={tab} type="button"
+                      className={`settings-tab ${activeSettingsTab === tab ? 'active' : ''}`}
+                      onClick={() => setActiveSettingsTab(tab)}
+                      style={{
+                        padding: '8px 16px',
+                        border: 'none',
+                        background: activeSettingsTab === tab ? 'var(--primary)' : 'transparent',
+                        color: activeSettingsTab === tab ? 'white' : 'var(--text)',
+                        borderRadius: '6px 6px 0 0',
+                        fontWeight: 500,
+                        fontSize: 13,
+                        cursor: 'pointer',
+                        transition: 'all 0.15s',
+                        marginBottom: -1,
+                        borderBottom: activeSettingsTab === tab ? '2px solid var(--primary)' : '2px solid transparent',
+                      }}>
+                    {tab.charAt(0).toUpperCase() + tab.slice(1)}
                   </button>
-                ))}
-              </div>
-              {sections.length === 0 ? (
-                <div className="empty" style={{ textAlign: 'center', padding: 40 }}>
-                  <p className="muted">No sections yet. Add sections above to build your page content.</p>
-                </div>
-              ) : (
-                <div className="sections-list">
-                  {sections.map((section, index) => {
-                    const typeInfo = SECTION_TYPES.find(t => t.type === section.type);
-                    const isEditing = editingSection === section.id;
-                    return (
-                      <div key={section.id} className="section-item" style={{ border: '1px solid var(--border)', borderRadius: 8, marginBottom: 12, background: 'var(--card)' }}>
-                        <div className="section-header" style={{ display: 'flex', alignItems: 'center', padding: 12, gap: 12, cursor: 'grab' }}>
-                          <button type="button" className="drag-handle" onDragStart={startDrag(section.id)} onDragOver={allowDrop} onDrop={onDrop(section.id)} draggable title="Drag to reorder"><GripVertical size={20} className="muted" /></button>
-                          <span style={{ fontSize: 20 }}>{typeInfo?.icon || '📦'}</span>
-                          <strong>{typeInfo?.label || section.type}</strong>
-                          <span className={`pill ${section.enabled ? 'pill-on' : 'pill-off'}`} style={{ fontSize: 12 }}>{section.enabled ? 'Visible' : 'Hidden'}</span>
-                          <div style={{ flex: 1 }} />
-                          {!isEditing ? (
-                            <>
-                              <button type="button" className="icon-action" onClick={() => editSection(section)} title="Edit"><Edit3 size={16} /></button>
-                              <button type="button" className="icon-action" onClick={() => duplicateSection(section)} title="Duplicate"><Copy size={16} /></button>
-                              <button type="button" className="icon-action" onClick={() => toggleSection(section.id)} title={section.enabled ? 'Hide' : 'Show'}><Eye size={16} /></button>
-                              <button type="button" className="icon-action danger" onClick={() => removeSection(section.id)} title="Remove"><Trash2 size={16} /></button>
-                            </>
-                          ) : (
-                            <button type="button" className="btn btn-primary btn-sm" onClick={saveSection}>Save</button>
-                          )}
-                        </div>
-                        {isEditing && (
-                          <div className="section-editor" style={{ padding: 16, borderTop: '1px solid var(--border)', background: 'var(--bg)' }}>
-                            <div className="editor-grid">
-                              {renderSectionFormFields(section.type, sectionForm.data)}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </Panel>
+                  ))}
+                </nav>
+                {renderSettingsTab(activeSettingsTab)}
+              </Panel>
+            </aside>
+            <main className="editor-canvas" style={{ flex: 1, overflow: 'auto', padding: 16, background: 'var(--bg)' }}>
+              <Panel title="Content Sections" icon={LayoutDashboard}>
+                <SectionToolbar onAddSection={addSection} />
+                {sections.length === 0 ? (
+                  <div className="empty" style={{ textAlign: 'center', padding: 60, color: 'var(--muted)' }}>
+                    <LayoutDashboard size={48} style={{ marginBottom: 16, opacity: 0.5 }} />
+                    <h3 style={{ marginBottom: 8 }}>No sections yet</h3>
+                    <p style={{ marginBottom: 20 }}>Add sections from the toolbar above to build your page content.</p>
+                    <button type="button" className="btn btn-primary" onClick={() => setShowSectionToolbar(true)}>
+                      <Plus size={16} /> Add First Section
+                    </button>
+                  </div>
+                ) : (
+                  <SectionList
+                    sections={sections}
+                    editingSection={editingSection}
+                    sectionForm={sectionForm}
+                    onEditSection={editSection}
+                    onSaveSection={saveSection}
+                    onRemoveSection={removeSection}
+                    onToggleSection={toggleSection}
+                    onDuplicateSection={duplicateSection}
+                    onMoveSection={moveSection}
+                    onStartDrag={startDrag}
+                    onAllowDrop={allowDrop}
+                    onDrop={onDrop}
+                    renderSectionFields={renderSectionFormFields}
+                  />
+                )}
+              </Panel>
+            </main>
           </div>
         </ModalShell>
       )}
