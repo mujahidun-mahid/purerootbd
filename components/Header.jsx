@@ -66,13 +66,13 @@ export default function Header() {
             <Link className="iconbtn action-hide-mobile" href="/search" aria-label="Search">
               <Search size={19} />
             </Link>
-            <Link className="iconbtn action-hide-mobile" href="/account" aria-label="Account">
+            <Link className="iconbtn" href="/account" aria-label="Account">
               <UserRound size={19} />
             </Link>
             <Link className="iconbtn action-hide-mobile" href="/wishlist" aria-label="Wishlist">
               <Heart size={19} />
             </Link>
-            <Link className="iconbtn" href="/cart" aria-label="Cart">
+            <Link className="iconbtn action-hide-mobile" href="/cart" aria-label="Cart">
               <ShoppingBag size={20} />
               {cartCount > 0 && <span className="badge">{cartCount}</span>}
             </Link>

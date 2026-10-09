@@ -2,14 +2,13 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useStore } from "./StoreProvider";
-import { Home, Grid, ShoppingBag, Search, UserRound } from "lucide-react";
+import { Home, Grid, ShoppingBag, Search } from "lucide-react";
 
 const navItems = [
   { href: "/", label: "Home", icon: Home },
   { href: "/shop", label: "Menu", icon: Grid },
   { href: "/cart", label: "Cart", icon: ShoppingBag, showBadge: true },
   { href: "/search", label: "Search", icon: Search },
-  { href: "/account", label: "Account", icon: UserRound },
 ];
 
 export default function BottomNav() {
