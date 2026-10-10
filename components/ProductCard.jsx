@@ -1,8 +1,9 @@
 "use client";
 import Link from "next/link";
 import { useState } from "react";
-import { Heart, ShoppingBasket } from "lucide-react";
+import { Heart } from "lucide-react";
 import { useStore } from "./StoreProvider";
+import AddToCartButton from "./AddToCartButton";
 
 function prettyCategory(slug) {
   return String(slug || "")
@@ -94,9 +95,9 @@ export default function ProductCard({ product }) {
         <span className="fp-score">({Number(product.rating || 0).toFixed(2)})</span>
       </div>
 
-      <button type="button" className="fp-cta" onClick={() => add(product, selected.size)}>
-        <ShoppingBasket size={16} /> Add to cart
-      </button>
+      <div className="fp-cta-wrap">
+        <AddToCartButton onAdd={() => add(product, selected.size)} />
+      </div>
     </article>
   );
 }

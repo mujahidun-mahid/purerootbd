@@ -346,15 +346,14 @@ label{font-size:13px;font-weight:700;color:#344038;display:block;margin-bottom:6
 .fp-stars span{color:#d1d5db}
 .fp-stars span.on{color:#e5b80c}
 .fp-score{font-size:12px;color:#6b7280}
-.fp-cta{margin-top:auto;width:100%;display:flex;align-items:center;justify-content:center;gap:6px;background:#ecfdf5;color:#047857;font-weight:600;font-size:12px;border:0;border-radius:999px;padding:8px 8px;transition:.2s;white-space:nowrap}
-.fp-cta:hover{background:#d1fae5}
+.fp-cta-wrap{margin-top:auto;width:100%;display:flex}
+.fp-cta-wrap .atc-button{flex:1;width:auto;min-width:0}
 @media(min-width:600px){
   .fp-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
   .fp-head{flex-direction:row;align-items:flex-end;justify-content:space-between}
   .fp-card{border-radius:16px;padding:16px;gap:10px}
   .fp-title{font-size:14px;min-height:40px}
   .fp-price{font-size:17px}
-  .fp-cta{font-size:14px;padding:10px 16px;gap:8px}
 }
 @media(min-width:768px){
   .fp-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
