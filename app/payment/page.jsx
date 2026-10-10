@@ -3,13 +3,14 @@ import { useEffect, useState } from "react";
 import { useStore } from "@/components/StoreProvider";
 import { useSiteSettings } from "@/components/SiteSettingsProvider";
 import Link from "next/link";
-import { Banknote, Smartphone, Building2, Lock } from "lucide-react";
+import { Banknote, Building2, Lock } from "lucide-react";
+import CheckoutSteps from "@/components/CheckoutSteps";
 
 const PAYMENT_METHODS = [
-  ["cod", "Cash on Delivery", "Pay when your order arrives at your doorstep.", Banknote],
-  ["bkash", "bKash Payment", "Pay using your bKash account and follow the payment instructions.", Smartphone],
-  ["nagad", "Nagad Payment", "Complete your payment using Nagad and follow the provided instructions.", Smartphone],
-  ["bank", "Bank Transfer", "Use the bank account details provided during checkout.", Building2]
+  ["cod", "Cash on Delivery", "Pay when your order arrives at your doorstep.", null, null],
+  ["bkash", "bKash Payment", "Pay using your bKash account and follow the payment instructions.", null, { text: "bKash", bg: "#E2136E" }],
+  ["nagad", "Nagad Payment", "Complete your payment using Nagad and follow the provided instructions.", null, { text: "Nagad", bg: "#F6921E" }],
+  ["bank", "Bank Transfer", "Use the bank account details provided during checkout.", Building2, null]
 ];
 
 export default function Payment() {
@@ -115,6 +116,7 @@ export default function Payment() {
           <div className="co-eyebrow"><Lock size={12} aria-hidden="true" /> Secure Checkout</div>
           <h1>Payment</h1>
           <p>Choose how you&apos;d like to pay for your order.</p>
+          <CheckoutSteps step={2} />
         </div>
       </div>
       <section className="section co-section">
@@ -127,7 +129,7 @@ export default function Payment() {
             )}
 
             <div className="co-methods" role="radiogroup" aria-label="Payment method">
-              {(methods.length ? methods : PAYMENT_METHODS.slice(0, 1)).map(([id, title, desc, Icon]) => {
+              {(methods.length ? methods : PAYMENT_METHODS.slice(0, 1)).map(([id, title, desc, Icon, badge]) => {
                 const selected = activeMethod === id;
                 return (
                   <label key={id} className={`co-method${selected ? " selected" : ""}`}>
@@ -142,11 +144,15 @@ export default function Payment() {
                       <strong>{title}</strong>
                       <small>{desc}</small>
                     </span>
-                    {Icon && (
+                    {badge ? (
+                      <span className="co-pay-logo" style={{ background: badge.bg }} aria-hidden="true">
+                        {badge.text}
+                      </span>
+                    ) : Icon ? (
                       <span className="co-method-icon" aria-hidden="true">
                         <Icon size={20} />
                       </span>
-                    )}
+                    ) : null}
                   </label>
                 );
               })}
@@ -198,6 +204,17 @@ export default function Payment() {
 
           <aside className="co-summary" aria-label="Payment summary">
             <h3>Summary</h3>
+            {cart.map((x) => (
+              <div className="co-sumline co-sumitem" key={x.key}>
+                <span className="co-sumthumb" aria-hidden="true">
+                  {x.image ? <img src={x.image} alt="" /> : <span className="orb nut" />}
+                </span>
+                <span className="co-sumname">
+                  {x.name} ({x.size}) × {x.qty}
+                </span>
+                <span>৳{(Number(x.price || 0) * Number(x.qty || 1)).toLocaleString()}</span>
+              </div>
+            ))}
             <div className="co-sumline">
               <span>Subtotal</span>
               <span>৳{total.toLocaleString()}</span>

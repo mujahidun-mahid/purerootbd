@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useStore } from "@/components/StoreProvider";
 import { useSiteSettings } from "@/components/SiteSettingsProvider";
+import CheckoutSteps from "@/components/CheckoutSteps";
 
 export default function Checkout() {
   const { cart, total } = useStore();
@@ -74,6 +75,7 @@ export default function Checkout() {
           <div className="co-eyebrow">Checkout</div>
           <h1>Delivery Details</h1>
           <p>Where should we deliver your order?</p>
+          <CheckoutSteps step={1} />
         </div>
       </div>
       <section className="section co-section">
@@ -200,8 +202,11 @@ export default function Checkout() {
           <aside className="co-summary" aria-label="Order summary">
             <h3>Summary</h3>
             {cart.map((x) => (
-              <div className="co-sumline" key={x.key}>
-                <span>
+              <div className="co-sumline co-sumitem" key={x.key}>
+                <span className="co-sumthumb" aria-hidden="true">
+                  {x.image ? <img src={x.image} alt="" /> : <span className="orb nut" />}
+                </span>
+                <span className="co-sumname">
                   {x.name} ({x.size}) × {x.qty}
                 </span>
                 <span>৳{(Number(x.price || 0) * Number(x.qty || 1)).toLocaleString()}</span>

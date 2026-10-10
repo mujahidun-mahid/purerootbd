@@ -496,6 +496,28 @@ label{font-size:13px;font-weight:700;color:#344038;display:block;margin-bottom:6
 .co-deliver-to strong{color:#1D1D1F}
 .co-edit-cart{display:block;margin-top:12px;font-size:13px;color:#6E756F}
 .co-edit-cart:hover{color:#21683F}
+/* checkout steps */
+.co-steps{list-style:none;display:flex;align-items:center;margin:18px 0 0;padding:0}
+.co-step{display:flex;align-items:center;gap:8px;font-size:13px;color:#6E756F}
+.co-step-line{width:44px;height:2px;background:#E5E9E5;border-radius:2px}
+.co-step.done .co-step-line{background:#21683F}
+.co-step-num{width:26px;height:26px;border-radius:50%;border:1.5px solid #c4cdc4;display:grid;place-items:center;font-size:12px;font-weight:700;background:#fff}
+.co-step.current .co-step-num{background:#21683F;border-color:#21683F;color:#fff}
+.co-step.done .co-step-num{background:#21683F;border-color:#21683F;color:#fff}
+.co-step.current .co-step-label{color:#1D1D1F;font-weight:700}
+.co-step.done .co-step-label{color:#21683F;font-weight:600}
+a.co-step-label:hover{text-decoration:underline}
+/* provider logo badges */
+.co-pay-logo{flex:0 0 auto;font-size:12px;font-weight:800;font-style:italic;letter-spacing:.2px;color:#fff;padding:7px 13px;border-radius:9px}
+/* summary thumbnails */
+.co-sumitem{align-items:center}
+.co-sumthumb{flex:0 0 auto;width:42px;height:42px;border-radius:11px;overflow:hidden;background:#F7F9F7;border:1px solid #E5E9E5;display:grid;place-items:center}
+.co-sumthumb img{width:100%;height:100%;object-fit:cover;display:block}
+.co-sumthumb .orb{width:26px;height:26px}
+.co-sumname{flex:1;min-width:0}
+@media(min-width:768px){
+  .co-summary{position:sticky;top:95px}
+}
 @media(min-width:768px){
   .co-layout{grid-template-columns:1fr 320px;gap:28px}
   .co-card{padding:30px}
