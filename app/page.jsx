@@ -44,29 +44,25 @@ export default async function Home() {
 
       <PromoGrid hero={hero} banners={banners} />
 
-      <section className="section">
+      <section className="section feat-cat-section" aria-labelledby="feat-cat-h">
         <div className="container">
-          <div className="section-head">
-            <div>
-              <div className="kicker">Explore</div>
-              <h2>Featured Categories</h2>
-            </div>
-            <Link className="btn btn-outline" href="/shop">
-              View all
+          <div className="feat-cat-head">
+            <h2 id="feat-cat-h">Featured Categories</h2>
+            <Link className="feat-cat-all" href="/shop">
+              View All Category
             </Link>
           </div>
-          <div className="grid cat-grid">
+          <div className="feat-cat-grid">
             {categories.map((c) => (
-              <Link className="cat" href={`/category/${c.slug}`} key={c.slug}>
-                {c.image ? (
-                  <div className="cat-art">
-                    <img src={c.image} alt={c.name} />
-                  </div>
-                ) : (
-                  <div className="cat-icon">{c.icon}</div>
-                )}
-                <strong>{c.name}</strong>
-                <span className="muted">{c.description}</span>
+              <Link className="feat-cat" href={`/category/${c.slug}`} key={c.slug}>
+                <div className="feat-cat-box">
+                  {c.image ? (
+                    <img src={c.image} alt={c.name} loading="lazy" />
+                  ) : (
+                    <span className="feat-cat-icon" aria-hidden="true">{c.icon}</span>
+                  )}
+                </div>
+                <strong className="feat-cat-label">{c.name}</strong>
               </Link>
             ))}
           </div>

@@ -425,6 +425,27 @@ label{font-size:13px;font-weight:700;color:#344038;display:block;margin-bottom:6
 .cat-art{width:100%;height:96px;border-radius:12px;overflow:hidden;background:#f4f1ea;display:flex;align-items:center;justify-content:center;margin-bottom:auto}
 .cat-art img{width:100%;height:100%;object-fit:cover}
 
+/* ---------- featured categories showcase ---------- */
+.feat-cat-head{display:flex;align-items:center;gap:12px;margin-bottom:24px}
+.feat-cat-head h2{flex:1;text-align:center;margin:0;font-size:clamp(24px,4.5vw,34px);line-height:1.15;color:var(--dark)}
+.feat-cat-all{flex:0 0 auto;font-size:14px;font-weight:700;color:var(--green);white-space:nowrap}
+.feat-cat-all:hover{text-decoration:underline}
+.feat-cat-grid{display:flex;gap:12px;overflow-x:auto;padding:4px 2px 12px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:thin}
+.feat-cat{flex:0 0 132px;scroll-snap-align:start;min-width:0}
+.feat-cat-box{width:100%;aspect-ratio:1/1;border-radius:20px;overflow:hidden;background:#f4f1ea;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;transition:.2s}
+.feat-cat:hover .feat-cat-box{transform:translateY(-3px);box-shadow:0 12px 35px rgba(22,77,42,.10)}
+.feat-cat-box img{width:100%;height:100%;object-fit:cover;display:block}
+.feat-cat-icon{font-size:44px}
+.feat-cat-label{display:block;text-align:center;margin-top:10px;font-size:14px;color:var(--dark)}
+@media(min-width:768px){
+  .feat-cat-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;overflow:visible}
+  .feat-cat{flex:none}
+}
+@media(min-width:981px){
+  .feat-cat-grid{grid-template-columns:repeat(5,minmax(0,1fr));gap:20px}
+  .feat-cat-label{font-size:15px}
+}
+
 /* ---------- account dashboard ---------- */
 .acct-layout{display:grid;grid-template-columns:1fr;gap:20px;align-items:start}
 .acct-side{display:flex;flex-direction:column;gap:14px}
