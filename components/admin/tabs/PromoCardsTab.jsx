@@ -27,6 +27,8 @@ export default function PromoCardsTab({ password }) {
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState('');
   const fileRef = useRef(null);
+  const [carousel, setCarousel] = useState({ enabled: true, autoplay: false, interval: 5000 });
+  const [carouselSaving, setCarouselSaving] = useState(false);
 
   const authHeaders = () => ({ 'x-admin-password': password, 'content-type': 'application/json' });
 
@@ -45,6 +47,51 @@ export default function PromoCardsTab({ password }) {
   }, [password]);
 
   useEffect(() => { load(); }, [load]);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch('/api/admin/dashboard', {
+          headers: { 'x-admin-password': password },
+          cache: 'no-store',
+        });
+        if (!res.ok) return;
+        const data = await res.json().catch(() => ({}));
+        const s = data.siteSettings || {};
+        setCarousel({
+          enabled: (s.promo_carousel_enabled ?? 'true') !== 'false',
+          autoplay: (s.promo_autoplay ?? 'false') === 'true',
+          interval: Math.max(2000, parseInt(s.promo_interval_ms, 10) || 5000),
+        });
+      } catch {}
+    })();
+  }, [password]);
+
+  const saveCarousel = async () => {
+    setCarouselSaving(true);
+    setNotice(null);
+    try {
+      const pairs = [
+        ['promo_carousel_enabled', carousel.enabled ? 'true' : 'false'],
+        ['promo_autoplay', carousel.autoplay ? 'true' : 'false'],
+        ['promo_interval_ms', String(Math.max(2000, Number(carousel.interval) || 5000))],
+      ];
+      for (const [key, value] of pairs) {
+        const res = await fetch('/api/admin/settings', {
+          method: 'PUT',
+          headers: authHeaders(),
+          body: JSON.stringify({ key, value }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || `Failed to save ${key}`);
+      }
+      setNotice({ type: 'success', text: 'Carousel settings saved — live on the homepage instantly.' });
+    } catch (e) {
+      setNotice({ type: 'error', text: e.message });
+    } finally {
+      setCarouselSaving(false);
+    }
+  };
 
   const openAdd = () => {
     setEditing('new');
@@ -174,6 +221,57 @@ export default function PromoCardsTab({ password }) {
       </div>
 
       {notice && <Alert type={notice.type} onClose={() => setNotice(null)}>{notice.text}</Alert>}
+
+      <section className="admin-panel" style={{ marginBottom: 16 }}>
+        <div className="panel-head">
+          <div>
+            <span className="admin-kicker">Carousel Behavior</span>
+            <h2>Slider Settings</h2>
+            <p>Two cards per view on desktop, one on mobile. Autoplay pauses on hover and touch.</p>
+          </div>
+        </div>
+        <div className="toggle-row">
+          <div>
+            <strong>Enable carousel</strong>
+            <small>{carousel.enabled ? 'Sliding with arrows and dots' : 'Off — cards render as a plain grid'}</small>
+          </div>
+          <button
+            type="button"
+            className={`a-switch${carousel.enabled ? ' on' : ''}`}
+            onClick={() => setCarousel((c) => ({ ...c, enabled: !c.enabled }))}
+            aria-label="Toggle carousel"
+            aria-pressed={carousel.enabled}
+          />
+        </div>
+        <div className="toggle-row">
+          <div>
+            <strong>Autoplay</strong>
+            <small>{carousel.autoplay ? 'Advancing automatically' : 'Manual navigation only'}</small>
+          </div>
+          <button
+            type="button"
+            className={`a-switch${carousel.autoplay ? ' on' : ''}`}
+            onClick={() => setCarousel((c) => ({ ...c, autoplay: !c.autoplay }))}
+            aria-label="Toggle autoplay"
+            aria-pressed={carousel.autoplay}
+          />
+        </div>
+        <Field label="Autoplay interval (milliseconds, min 2000)">
+          <input
+            className="input"
+            type="number"
+            min={2000}
+            step={500}
+            value={carousel.interval}
+            onChange={(e) => setCarousel((c) => ({ ...c, interval: Number(e.target.value) || 5000 }))}
+          />
+        </Field>
+        <div className="settings-actions">
+          <button type="button" className="btn btn-primary" onClick={saveCarousel} disabled={carouselSaving}>
+            {carouselSaving ? 'Saving…' : 'Save Carousel Settings'}
+          </button>
+        </div>
+      </section>
 
       <DataTable
         columns={[

@@ -20,6 +20,11 @@ export default async function Home() {
   const products = await loadProducts();
   const categories = await loadCategories({ featuredOnly: true });
   const promoCards = await loadPromoCards();
+  const promoCarousel = {
+    enabled: (settings.promo_carousel_enabled ?? "true") !== "false",
+    autoplay: (settings.promo_autoplay ?? "false") === "true",
+    interval: Math.max(2000, parseInt(settings.promo_interval_ms, 10) || 5000),
+  };
   const banners = parsePromoBanners(settings.promo_banners);
   const counts = {};
   products.forEach((p) => {
@@ -72,7 +77,7 @@ export default async function Home() {
         </div>
       </section>
 
-      <PromoCards cards={promoCards} />
+      <PromoCards cards={promoCards} carousel={promoCarousel} />
 
       <FeaturedProducts
         products={products}

@@ -368,22 +368,37 @@ label{font-size:13px;font-weight:700;color:#344038;display:block;margin-bottom:6
 /* ---------- homepage promo banner cards ---------- */
 .promo-cards-section{padding-top:0}
 .promo-cards-grid{display:grid;grid-template-columns:1fr;gap:14px}
-.promo-cards-card{background:#FFFDF9;border:1px solid var(--border);border-radius:22px;overflow:hidden;display:grid;grid-template-columns:1fr;min-height:220px;transition:.2s}
-.promo-cards-card:hover{transform:translateY(-3px);box-shadow:0 12px 35px rgba(22,77,42,.10)}
-.promo-cards-copy{padding:24px 22px;display:flex;flex-direction:column;align-items:flex-start;gap:10px;justify-content:center}
+.promo-cards-card{position:relative;background:#FFFDF9;border:1px solid var(--border);border-radius:24px;overflow:hidden;display:flex;align-items:center;min-height:250px;transition:transform .2s,box-shadow .2s}
+.promo-cards-card:hover{transform:translateY(-3px);box-shadow:0 12px 35px rgba(22,77,42,.12)}
+.promo-cards-bg{position:absolute;inset:0}
+.promo-cards-bg img{width:100%;height:100%;object-fit:cover;display:block}
+.promo-cards-shade{position:absolute;inset:0;background:linear-gradient(90deg,var(--tint,#FFFDF9) 35%,rgba(255,255,255,0) 80%);background:linear-gradient(90deg,var(--tint,#FFFDF9) 22%,color-mix(in srgb,var(--tint,#FFFDF9) 55%,transparent) 55%,transparent 80%)}
+.promo-cards-copy{position:relative;z-index:1;padding:26px 24px;display:flex;flex-direction:column;align-items:flex-start;gap:10px;justify-content:center;max-width:68%}
 .promo-cards-badge{display:inline-block;background:var(--green);color:#fff;font-size:12px;font-weight:800;letter-spacing:.4px;padding:6px 14px;border-radius:999px}
-.promo-cards-copy h3{margin:0;font-size:clamp(22px,3.5vw,30px);line-height:1.2;color:var(--dark)}
+.promo-cards-copy h3{margin:0;font-size:clamp(24px,3.5vw,34px);line-height:1.15;color:var(--dark);font-weight:800}
 .promo-cards-copy p{margin:0}
-.promo-cards-copy .btn{margin-top:6px}
-.promo-cards-art{min-height:170px;background:linear-gradient(145deg,rgba(31,107,58,.06),rgba(201,164,92,.10));display:grid;place-items:center;overflow:hidden}
-.promo-cards-art img{width:100%;height:100%;min-height:170px;object-fit:cover;display:block}
-.promo-cards-fallback{font-size:44px;color:var(--green)}
+.promo-cards-copy .btn{margin-top:8px}
+.promo-cards-fallback{position:absolute;right:8%;top:50%;transform:translateY(-50%);font-size:72px;color:var(--green);opacity:.35}
+/* carousel chrome */
+.promo-viewport{overflow:hidden;border-radius:4px}
+.promo-track{display:flex;transition:transform .5s ease}
+.promo-slide{flex:0 0 100%;padding:0 7px;box-sizing:border-box;min-width:0}
+.promo-slide .promo-cards-card{height:100%}
+.promo-nav{display:flex;align-items:center;justify-content:space-between;margin-top:14px}
+.promo-arrows{display:flex;gap:8px}
+.promo-arrow{border:1px solid var(--border);background:#fff}
+.promo-arrow:hover{background:var(--bg)}
+.promo-dots{display:flex;gap:8px}
+.promo-dot{width:9px;height:9px;border-radius:50%;border:0;background:#d4dcd4;padding:0;transition:.2s}
+.promo-dot.active{background:var(--green);transform:scale(1.25)}
 @media(min-width:768px){
   .promo-cards-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
-  .promo-cards-card{grid-template-columns:1.05fr .95fr;align-items:stretch;min-height:260px}
-  .promo-cards-art{min-height:100%}
-  .promo-cards-art img{min-height:100%}
-  .promo-cards-copy{padding:32px}
+  .promo-slide{flex-basis:50%}
+  .promo-cards-card{min-height:300px}
+  .promo-cards-copy{padding:34px;max-width:62%}
+}
+@media(prefers-reduced-motion:reduce){
+  .promo-track{transition:none}
 }
 .promo-thumb-fallback{display:inline-grid;place-items:center;width:64px;height:40px;border-radius:8px;border:1px solid var(--a-line-soft);color:var(--green);font-size:18px}
 
