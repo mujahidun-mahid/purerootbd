@@ -50,7 +50,7 @@ export default function Confirmation() {
             <div style={{ padding: 40 }}>Loading order confirmation…</div>
           ) : order ? (
             <>
-              <div style={{ width: 68, height: 68, borderRadius: '50%', background: '#F1F7EF', color: 'var(--green)', display: 'grid', placeItems: 'center', margin: '0 auto 16px' }}>
+              <div style={{ width: 68, height: 68, borderRadius: '50%', background: '#E6F4EC', color: '#217A4B', display: 'grid', placeItems: 'center', margin: '0 auto 16px' }}>
                 <CheckCircle2 size={40} />
               </div>
               <div className="kicker">Thank you for choosing Pure Roots</div>

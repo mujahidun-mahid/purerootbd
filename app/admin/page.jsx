@@ -474,7 +474,7 @@ export default function AdminPage() {
           </div>
 
           <div>
-            <div className="admin-kicker" style={{ color: '#7fd6a4' }}>
+            <div className="admin-kicker" style={{ color: '#C4B5FD' }}>
               Secure Admin Console
             </div>
             <h2>

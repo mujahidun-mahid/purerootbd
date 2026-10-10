@@ -53,7 +53,7 @@ export default function Sidebar({ tab, onSelect, connected, onLogout, open, onCl
 
         <div className="admin-side-bottom">
           <div className="live-dot">
-            <i style={{ background: connected ? '#5ee095' : '#f5a623' }} />
+            <i style={{ background: connected ? '#217A4B' : '#f5a623' }} />
             {connected ? 'Live WebSocket' : 'Polling Active'}
           </div>
           <small>Auto-syncs every 5s</small>

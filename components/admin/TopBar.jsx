@@ -23,7 +23,7 @@ export default function TopBar({ tab, connected, lastSync, loading, onRefresh, o
 
       <div className="admin-header-actions">
         <span className="sync-time">
-          <i style={{ background: connected ? '#2e8b57' : '#f5a623' }} />
+          <i style={{ background: connected ? '#217A4B' : '#f5a623' }} />
           {lastSync
             ? `Synced ${lastSync.toLocaleTimeString([], {
                 hour: '2-digit',
