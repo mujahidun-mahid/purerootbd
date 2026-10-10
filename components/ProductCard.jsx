@@ -1,9 +1,8 @@
 "use client";
 import Link from "next/link";
 import { useState } from "react";
-import { Heart } from "lucide-react";
+import { Heart, Plus, Loader2 } from "lucide-react";
 import { useStore } from "./StoreProvider";
-import AddToCartButton from "./AddToCartButton";
 
 function prettyCategory(slug) {
   return String(slug || "")
@@ -20,13 +19,27 @@ function orbClass(category) {
 }
 
 export default function ProductCard({ product }) {
-  const { add, wishlist, toggleWish } = useStore();
+  const { add, wishlist, toggleWish, showToast } = useStore();
   const active = wishlist.includes(product.slug);
   const packages = Array.isArray(product.packages) && product.packages.length
     ? product.packages
     : [{ size: "500g", price: product.price }];
   const [size, setSize] = useState(packages[0].size);
+  const [adding, setAdding] = useState(false);
   const selected = packages.find((p) => p.size === size) || packages[0];
+  const inStock = Number(product.stock ?? 1) > 0;
+
+  function handlePlus() {
+    if (adding || !inStock) return;
+    setAdding(true);
+    try {
+      add(product, selected.size);
+    } catch (e) {
+      showToast("Could not add to cart. Please try again.", "error");
+    } finally {
+      setTimeout(() => setAdding(false), 600);
+    }
+  }
 
   const basePrice = Number(product.price) || 0;
   const baseOld = product.oldPrice === null || product.oldPrice === undefined ? null : Number(product.oldPrice);
@@ -95,8 +108,26 @@ export default function ProductCard({ product }) {
         <span className="fp-score">({Number(product.rating || 0).toFixed(2)})</span>
       </div>
 
-      <div className="fp-cta-wrap">
-        <AddToCartButton onAdd={() => add(product, selected.size)} />
+      <div className="fp-actions">
+        {inStock ? (
+          <Link className="btn btn-primary fp-buy" href="/checkout" onClick={() => add(product, selected.size)}>
+            Buy Now
+          </Link>
+        ) : (
+          <button type="button" className="btn btn-primary fp-buy" disabled title="Out of stock">
+            Out of Stock
+          </button>
+        )}
+        <button
+          type="button"
+          className="fp-plus"
+          onClick={handlePlus}
+          disabled={!inStock || adding}
+          title="Add to Cart"
+          aria-label={`Add ${product.name} to cart`}
+        >
+          {adding ? <Loader2 size={20} className="spin" /> : <Plus size={20} />}
+        </button>
       </div>
     </article>
   );
