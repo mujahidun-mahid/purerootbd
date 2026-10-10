@@ -69,19 +69,19 @@ export default function Checkout() {
 
   return (
     <>
-      <div className="page-head">
+      <div className="co-intro">
         <div className="container">
-          <div className="crumb">Cart / Checkout</div>
+          <div className="co-eyebrow">Checkout</div>
           <h1>Delivery Details</h1>
-          <p className="muted">Provide your shipping address for fast doorstep delivery across Bangladesh.</p>
+          <p>Where should we deliver your order?</p>
         </div>
       </div>
-      <section className="section">
-        <div className="container cart-layout">
-          <form onSubmit={submit}>
+      <section className="section co-section">
+        <div className="container co-layout">
+          <form onSubmit={submit} className="co-card" aria-label="Delivery information">
             <h2>Delivery Information</h2>
             {error && (
-              <div className="notice" style={{ color: "var(--danger)", margin: "14px 0", background: "#fff4f2", borderColor: "#f0c9c4" }}>
+              <div className="co-error" role="alert">
                 {error}
               </div>
             )}
@@ -192,22 +192,22 @@ export default function Checkout() {
                 />
               </div>
             </div>
-            <button className="btn btn-primary" style={{ marginTop: 22 }}>
+            <button className="btn btn-primary co-pay-btn" style={{ marginTop: 22 }}>
               Continue to Payment →
             </button>
           </form>
 
-          <aside className="summary">
-            <h3>Order Summary</h3>
+          <aside className="co-summary" aria-label="Order summary">
+            <h3>Summary</h3>
             {cart.map((x) => (
-              <div className="sumline" key={x.key}>
+              <div className="co-sumline" key={x.key}>
                 <span>
                   {x.name} ({x.size}) × {x.qty}
                 </span>
                 <span>৳{(Number(x.price || 0) * Number(x.qty || 1)).toLocaleString()}</span>
               </div>
             ))}
-            <div className="sumline">
+            <div className="co-sumline">
               <span>Delivery Fee</span>
               <span>
                 {delivery
@@ -215,11 +215,11 @@ export default function Checkout() {
                   : `Free (Orders ৳${Number(settings.free_delivery_threshold || 2000).toLocaleString()}+)`}
               </span>
             </div>
-            <div className="sumline sumtotal">
+            <div className="co-sumline co-sumtotal">
               <span>Total Payable</span>
               <span>৳{(total + delivery).toLocaleString()}</span>
             </div>
-            <Link href="/cart" className="muted" style={{ display: "block", marginTop: 12, fontSize: 13 }}>
+            <Link href="/cart" className="co-edit-cart">
               ← Edit Cart
             </Link>
           </aside>
