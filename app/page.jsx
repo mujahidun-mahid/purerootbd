@@ -1,58 +1,48 @@
 import Link from "next/link";
 import FeaturedProducts from "@/components/FeaturedProducts";
+import CategoryStrip from "@/components/CategoryStrip";
+import PromoGrid, { parsePromoBanners } from "@/components/PromoGrid";
 import { loadProducts, loadCategories } from "@/lib/products-server";
 import { getSiteSettings } from "@/lib/site-settings";
 import NewsletterForm from "@/components/NewsletterForm";
 
 export const dynamic = 'force-dynamic';
 
+function parseIds(raw) {
+  if (Array.isArray(raw)) return raw;
+  return String(raw || "").split(",").map((s) => s.trim()).filter(Boolean);
+}
+
 export default async function Home() {
   const settings = await getSiteSettings();
   const products = await loadProducts();
   const categories = await loadCategories({ featuredOnly: true });
+  const banners = parsePromoBanners(settings.promo_banners);
+  const counts = {};
+  products.forEach((p) => {
+    if (p.category) counts[p.category] = (counts[p.category] || 0) + 1;
+  });
+  const hero = {
+    eyebrow: settings.hero_eyebrow || "",
+    title: settings.hero_title || "Nature’s Nutrition, Delivered Pure",
+    subtitle: settings.hero_subtitle || "",
+    image: settings.hero_image_url || "",
+    offer: settings.hero_offer || "",
+    cta_text: settings.hero_cta_text || "Shop Now",
+    cta_link: settings.hero_cta_link || "/shop",
+    secondary_text: settings.hero_secondary_text || "",
+    secondary_link: settings.hero_secondary_link || "",
+  };
+  const featuredIds = parseIds(settings.featured_product_ids);
+  const featuredLimit = Math.max(1, parseInt(settings.featured_limit, 10) || 10);
 
   return (
     <>
-      <section className="hero">
-        <div className="container hero-grid">
-          <div>
-            <div className="kicker">{settings.site_name || "Pure Roots"} · Bangladesh</div>
-            <h1 className="serif">{settings.hero_title || "Nature’s Nutrition, Delivered Pure"}</h1>
-            <p>
-              {settings.hero_subtitle ||
-                "Premium nuts, seeds, spices, natural honey and nutritious food mixes, carefully selected for your everyday wellness."}
-            </p>
-            <div className="hero-actions">
-              <Link className="btn btn-primary" href="/shop">
-                Shop Now
-              </Link>
-              <Link className="btn btn-outline" href="/category/nuts">
-                Explore Categories
-              </Link>
-            </div>
-          </div>
-          <div
-            className="hero-art"
-            style={
-              settings.hero_image_url
-                ? {
-                    backgroundImage: `url(${settings.hero_image_url})`,
-                    backgroundSize: "cover",
-                    backgroundPosition: "center"
-                  }
-                : undefined
-            }
-          >
-            {!settings.hero_image_url && (
-              <>
-                <div className="food a" />
-                <div className="food b" />
-                <div className="food c" />
-              </>
-            )}
-          </div>
-        </div>
-      </section>
+      {(settings.category_strip_enabled ?? "true") !== "false" && (
+        <CategoryStrip categories={categories} counts={counts} />
+      )}
+
+      <PromoGrid hero={hero} banners={banners} />
 
       <section className="section">
         <div className="container">
@@ -83,7 +73,14 @@ export default async function Home() {
         </div>
       </section>
 
-      <FeaturedProducts products={products} limit={10} />
+      <FeaturedProducts
+        products={products}
+        limit={featuredLimit}
+        title={settings.featured_title || "Featured Products"}
+        subtitle={settings.featured_subtitle || ""}
+        enabled={(settings.featured_enabled ?? "true") !== "false"}
+        productIds={featuredIds}
+      />
 
       <section className="section">
         <div className="container">

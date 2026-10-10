@@ -37,7 +37,15 @@ export default function Header() {
     <>
       {showAnnouncement && (
         <div className="announcement-bar" role="status">
-          <div className="container">{settings.announcement}</div>
+          <div className="container">
+            {String(settings.announcement_url || "").trim() ? (
+              <Link href={settings.announcement_url} style={{ color: "inherit", textDecoration: "underline", textUnderlineOffset: 3 }}>
+                {settings.announcement}
+              </Link>
+            ) : (
+              settings.announcement
+            )}
+          </div>
         </div>
       )}
       <header className="header">

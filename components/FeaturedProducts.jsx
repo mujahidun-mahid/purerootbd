@@ -10,21 +10,41 @@ function prettyCategory(slug) {
     .join(" ");
 }
 
-export default function FeaturedProducts({ products = [], limit = 10 }) {
+export default function FeaturedProducts({
+  products = [],
+  limit = 10,
+  title = "Featured Products",
+  subtitle = "",
+  enabled = true,
+  productIds = [],
+}) {
   const [active, setActive] = useState("All");
+
+  const pool = useMemo(() => {
+    if (Array.isArray(productIds) && productIds.length) {
+      const ids = productIds.map((s) => String(s).trim().toLowerCase()).filter(Boolean);
+      const picked = ids
+        .map((id) => products.find((p) => p.slug === id || p.id === id))
+        .filter(Boolean);
+      return picked.length ? picked : products;
+    }
+    return products;
+  }, [products, productIds]);
 
   const filters = useMemo(() => {
     const seen = [];
-    products.forEach((p) => {
+    pool.forEach((p) => {
       if (p.category && !seen.includes(p.category)) seen.push(p.category);
     });
     return ["All", ...seen];
-  }, [products]);
+  }, [pool]);
 
   const shown = useMemo(() => {
-    const list = active === "All" ? products : products.filter((p) => p.category === active);
+    const list = active === "All" ? pool : pool.filter((p) => p.category === active);
     return list.slice(0, limit);
-  }, [products, active, limit]);
+  }, [pool, active, limit]);
+
+  if (!enabled) return null;
 
   return (
     <section className="section" aria-labelledby="featured-products-h">
@@ -32,7 +52,8 @@ export default function FeaturedProducts({ products = [], limit = 10 }) {
         <div className="fp-head">
           <div>
             <div className="kicker">Handpicked</div>
-            <h2 id="featured-products-h">Featured Products</h2>
+            <h2 id="featured-products-h">{title}</h2>
+            {subtitle && <p className="muted" style={{ margin: "8px 0 0" }}>{subtitle}</p>}
           </div>
           <nav className="fp-filters" aria-label="Filter products by category">
             {filters.map((f) => (

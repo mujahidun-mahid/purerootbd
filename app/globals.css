@@ -44,14 +44,13 @@ img,svg{max-width:100%}
 .announcement-bar{background:var(--dark);color:#eaf5ec;font-size:12px;padding:8px 0;letter-spacing:.2px}
 .announcement-bar .container{text-align:center}
 
-/* ---------- bottom navigation (mobile, floating) ---------- */
+/* ---------- bottom navigation (mobile) ---------- */
 .bottom-nav{
-  position:fixed;bottom:calc(12px + env(safe-area-inset-bottom, 0));left:12px;right:12px;z-index:60;
+  position:fixed;bottom:0;left:0;right:0;z-index:60;
   display:grid;grid-template-columns:repeat(4,1fr);
   background:rgba(255,255,255,.98);backdrop-filter:blur(12px);
-  border:1px solid var(--border);
-  border-radius:22px;
-  box-shadow:0 12px 32px rgba(22,77,42,.16);
+  border-top:1px solid var(--border);
+  box-shadow:0 -4px 20px rgba(22,77,42,.08);
   padding-bottom:env(safe-area-inset-bottom, 0);
 }
 .bottom-nav-item{
@@ -79,14 +78,14 @@ img,svg{max-width:100%}
   .bottom-nav{display:none}
 }
 
-/* Add bottom padding to main to prevent content being covered by floating bottom nav */
+/* Add bottom padding to main to prevent content being covered by bottom nav */
 @media(max-width:980px){
-  main{padding-bottom:calc(96px + env(safe-area-inset-bottom, 0))}
+  main{padding-bottom:calc(70px + env(safe-area-inset-bottom, 0))}
 }
 
-/* Adjust footer to not be hidden behind floating bottom nav on mobile */
+/* Adjust footer to not be hidden behind bottom nav on mobile */
 @media(max-width:980px){
-  .footer{margin-bottom:calc(96px + env(safe-area-inset-bottom, 0))}
+  .footer{margin-bottom:calc(70px + env(safe-area-inset-bottom, 0))}
 }
 
 /* ---------- buttons / forms ---------- */
@@ -312,6 +311,51 @@ label{font-size:13px;font-weight:700;color:#344038;display:block;margin-bottom:6
 .catalog-art img{object-fit:contain;padding:4px;border-radius:10px}
 .mini-img img{border-radius:10px}
 
+
+/* ---------- category strip (horizontal scroll) ---------- */
+.cat-strip{background:#fff;border-bottom:1px solid var(--border)}
+.cat-strip-track{display:flex;gap:10px;overflow-x:auto;padding:12px 0;scroll-snap-type:x mandatory;scrollbar-width:thin}
+.cat-strip-item{flex:0 0 auto;scroll-snap-align:start;display:flex;align-items:center;gap:10px;border:1px solid var(--border);border-radius:999px;padding:6px 16px 6px 6px;background:var(--bg);transition:.2s;min-width:0}
+.cat-strip-item:hover{border-color:var(--green);transform:translateY(-1px)}
+.cat-strip-icon{width:36px;height:36px;border-radius:50%;background:#fff;display:grid;place-items:center;font-size:20px;overflow:hidden;flex:0 0 auto}
+.cat-strip-icon img{width:100%;height:100%;object-fit:cover;display:block}
+.cat-strip-name{font-size:13px;font-weight:700;color:var(--dark);white-space:nowrap}
+.cat-strip-count{font-size:11px;color:var(--muted);white-space:nowrap}
+
+/* ---------- promo hero grid (main + secondary banners) ---------- */
+.promo-grid-section{padding:34px 0 8px}
+.promo-grid{display:grid;grid-template-columns:1fr;gap:14px}
+.promo-main{background:linear-gradient(120deg,#f7faf7 0%,#fff 60%);border:1px solid var(--border);border-radius:24px;overflow:hidden;display:grid;grid-template-columns:1fr;min-height:320px}
+.promo-main-copy{padding:28px 24px;display:flex;flex-direction:column;justify-content:center;gap:12px}
+.promo-main-copy h1{font-size:clamp(30px,5vw,54px);line-height:1.05;margin:0;color:var(--dark)}
+.promo-main-copy p{font-size:clamp(15px,1.7vw,17px);line-height:1.65;color:#5c675f;margin:0;max-width:520px}
+.promo-offer{display:inline-block;width:fit-content;background:var(--green);color:#fff;font-size:13px;font-weight:800;padding:6px 14px;border-radius:999px}
+.promo-main-art{min-height:240px;position:relative;overflow:hidden;background:linear-gradient(145deg,#e8f2e9,#f9f4e8)}
+.promo-side{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.promo-side .promo-card:first-child{grid-column:1/-1}
+.promo-card{background:#fff;border:1px solid var(--border);border-radius:20px;overflow:hidden;display:flex;flex-direction:column;transition:.2s;min-width:0}
+.promo-card:hover{transform:translateY(-3px);box-shadow:0 12px 35px rgba(22,77,42,.10)}
+.promo-card-art{height:120px;overflow:hidden;background:linear-gradient(145deg,#eef5ee,#faf6ec);display:grid;place-items:center}
+.promo-card-art img{width:100%;height:100%;object-fit:cover;display:block}
+.promo-art-fallback{font-size:34px;color:var(--green)}
+.promo-card-copy{padding:16px;display:flex;flex-direction:column;gap:6px}
+.promo-eyebrow{font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--green)}
+.promo-card-copy h3{margin:0;font-size:17px;color:var(--dark)}
+.promo-card-copy p{margin:0}
+.promo-cta{font-size:13px;font-weight:800;color:var(--green);margin-top:4px}
+.promo-cta:hover{text-decoration:underline}
+@media(min-width:768px){
+  .promo-main{grid-template-columns:1.05fr .95fr;align-items:stretch}
+  .promo-main-art{min-height:340px}
+  .promo-main-copy{padding:40px}
+}
+@media(min-width:981px){
+  .promo-grid-section{padding:44px 0 12px}
+  .promo-grid{grid-template-columns:62% 1fr;gap:18px}
+  .promo-main{min-height:420px}
+  .promo-side{grid-template-columns:1fr 1fr;align-content:stretch}
+  .promo-card-art{height:140px}
+}
 
 /* ---------- featured products + filter bar ---------- */
 .fp-head{display:flex;flex-direction:column;align-items:flex-start;gap:14px;margin-bottom:24px}

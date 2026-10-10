@@ -43,7 +43,21 @@ const IDENTITY_KEYS = [
   'contact_email',
   'contact_address',
   'announcement',
-  'announcement_enabled'
+  'announcement_enabled',
+  'announcement_url',
+  'hero_eyebrow',
+  'hero_offer',
+  'hero_cta_text',
+  'hero_cta_link',
+  'hero_secondary_text',
+  'hero_secondary_link',
+  'promo_banners',
+  'category_strip_enabled',
+  'featured_enabled',
+  'featured_title',
+  'featured_subtitle',
+  'featured_limit',
+  'featured_product_ids'
 ];
 
 export default function AdminPage() {

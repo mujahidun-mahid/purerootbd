@@ -1,4 +1,5 @@
 import { Image as ImageIcon, Megaphone, ShieldCheck, Save } from 'lucide-react';
+import HomepageBuilder from '../HomepageBuilder';
 
 const identityFields = [
   { key: 'site_name', label: 'Site Name', placeholder: 'PURE ROOTS' },
@@ -244,6 +245,13 @@ export default function SettingsTab({
             </button>
           </div>
         </section>
+
+        <HomepageBuilder
+          identity={identity}
+          setIdentity={setIdentity}
+          saveIdentity={saveIdentity}
+          loading={loading}
+        />
 
         {/* -------------------------------------------------------
             SYSTEM HEALTH
