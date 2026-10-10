@@ -1,4 +1,4 @@
-const BASE = 'https://pure-roots-fawn.vercel.app';
+const BASE = 'https://purerootsbd.vercel.app';
 
 export default function robots() {
   return {

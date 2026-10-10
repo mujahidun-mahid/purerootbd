@@ -1,6 +1,6 @@
 import { products, categories } from '@/lib/products';
 
-const BASE = 'https://pure-roots-fawn.vercel.app';
+const BASE = 'https://purerootsbd.vercel.app';
 
 const pages = [
   ['/', 1, 'daily'],

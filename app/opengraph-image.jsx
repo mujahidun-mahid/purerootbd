@@ -57,7 +57,7 @@ export default function OpengraphImage() {
         </div>
 
         <div style={{ display: 'flex', fontSize: 26, color: '#86efac', letterSpacing: 1 }}>
-          pure-roots-fawn.vercel.app
+          purerootsbd.vercel.app
         </div>
       </div>
     ),
