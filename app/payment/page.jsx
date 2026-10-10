@@ -8,9 +8,9 @@ import PayLogo from "@/components/PayLogo";
 
 const PAYMENT_METHODS = [
   ["cod", "Cash on Delivery", "Cash", "Pay when your order arrives at your doorstep.", Banknote, null, null],
-  ["bkash", "bKash Payment", "bKash", "Pay using your bKash account and follow the payment instructions.", null, { text: "bKash", bg: "#E2136E" }, "/images/payments/bkash.png"],
-  ["nagad", "Nagad Payment", "Nagad", "Complete your payment using Nagad and follow the provided instructions.", null, { text: "Nagad", bg: "#F6921E" }, "/images/payments/nagad.png"],
-  ["bank", "Bank Transfer", "Bank", "Use the bank account details provided during checkout.", Building2, null, "/images/payments/bank.png"]
+  ["bkash", "bKash Payment", "bKash", "Pay using your bKash account and follow the payment instructions.", null, { text: "bKash", bg: "#E2136E" }, "https://logos-world.net/wp-content/uploads/2024/10/Bkash-Logo.jpg"],
+  ["nagad", "Nagad Payment", "Nagad", "Complete your payment using Nagad and follow the provided instructions.", null, { text: "Nagad", bg: "#F6921E" }, "https://www.logo.wine/a/logo/Nagad/Nagad-Logo.wine.svg"],
+  ["bank", "Bank Transfer", "Bank", "Use the bank account details provided during checkout.", Building2, null, "https://static.vecteezy.com/system/resources/thumbnails/013/948/616/small/bank-icon-logo-design-vector.jpg"]
 ];
 
 export default function Payment() {
@@ -56,8 +56,8 @@ export default function Payment() {
       location.href = "/cart";
       return;
     }
-    if (!customer?.name || !customer?.phone) {
-      setError("Your delivery information is missing. Please return to checkout to complete it.");
+    if (!customer?.name?.trim() || !customer?.phone?.trim() || !customer?.address?.trim()) {
+      setError("Your delivery information is incomplete. Please return to checkout and fill in your name, phone number, and full address.");
       return;
     }
 

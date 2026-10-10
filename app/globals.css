@@ -601,8 +601,8 @@ a.co-step-label:hover{text-decoration:underline}
 .pm-error{background:#FDF2F2;border:1px solid #F3C6C6;color:var(--danger);border-radius:14px;padding:13px 15px;font-size:14px}
 .pm-methods{display:flex;gap:10px;overflow-x:auto;padding:4px 2px 8px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch}
 .pm-method{flex:1 0 96px;scroll-snap-align:start;display:flex;flex-direction:column;align-items:center;gap:8px;background:#fff;border:1.5px solid var(--border);border-radius:20px;padding:14px 10px;transition:border-color .2s,background .2s;min-width:0}
-.pm-method:hover{border-color:#D6336C}
-.pm-method.selected{border-color:#D6336C;background:#FDF0F5}
+.pm-method:hover{border-color:var(--green)}
+.pm-method.selected{border-color:var(--green);background:var(--mint-soft)}
 .pm-method:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
 .pm-micon{width:46px;height:46px;border-radius:16px;background:var(--bg);display:grid;place-items:center;color:var(--dark)}
 .pm-method.selected .pm-micon{background:#fff}
@@ -624,8 +624,8 @@ a.co-step-label:hover{text-decoration:underline}
 .pm-sumtotal{font-size:17px;font-weight:800;color:var(--ink);border-top:1px solid var(--border);padding-top:14px;margin-bottom:0}
 .pm-deliver-to{margin-top:12px;padding-top:12px;border-top:1px solid var(--border);font-size:13px}
 .pm-deliver-to strong{color:var(--ink)}
-.pm-pay{width:100%;border:0;border-radius:16px;background:#D6336C;color:#fff;font-weight:800;font-size:16px;padding:16px;transition:background .2s;min-height:56px}
-.pm-pay:hover:not(:disabled){background:#C2255C}
+.pm-pay{width:100%;border:0;border-radius:16px;background:var(--green);color:#fff;font-weight:800;font-size:16px;padding:16px;transition:background .2s;min-height:56px}
+.pm-pay:hover:not(:disabled){background:var(--dark)}
 .pm-pay:disabled{opacity:.65;cursor:wait}
 .pm-pay:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
 .pm-secure{display:flex;align-items:center;justify-content:center;gap:6px;color:var(--muted);font-size:13px;margin:0;text-align:center}

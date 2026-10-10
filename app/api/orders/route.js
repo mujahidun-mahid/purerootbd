@@ -18,6 +18,24 @@ function isCancellable(status) {
   return CANCELLABLE_STATUSES.has(String(status || '').toLowerCase());
 }
 
+const ALLOWED_PAYMENT_METHODS = new Set(['cod', 'bkash', 'nagad', 'bank']);
+
+async function getDeliveryPolicy(supabase) {
+  let fee = 80;
+  let threshold = 2000;
+  try {
+    const { data } = await supabase
+      .from('site_settings')
+      .select('key,value')
+      .in('key', ['delivery_fee_default', 'free_delivery_threshold']);
+    for (const row of data || []) {
+      if (row.key === 'delivery_fee_default' && Number(row.value) >= 0) fee = Number(row.value);
+      if (row.key === 'free_delivery_threshold' && Number(row.value) >= 0) threshold = Number(row.value);
+    }
+  } catch {}
+  return { fee, threshold };
+}
+
 export async function POST(request) {
   try {
     const body = await request.json().catch(() => ({}));
@@ -27,15 +45,25 @@ export async function POST(request) {
     const name = String(customer.name || '').trim();
     const phone = normalizePhone(customer.phone);
     const address = String(customer.address || '').trim();
+    const paymentMethod = body.payment_method || body.method || 'cod';
 
     if (!name) {
       return NextResponse.json({ error: 'Customer name is required.' }, { status: 400 });
     }
-    if (!phone) {
+    if (!phone || phone.replace(/\D/g, '').length < 10) {
       return NextResponse.json({ error: 'Valid phone number is required.' }, { status: 400 });
+    }
+    if (!address) {
+      return NextResponse.json({ error: 'Delivery address is required.' }, { status: 400 });
+    }
+    if (!ALLOWED_PAYMENT_METHODS.has(paymentMethod)) {
+      return NextResponse.json({ error: 'Unsupported payment method.' }, { status: 400 });
     }
     if (!items.length) {
       return NextResponse.json({ error: 'Order must contain at least one item.' }, { status: 400 });
+    }
+    if (items.length > 100) {
+      return NextResponse.json({ error: 'Too many items in a single order.' }, { status: 400 });
     }
 
     const config = getSupabaseConfig();
@@ -52,17 +80,74 @@ export async function POST(request) {
     }
 
     const orderNumber = body.order || body.order_number || `PR-${Math.floor(10000000 + Math.random() * 90000000)}`;
-    const subtotal = Number(body.subtotal || 0);
-    const deliveryFee = Number(body.delivery_fee ?? body.delivery ?? (subtotal >= 2000 ? 0 : 80));
-    const total = Number(body.total || (subtotal + deliveryFee));
-    const paymentMethod = body.payment_method || body.method || 'cod';
 
-    let initialStatus = body.status || 'Order Placed';
-    if (!body.status) {
-      if (paymentMethod === 'cod') initialStatus = 'Order Placed';
-      else if (paymentMethod === 'bank') initialStatus = 'Awaiting Bank Transfer';
-      else initialStatus = 'Awaiting Payment';
+    // Idempotency: retried submissions with the same order number
+    // return the original order instead of creating a duplicate.
+    const { data: existing } = await supabase
+      .from('orders')
+      .select('*')
+      .eq('order_number', String(orderNumber).trim())
+      .maybeSingle();
+    if (existing) {
+      return NextResponse.json({
+        order: { ...existing, order: existing.order_number, method: existing.payment_method },
+        duplicate: true
+      });
     }
+
+    // Server-side catalog verification: every line must match a real,
+    // active product at its real package price, within available stock.
+    const { data: catalog, error: catalogError } = await supabase
+      .from('products')
+      .select('id,slug,name,price,stock,packages,active');
+    if (catalogError) throw catalogError;
+    const bySlug = new Map((catalog || []).map((p) => [String(p.slug || '').toLowerCase(), p]));
+    const byId = new Map((catalog || []).map((p) => [String(p.id || ''), p]));
+
+    let subtotal = 0;
+    const sanitizedItems = [];
+    for (const x of items) {
+      const qty = Math.max(1, Math.min(99, Number(x.qty || 1)));
+      const ref = bySlug.get(String(x.slug || '').toLowerCase()) || byId.get(String(x.productId || x.id || ''));
+      if (!ref || ref.active === false) {
+        return NextResponse.json({ error: `Product "${x.name || x.slug || 'unknown'}" is not available.` }, { status: 400 });
+      }
+      const size = String(x.size || '500g');
+      const pkg = Array.isArray(ref.packages) && ref.packages.length
+        ? ref.packages.find((p) => String(p.size) === size) || ref.packages[0]
+        : { size, price: ref.price };
+      const unitPrice = Number(pkg.price ?? ref.price ?? 0);
+      if (!(unitPrice > 0)) {
+        return NextResponse.json({ error: `Product "${ref.name}" has no valid price.` }, { status: 400 });
+      }
+      if (ref.stock !== null && ref.stock !== undefined && Number(ref.stock) < qty) {
+        return NextResponse.json({ error: `Only ${ref.stock} × ${ref.name} left in stock.` }, { status: 400 });
+      }
+      subtotal += unitPrice * qty;
+      sanitizedItems.push({
+        key: x.key || `${ref.id}-${pkg.size}`,
+        productId: ref.id,
+        slug: ref.slug,
+        name: ref.name,
+        size: pkg.size,
+        price: unitPrice,
+        qty,
+        imageType: x.imageType || x.category || 'nuts',
+        image: x.image || ''
+      });
+    }
+    subtotal = Math.round(subtotal * 100) / 100;
+
+    const { fee: deliveryDefault, threshold: freeThreshold } = await getDeliveryPolicy(supabase);
+    const deliveryFee = subtotal <= 0 ? 0 : subtotal >= freeThreshold ? 0 : deliveryDefault;
+    const total = Math.round((subtotal + deliveryFee) * 100) / 100;
+
+    // Order status follows fulfillment; payment is NEVER marked paid here.
+    // Online methods stay pending until a verified provider callback arrives.
+    let initialStatus;
+    if (paymentMethod === 'cod') initialStatus = 'Order Placed';
+    else if (paymentMethod === 'bank') initialStatus = 'Awaiting Bank Transfer';
+    else initialStatus = 'Awaiting Payment';
 
     const sanitizedCustomer = {
       name,
@@ -77,29 +162,18 @@ export async function POST(request) {
       notes: String(customer.notes || '').trim()
     };
 
-    const sanitizedItems = items.map((x, idx) => ({
-      key: x.key || `${x.productId || x.slug || x.name || idx}-${x.size || '500g'}`,
-      productId: x.productId || x.id || '',
-      slug: x.slug || '',
-      name: x.name || 'Pure Roots Product',
-      size: x.size || '500g',
-      price: Number(x.price || 0),
-      qty: Math.max(1, Number(x.qty || 1)),
-      imageType: x.imageType || x.category || 'nuts',
-      image: x.image || ''
-    }));
-
     const orderRow = {
-      order_number: orderNumber,
+      order_number: String(orderNumber).trim(),
       phone,
       customer: sanitizedCustomer,
       items: sanitizedItems,
       payment_method: paymentMethod,
+      payment_status: 'pending',
       subtotal,
       delivery_fee: deliveryFee,
       total,
       status: initialStatus,
-      placed_at: body.createdAt || new Date().toISOString()
+      placed_at: new Date().toISOString()
     };
 
     const { data, error } = await supabase
@@ -173,6 +247,7 @@ export async function GET(request) {
       delivery_fee: Number(row.delivery_fee || 0),
       total: Number(row.total || 0),
       status: row.status,
+      payment_status: row.payment_status || 'pending',
       customer: row.customer,
       items: row.items,
       date: new Date(row.placed_at).toLocaleDateString('en-BD'),

@@ -74,6 +74,16 @@ export default function Confirmation() {
                     <strong>{order.payment_method === 'cod' ? 'Cash on Delivery' : order.payment_method || order.method || 'COD'}</strong>
                   </div>
                   <div>
+                    <span className="muted" style={{ display: 'block', fontSize: 11, textTransform: 'uppercase', letterSpacing: 1 }}>Payment Status</span>
+                    <strong style={{ color: (order.payment_status || 'pending') === 'paid' ? '#217A4B' : 'var(--warning, #946200)' }}>
+                      {(order.payment_status || 'pending') === 'paid'
+                        ? 'Paid'
+                        : order.payment_method === 'cod' || order.method === 'cod'
+                          ? 'Pending — pay on delivery'
+                          : 'Pending verification'}
+                    </strong>
+                  </div>
+                  <div>
                     <span className="muted" style={{ display: 'block', fontSize: 11, textTransform: 'uppercase', letterSpacing: 1 }}>Total Amount</span>
                     <strong style={{ fontSize: 16 }}>৳{Number(order.total || 0).toLocaleString()}</strong>
                   </div>
