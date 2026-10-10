@@ -23,6 +23,7 @@ import FulfillmentTab from '@/components/admin/tabs/FulfillmentTab';
 import DeliveryTab from '@/components/admin/tabs/DeliveryTab';
 import DriversTab from '@/components/admin/tabs/DriversTab';
 import PromotionsTab from '@/components/admin/tabs/PromotionsTab';
+import PromoCardsTab from '@/components/admin/tabs/PromoCardsTab';
 import LoyaltyTab from '@/components/admin/tabs/LoyaltyTab';
 import SupportTab from '@/components/admin/tabs/SupportTab';
 import PaymentsTab from '@/components/admin/tabs/PaymentsTab';
@@ -611,6 +612,8 @@ export default function AdminPage() {
       {tab === 'products' && <ProductsTab password={sessionPassword} />}
 
       {tab === 'featured-categories' && <FeaturedCategoriesTab password={sessionPassword} />}
+
+      {tab === 'promo-cards' && <PromoCardsTab password={sessionPassword} />}
 
       {tab === 'analytics' && <AnalyticsTab data={data} />}
 

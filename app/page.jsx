@@ -2,7 +2,9 @@ import Link from "next/link";
 import FeaturedProducts from "@/components/FeaturedProducts";
 import CategoryStrip from "@/components/CategoryStrip";
 import PromoGrid, { parsePromoBanners } from "@/components/PromoGrid";
+import PromoCards from "@/components/PromoCards";
 import { loadProducts, loadCategories } from "@/lib/products-server";
+import { loadPromoCards } from "@/lib/promo-cards";
 import { getSiteSettings } from "@/lib/site-settings";
 import NewsletterForm from "@/components/NewsletterForm";
 
@@ -17,6 +19,7 @@ export default async function Home() {
   const settings = await getSiteSettings();
   const products = await loadProducts();
   const categories = await loadCategories({ featuredOnly: true });
+  const promoCards = await loadPromoCards();
   const banners = parsePromoBanners(settings.promo_banners);
   const counts = {};
   products.forEach((p) => {
@@ -68,6 +71,8 @@ export default async function Home() {
           </div>
         </div>
       </section>
+
+      <PromoCards cards={promoCards} />
 
       <FeaturedProducts
         products={products}
