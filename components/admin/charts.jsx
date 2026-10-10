@@ -30,15 +30,15 @@ export function AreaChart({ data = [], height = 170, format = (v) => v }) {
       <svg className="area-chart" viewBox={`0 0 600 ${height}`} preserveAspectRatio="none" role="img" aria-label="Trend chart">
         <defs>
           <linearGradient id="areaFill" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="var(--a-accent, #8064BD)" stopOpacity="0.35" />
-            <stop offset="100%" stopColor="var(--a-accent, #8064BD)" stopOpacity="0.02" />
+            <stop offset="0%" stopColor="var(--a-accent, #819067)" stopOpacity="0.35" />
+            <stop offset="100%" stopColor="var(--a-accent, #819067)" stopOpacity="0.02" />
           </linearGradient>
         </defs>
         {[0.25, 0.5, 0.75].map((t) => (
           <line key={t} x1="0" x2="600" y1={height * t} y2={height * t} className="chart-grid" />
         ))}
         {line && <path d={area} fill="url(#areaFill)" />}
-        {line && <path d={line} fill="none" stroke="var(--a-accent, #8064BD)" strokeWidth="2.5" vectorEffect="non-scaling-stroke" />}
+        {line && <path d={line} fill="none" stroke="var(--a-accent, #819067)" strokeWidth="2.5" vectorEffect="non-scaling-stroke" />}
       </svg>
       <div className="chart-axis">
         <span>{data[0]?.label}</span>
@@ -70,7 +70,7 @@ export function DonutChart({ data = [], size = 132, format = (v) => v }) {
                 cy="66"
                 r={radius}
                 fill="none"
-                stroke={d.color || 'var(--a-accent, #8064BD)'}
+                stroke={d.color || 'var(--a-accent, #819067)'}
                 strokeWidth="15"
                 strokeDasharray={`${dash} ${c - dash}`}
                 strokeDashoffset={-offset}
@@ -90,7 +90,7 @@ export function DonutChart({ data = [], size = 132, format = (v) => v }) {
       <ul className="donut-legend">
         {data.map((d) => (
           <li key={d.label}>
-            <i style={{ background: d.color || 'var(--a-accent, #8064BD)' }} />
+            <i style={{ background: d.color || 'var(--a-accent, #819067)' }} />
             <span>{d.label}</span>
             <b>{format(d.value)}</b>
           </li>
@@ -122,7 +122,7 @@ export function Sparkline({ values = [], width = 84, height = 26 }) {
   if (!line) return <span className="muted">—</span>;
   return (
     <svg className="sparkline" width={width} height={height} viewBox={`0 0 ${width} ${height}`} aria-hidden="true">
-      <path d={line} fill="none" stroke="var(--a-accent, #8064BD)" strokeWidth="2" />
+      <path d={line} fill="none" stroke="var(--a-accent, #819067)" strokeWidth="2" />
     </svg>
   );
 }

@@ -108,7 +108,7 @@ export default function SettingsTab({
             style={{
               backgroundImage: heroUrl
                 ? `linear-gradient(90deg, rgba(7,38,22,.85), rgba(7,38,22,.2)), url(${heroUrl})`
-                : 'linear-gradient(135deg, #164D2A, #2E8B57)'
+                : 'linear-gradient(135deg, #062D08, #0A400C)'
             }}
           >
             <span>Live Preview</span>
@@ -271,7 +271,7 @@ export default function SettingsTab({
               <small>Supabase PostgreSQL</small>
             </div>
             <span>
-              <i style={{ background: health.database === 'Connected' ? '#2e8b57' : '#c0392b' }} />
+              <i style={{ background: health.database === 'Connected' ? '#217A4B' : '#c0392b' }} />
               {health.database || 'Checking…'}
             </span>
           </div>
