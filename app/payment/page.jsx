@@ -4,12 +4,13 @@ import { useStore } from "@/components/StoreProvider";
 import { useSiteSettings } from "@/components/SiteSettingsProvider";
 import Link from "next/link";
 import { Banknote, Building2, Lock, ArrowLeft, ShieldCheck } from "lucide-react";
+import PayLogo from "@/components/PayLogo";
 
 const PAYMENT_METHODS = [
-  ["cod", "Cash on Delivery", "Cash", "Pay when your order arrives at your doorstep.", Banknote, null],
-  ["bkash", "bKash Payment", "bKash", "Pay using your bKash account and follow the payment instructions.", null, { text: "bKash", bg: "#E2136E" }],
-  ["nagad", "Nagad Payment", "Nagad", "Complete your payment using Nagad and follow the provided instructions.", null, { text: "Nagad", bg: "#F6921E" }],
-  ["bank", "Bank Transfer", "Bank", "Use the bank account details provided during checkout.", Building2, null]
+  ["cod", "Cash on Delivery", "Cash", "Pay when your order arrives at your doorstep.", Banknote, null, null],
+  ["bkash", "bKash Payment", "bKash", "Pay using your bKash account and follow the payment instructions.", null, { text: "bKash", bg: "#E2136E" }, "/images/payments/bkash.png"],
+  ["nagad", "Nagad Payment", "Nagad", "Complete your payment using Nagad and follow the provided instructions.", null, { text: "Nagad", bg: "#F6921E" }, "/images/payments/nagad.png"],
+  ["bank", "Bank Transfer", "Bank", "Use the bank account details provided during checkout.", Building2, null, "/images/payments/bank.png"]
 ];
 
 export default function Payment() {
@@ -31,6 +32,17 @@ export default function Payment() {
   const activeMethod = methods.some(([id]) => id === method) ? method : (methods[0]?.[0] || "cod");
   const active = methods.find(([id]) => id === activeMethod);
   const ActiveIcon = active && active[4] ? active[4] : null;
+  const panelFallback = active && active[5] ? (
+    <span className="pm-logo pm-logo-lg" style={{ background: active[5].bg }} aria-hidden="true">
+      {active[5].text}
+    </span>
+  ) : (
+    ActiveIcon && (
+      <span className="pm-panel-icon" aria-hidden="true">
+        <ActiveIcon size={22} />
+      </span>
+    )
+  );
 
   useEffect(() => {
     try {
@@ -133,8 +145,13 @@ export default function Payment() {
           )}
 
           <div className="pm-methods" role="radiogroup" aria-label="Choose a payment method">
-            {(methods.length ? methods : PAYMENT_METHODS.slice(0, 1)).map(([id, title, short, , Icon, badge]) => {
+            {(methods.length ? methods : PAYMENT_METHODS.slice(0, 1)).map(([id, title, short, , Icon, badge, logo]) => {
               const selected = activeMethod === id;
+              const fallback = badge ? (
+                <span className="pm-logo" style={{ background: badge.bg }}>{badge.text}</span>
+              ) : (
+                Icon && <Icon size={22} />
+              );
               return (
                 <button
                   key={id}
@@ -147,10 +164,10 @@ export default function Payment() {
                   onClick={() => setMethod(id)}
                 >
                   <span className="pm-micon" aria-hidden="true">
-                    {badge ? (
-                      <span className="pm-logo" style={{ background: badge.bg }}>{badge.text}</span>
+                    {logo ? (
+                      <PayLogo src={logo} alt={`${title} logo`} whiteBg={id === "nagad"} fallback={fallback} />
                     ) : (
-                      Icon && <Icon size={22} />
+                      fallback
                     )}
                   </span>
                   <span className="pm-mname">{short}</span>
@@ -162,16 +179,16 @@ export default function Payment() {
           {active && (
             <div className="pm-panel">
               <div className="pm-panel-head">
-                {active[5] ? (
-                  <span className="pm-logo pm-logo-lg" style={{ background: active[5].bg }} aria-hidden="true">
-                    {active[5].text}
-                  </span>
+                {active[6] ? (
+                  <PayLogo
+                    src={active[6]}
+                    alt={`${active[1]} logo`}
+                    whiteBg={active[0] === "nagad"}
+                    large
+                    fallback={panelFallback}
+                  />
                 ) : (
-                  ActiveIcon && (
-                    <span className="pm-panel-icon" aria-hidden="true">
-                      <ActiveIcon size={22} />
-                    </span>
-                  )
+                  panelFallback
                 )}
                 <div>
                   <strong>{active[1]}</strong>
