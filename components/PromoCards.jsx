@@ -15,6 +15,18 @@ function usePerView() {
   return perView;
 }
 
+function useReducedMotion() {
+  const [reduced, setReduced] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const update = () => setReduced(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
+  return reduced;
+}
+
 function PromoCard({ card }) {
   const tint = card.background_color || "#FFFDF9";
   return (
@@ -44,12 +56,16 @@ function PromoCard({ card }) {
   );
 }
 
-export default function PromoCards({ cards = [], carousel = { enabled: true, autoplay: false, interval: 5000 } }) {
+export default function PromoCards({ cards = [], carousel = { enabled: true, autoplay: false, interval: 6000 } }) {
   const perView = usePerView();
+  const reducedMotion = useReducedMotion();
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
   const touchX = useRef(null);
   const pages = Math.max(1, cards.length - perView + 1);
+  const isMobile = perView === 1;
+  // Mobile always autoplays (6s default); desktop/tablet follow the admin toggle.
+  const autoplayOn = pages > 1 && !reducedMotion && (isMobile ? true : carousel.autoplay);
 
   useEffect(() => {
     setIndex((i) => Math.min(i, pages - 1));
@@ -63,11 +79,11 @@ export default function PromoCards({ cards = [], carousel = { enabled: true, aut
   );
 
   useEffect(() => {
-    if (!carousel.autoplay || paused || pages <= 1) return;
-    const ms = Math.max(2000, Number(carousel.interval) || 5000);
+    if (!autoplayOn || paused) return;
+    const ms = Math.max(2000, Number(carousel.interval) || 6000);
     const id = setInterval(() => go(1), ms);
     return () => clearInterval(id);
-  }, [carousel.autoplay, carousel.interval, paused, pages, go]);
+  }, [autoplayOn, carousel.interval, paused, pages, go, index]);
 
   if (!cards.length) return null;
 

@@ -23,7 +23,7 @@ export default async function Home() {
   const promoCarousel = {
     enabled: (settings.promo_carousel_enabled ?? "true") !== "false",
     autoplay: (settings.promo_autoplay ?? "false") === "true",
-    interval: Math.max(2000, parseInt(settings.promo_interval_ms, 10) || 5000),
+    interval: Math.max(2000, parseInt(settings.promo_interval_ms, 10) || 6000),
   };
   const banners = parsePromoBanners(settings.promo_banners);
   const counts = {};

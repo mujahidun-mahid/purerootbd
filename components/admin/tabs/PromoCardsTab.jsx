@@ -27,7 +27,7 @@ export default function PromoCardsTab({ password }) {
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState('');
   const fileRef = useRef(null);
-  const [carousel, setCarousel] = useState({ enabled: true, autoplay: false, interval: 5000 });
+  const [carousel, setCarousel] = useState({ enabled: true, autoplay: false, interval: 6000 });
   const [carouselSaving, setCarouselSaving] = useState(false);
 
   const authHeaders = () => ({ 'x-admin-password': password, 'content-type': 'application/json' });
@@ -61,7 +61,7 @@ export default function PromoCardsTab({ password }) {
         setCarousel({
           enabled: (s.promo_carousel_enabled ?? 'true') !== 'false',
           autoplay: (s.promo_autoplay ?? 'false') === 'true',
-          interval: Math.max(2000, parseInt(s.promo_interval_ms, 10) || 5000),
+          interval: Math.max(2000, parseInt(s.promo_interval_ms, 10) || 6000),
         });
       } catch {}
     })();
@@ -246,7 +246,7 @@ export default function PromoCardsTab({ password }) {
         <div className="toggle-row">
           <div>
             <strong>Autoplay</strong>
-            <small>{carousel.autoplay ? 'Advancing automatically' : 'Manual navigation only'}</small>
+            <small>{carousel.autoplay ? 'Advancing automatically' : 'Manual navigation only'} · Mobile autoplays every 6s by default; this toggle controls desktop.</small>
           </div>
           <button
             type="button"
