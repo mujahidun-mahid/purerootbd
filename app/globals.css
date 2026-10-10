@@ -200,16 +200,47 @@ label{font-size:13px;font-weight:700;color:#344038;display:block;margin-bottom:6
 .faq{border-bottom:1px solid var(--border)}.faq summary{padding:18px 0;font-weight:700;color:var(--dark);cursor:pointer}.faq p{color:var(--muted);line-height:1.7;padding:0 0 18px;margin:0}
 .searchbox{display:flex;gap:10px;max-width:100%}.searchbox input{flex:1;min-width:0}
 
-/* ---------- footer ---------- */
-.footer{background:#122c1c;color:#dfe9e1;padding:40px 0 18px}
-.footer-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px}
-.footer-grid>div:first-child{grid-column:1/-1}
-.footer h3{color:#fff;font-size:14px}.footer a{display:block;color:#b9c9bd;font-size:13px;margin:10px 0}
-.copyright{border-top:1px solid rgba(255,255,255,.12);margin-top:30px;padding-top:18px;font-size:12px;color:#9eb0a2}
+/* ---------- footer (light minimal) ---------- */
+.footer{background:#fff;border-top:1px solid var(--border);color:var(--ink);padding:26px 0 14px}
+.footer-top{display:flex;flex-direction:column;gap:6px}
+.footer-brand{padding:4px 0 2px}
+.footer-logo{text-decoration:none}
+.footer-wordmark{font-weight:800;font-size:20px;letter-spacing:-.5px;color:var(--dark)}
+.footer-tag{margin:6px 0 0;font-size:13px;color:var(--muted)}
+.footer-contact{display:flex;flex-direction:column;gap:7px;margin-top:12px;font-style:normal}
+.footer-contact a,.footer-contact span{display:flex;align-items:center;gap:7px;color:var(--muted);font-size:13px}
+.footer-contact a:hover{color:var(--green)}
 .logo-img{height:30px;width:auto;display:block;object-fit:contain}
-.footer-contact{display:flex;flex-direction:column;gap:7px;margin-top:14px}
-.footer-contact a,.footer-contact span{display:flex;align-items:center;gap:7px;color:#b9c9bd;font-size:13px}
-.footer-contact a:hover{color:#fff}
+.footer-groups{display:flex;flex-direction:column}
+.f-group{border-bottom:1px solid var(--border)}
+.f-group:last-child{border-bottom:0}
+.f-toggle{width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:48px;border:0;background:transparent;padding:6px 0;font-size:14px;font-weight:700;color:var(--ink)}
+.f-toggle svg{color:var(--muted);transition:transform .25s;flex:0 0 auto}
+.f-toggle svg.open{transform:rotate(45deg);color:var(--green)}
+.f-links{display:grid;grid-template-rows:0fr;transition:grid-template-rows .25s ease}
+.f-links > *{overflow:hidden}
+.f-links.open{grid-template-rows:1fr}
+.f-links a{display:block;color:var(--muted);font-size:14px;padding:9px 0}
+.f-links a:hover,.f-links a:focus-visible{color:var(--green)}
+.footer-bottom{margin-top:14px;padding-top:14px;border-top:1px solid var(--border)}
+.footer-bottom small{display:block;font-size:12px;color:var(--muted);line-height:1.6}
+@media(min-width:768px){
+  .footer{padding:40px 0 18px}
+  .footer-top{display:grid;grid-template-columns:1.2fr 2fr;gap:40px;align-items:start}
+  .footer-groups{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:28px}
+  .f-group{border-bottom:0}
+  .f-toggle{pointer-events:none;min-height:0;padding:0 0 4px;font-size:14px}
+  .f-toggle svg{display:none}
+  .f-links{display:block}
+  .footer-bottom{margin-top:26px}
+}
+@media(min-width:981px){
+  .footer-top{grid-template-columns:1.3fr 2fr;gap:48px}
+  .footer-wordmark{font-size:22px}
+}
+@media(prefers-reduced-motion:reduce){
+  .f-links,.f-toggle svg{transition:none}
+}
 
 /* ---------- page helpers ---------- */
 .account-layout{display:grid;grid-template-columns:1fr;gap:24px;align-items:start}
@@ -281,7 +312,6 @@ label{font-size:13px;font-weight:700;color:#344038;display:block;margin-bottom:6
   .filters{display:block}
   .filters-toggle{display:none}
   .page-head{padding:50px 0}
-  .footer{padding:52px 0 22px}
   .searchbox{max-width:650px}
 }
 
@@ -321,8 +351,6 @@ label{font-size:13px;font-weight:700;color:#344038;display:block;margin-bottom:6
   .gallery-main .orb{width:260px;height:260px}
   .cart-layout{grid-template-columns:1fr 340px}
   .summary{position:sticky;top:95px}
-  .footer-grid{grid-template-columns:1.4fr repeat(4,1fr);gap:28px}
-  .footer-grid>div:first-child{grid-column:auto}
   .account-layout{grid-template-columns:1fr 300px;gap:28px}
 }
 
