@@ -165,8 +165,12 @@ label{font-size:13px;font-weight:700;color:#344038;display:block;margin-bottom:6
 .qty{display:flex;align-items:center;border:1px solid var(--border);border-radius:8px;width:max-content}.qty button{border:0;background:#fff;padding:9px 13px}.qty span{min-width:35px;text-align:center}
 .tabs{margin-top:20px;border-top:1px solid var(--border)}.tab{padding:22px 0;border-bottom:1px solid var(--border)}.tab h3{margin:0 0 10px;color:var(--dark);font-size:18px}
 .cart-layout{display:grid;grid-template-columns:1fr;gap:24px}
-.cart-row{display:grid;grid-template-columns:64px 1fr;gap:10px 12px;align-items:center;padding:16px 0;border-bottom:1px solid var(--border)}
-.cart-row>*:nth-child(3),.cart-row>*:nth-child(4){grid-column:2}
+.cart-row{display:flex;gap:12px;align-items:flex-start;padding:16px 0;border-bottom:1px solid var(--border)}
+.cart-row .mini-img{flex:0 0 64px}
+.cart-info{flex:1;min-width:0;display:flex;flex-direction:column;gap:8px}
+.cart-info-name strong{display:block;color:var(--dark);font-size:15px}
+.cart-controls{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.cart-total strong{font-size:16px;color:var(--dark)}
 .mini-img{width:64px;height:64px;border-radius:10px;background:var(--bg);display:grid;place-items:center}.mini-img .orb{width:42px;height:42px}
 .summary{border:1px solid var(--border);border-radius:14px;padding:20px;height:max-content;position:static}
 .sumline{display:flex;justify-content:space-between;gap:12px;margin:13px 0;color:#59635c}.sumtotal{font-size:19px;font-weight:700;color:var(--dark);border-top:1px solid var(--border);padding-top:15px}
@@ -221,8 +225,12 @@ label{font-size:13px;font-weight:700;color:#344038;display:block;margin-bottom:6
   .product-name{font-size:16px}
   .price{font-size:18px}
   .card-actions .btn{font-size:14px;padding:10px 8px}
-  .cart-row{grid-template-columns:76px 1fr auto auto;gap:14px}
-  .cart-row>*:nth-child(3),.cart-row>*:nth-child(4){grid-column:auto}
+  .cart-row{align-items:center;gap:14px}
+  .cart-row .mini-img{flex-basis:76px}
+  .cart-info{flex-direction:row;align-items:center;gap:14px}
+  .cart-info-name{flex:1;min-width:0}
+  .cart-controls{justify-content:flex-start}
+  .cart-total{margin-left:auto;text-align:right;white-space:nowrap}
   .mini-img{width:76px;height:76px}.mini-img .orb{width:48px;height:48px}
   .timeline{overflow:visible;gap:0;justify-content:space-between;padding-bottom:0}
   .step{min-width:0}
