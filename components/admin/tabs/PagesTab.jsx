@@ -4,6 +4,7 @@ import { Alert, Field, ModalShell, Toggle, StatCard, Panel } from '../ui';
 import DataTable from '../DataTable';
 import { formatDateTime } from '../constants';
 import { SECTION_TYPES, getDefaultSectionData, sectionRenderers } from '../../PageSections';
+import FaqItemsEditor from '../FaqItemsEditor';
 
 const PAGE_TEMPLATES = [
   { slug: 'home', label: 'Home Page', description: 'Main landing page with hero, featured categories, best sellers' },
@@ -428,6 +429,37 @@ export default function PagesTab({ password }) {
             <Field label="Navigation Order" hint="full">
               <input className="input" type="number" min="0" value={form.nav_order || 0}
                 onChange={(e) => setForm({ ...form, nav_order: Number(e.target.value) })} />
+            </Field>
+            <Field label="Content Sections" hint="full">
+              <div style={{ display: 'grid', gap: 10 }}>
+                {(sections || []).map((s, i) => (
+                  <div key={s.id || i} style={{ border: '1px solid var(--border)', borderRadius: 10, padding: 12 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: s.type === 'faq' ? 10 : 0 }}>
+                      <strong style={{ fontSize: 13 }}>{s.type === 'faq' ? `FAQ Questions (${(s.data?.items || []).length})` : `${s.type} section`}</strong>
+                      <span style={{ flex: 1 }} />
+                      <label className="editor-toggle" style={{ fontSize: 12 }}>
+                        <Toggle checked={s.enabled !== false} onChange={(v) => setSections(sections.map((x, xi) => (xi === i ? { ...x, enabled: v } : x)))} />
+                        {s.enabled !== false ? 'Shown' : 'Hidden'}
+                      </label>
+                    </div>
+                    {s.type === 'faq' && (
+                      <FaqItemsEditor
+                        items={s.data?.items || []}
+                        onChange={(items) => setSections(sections.map((x, xi) => (xi === i ? { ...x, data: { ...(x.data || {}), items } } : x)))}
+                      />
+                    )}
+                  </div>
+                ))}
+                {!sections.some((s) => s.type === 'faq') && (
+                  <button
+                    type="button"
+                    className="btn btn-outline btn-sm"
+                    onClick={() => setSections([...sections, { id: `section-${Date.now()}`, type: 'faq', enabled: true, order: sections.length, data: { title: 'Frequently Asked Questions', items: [] } }])}
+                  >
+                    <Plus size={14} /> Add FAQ Section
+                  </button>
+                )}
+              </div>
             </Field>
           </div>
         </ModalShell>

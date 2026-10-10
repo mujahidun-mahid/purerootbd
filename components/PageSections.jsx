@@ -191,26 +191,45 @@ export function CategoriesSection({ data, categories = [] }) {
 
 export function FAQSection({ data }) {
   const { items = [], title } = data;
-  const validItems = items.filter(item => item.question && item.answer);
+  const validItems = items
+    .filter(item => item && item.question && item.answer && item.enabled !== false)
+    .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
   if (!validItems.length && !title) return null;
+
+  const groups = [];
+  const seen = {};
+  validItems.forEach((item) => {
+    const cat = (item.category || "").trim() || "General";
+    if (!seen[cat]) {
+      seen[cat] = { category: cat, items: [] };
+      groups.push(seen[cat]);
+    }
+    seen[cat].items.push(item);
+  });
+  const singleGroup = groups.length <= 1;
 
   return (
     <section className="section">
       <div className="container" style={{ maxWidth: 900 }}>
         {title && <h2 className="text-2xl font-bold text-gray-900 mb-8 text-center">{title}</h2>}
-        <div className="space-y-4">
-          {validItems.map((item, i) => (
-            <details key={i} className="faq group">
-              <summary className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg cursor-pointer list-none">
-                <span className="font-medium text-gray-900">{item.question}</span>
-                <svg className="w-5 h-5 text-gray-400 group-open:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
-              </summary>
-              <div className="p-4 text-gray-600 border border-t-0 border-gray-200 rounded-b-lg bg-gray-50">
-                {item.answer}
-              </div>
-            </details>
-          ))}
-        </div>
+        {groups.map((g) => (
+          <div key={g.category} className="space-y-4" style={{ marginBottom: singleGroup ? 0 : 32 }}>
+            {!singleGroup && (
+              <h3 className="text-lg font-semibold text-gray-800" style={{ marginBottom: 4 }}>{g.category}</h3>
+            )}
+            {g.items.map((item, i) => (
+              <details key={`${g.category}-${i}`} className="faq group">
+                <summary className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg cursor-pointer list-none">
+                  <span className="font-medium text-gray-900">{item.question}</span>
+                  <svg className="w-5 h-5 text-gray-400 group-open:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                </summary>
+                <div className="p-4 text-gray-600 border border-t-0 border-gray-200 rounded-b-lg bg-gray-50">
+                  {item.answer}
+                </div>
+              </details>
+            ))}
+          </div>
+        ))}
       </div>
     </section>
   );
