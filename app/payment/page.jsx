@@ -20,6 +20,17 @@ export default function Payment() {
   const [state, setState] = useState("");
   const [error, setError] = useState("");
   const [customer, setCustomer] = useState(null);
+  const [coupon, setCoupon] = useState("");
+  const [couponMsg, setCouponMsg] = useState("");
+
+  function applyCoupon(e) {
+    e.preventDefault();
+    if (!coupon.trim()) {
+      setCouponMsg("Enter a code first.");
+      return;
+    }
+    setCouponMsg(`“${coupon.trim().toUpperCase()}” isn't valid yet — discount codes are coming soon. Your total is unchanged.`);
+  }
 
   const feeDefault = Number(settings.delivery_fee_default || 80);
   const threshold = Number(settings.free_delivery_threshold || 2000);
@@ -228,6 +239,17 @@ export default function Payment() {
                 <span>৳{tax.toLocaleString()}</span>
               </div>
             )}
+            <form className="pm-coupon" onSubmit={applyCoupon}>
+              <input
+                className="input"
+                value={coupon}
+                onChange={(e) => { setCoupon(e.target.value); setCouponMsg(""); }}
+                placeholder="Coupon or discount code"
+                aria-label="Coupon or discount code"
+              />
+              <button type="submit" className="btn btn-outline btn-sm">Apply</button>
+            </form>
+            {couponMsg && <p className="pm-coupon-note" role="status">{couponMsg}</p>}
             <div className="pm-sumline pm-sumtotal">
               <span>Total</span>
               <span>৳{grand.toLocaleString()}</span>
