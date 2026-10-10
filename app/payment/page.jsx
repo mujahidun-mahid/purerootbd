@@ -3,14 +3,13 @@ import { useEffect, useState } from "react";
 import { useStore } from "@/components/StoreProvider";
 import { useSiteSettings } from "@/components/SiteSettingsProvider";
 import Link from "next/link";
-import { Banknote, Building2, Lock } from "lucide-react";
-import CheckoutSteps from "@/components/CheckoutSteps";
+import { Banknote, Building2, Lock, ArrowLeft, ShieldCheck } from "lucide-react";
 
 const PAYMENT_METHODS = [
-  ["cod", "Cash on Delivery", "Pay when your order arrives at your doorstep.", null, null],
-  ["bkash", "bKash Payment", "Pay using your bKash account and follow the payment instructions.", null, { text: "bKash", bg: "#E2136E" }],
-  ["nagad", "Nagad Payment", "Complete your payment using Nagad and follow the provided instructions.", null, { text: "Nagad", bg: "#F6921E" }],
-  ["bank", "Bank Transfer", "Use the bank account details provided during checkout.", Building2, null]
+  ["cod", "Cash on Delivery", "Cash", "Pay when your order arrives at your doorstep.", Banknote, null],
+  ["bkash", "bKash Payment", "bKash", "Pay using your bKash account and follow the payment instructions.", null, { text: "bKash", bg: "#E2136E" }],
+  ["nagad", "Nagad Payment", "Nagad", "Complete your payment using Nagad and follow the provided instructions.", null, { text: "Nagad", bg: "#F6921E" }],
+  ["bank", "Bank Transfer", "Bank", "Use the bank account details provided during checkout.", Building2, null]
 ];
 
 export default function Payment() {
@@ -30,6 +29,8 @@ export default function Payment() {
 
   const methods = PAYMENT_METHODS.filter(([id]) => settings[`payment_${id}_enabled`] !== "false");
   const activeMethod = methods.some(([id]) => id === method) ? method : (methods[0]?.[0] || "cod");
+  const active = methods.find(([id]) => id === activeMethod);
+  const ActiveIcon = active && active[4] ? active[4] : null;
 
   useEffect(() => {
     try {
@@ -111,138 +112,128 @@ export default function Payment() {
 
   return (
     <>
-      <div className="co-intro">
-        <div className="container">
-          <div className="co-eyebrow"><Lock size={12} aria-hidden="true" /> Secure Checkout</div>
-          <h1>Payment</h1>
-          <p>Choose how you&apos;d like to pay for your order.</p>
-          <CheckoutSteps step={2} />
+      <div className="pm-head">
+        <div className="container pm-head-inner">
+          <Link className="iconbtn pm-back" href="/checkout" aria-label="Back to checkout">
+            <ArrowLeft size={20} />
+          </Link>
+          <h1>Payment Method</h1>
+          <span className="pm-head-lock" aria-hidden="true">
+            <Lock size={18} />
+          </span>
         </div>
       </div>
-      <section className="section co-section">
-        <div className="container co-layout">
-          <div className="co-main">
-            {error && (
-              <div className="co-error" role="alert">
-                {error}
-              </div>
-            )}
 
-            <div className="co-methods" role="radiogroup" aria-label="Payment method">
-              {(methods.length ? methods : PAYMENT_METHODS.slice(0, 1)).map(([id, title, desc, Icon, badge]) => {
-                const selected = activeMethod === id;
-                return (
-                  <label key={id} className={`co-method${selected ? " selected" : ""}`}>
-                    <input
-                      type="radio"
-                      name="payment-method"
-                      checked={selected}
-                      onChange={() => setMethod(id)}
-                    />
-                    <span className="co-radio" aria-hidden="true" />
-                    <span className="co-method-text">
-                      <strong>{title}</strong>
-                      <small>{desc}</small>
-                    </span>
-                    {badge ? (
-                      <span className="co-pay-logo" style={{ background: badge.bg }} aria-hidden="true">
-                        {badge.text}
-                      </span>
-                    ) : Icon ? (
-                      <span className="co-method-icon" aria-hidden="true">
-                        <Icon size={20} />
-                      </span>
-                    ) : null}
-                  </label>
-                );
-              })}
+      <section className="section pm-section">
+        <div className="container pm-wrap">
+          {error && (
+            <div className="pm-error" role="alert">
+              {error}
             </div>
+          )}
 
-            {settings.payment_instructions && (
-              <div className="co-note">
-                <strong>Payment Note</strong>
-                <p>{settings.payment_instructions}</p>
-              </div>
-            )}
-
-            {activeMethod === "cod" && (
-              <div className="co-note">
-                <strong>No advance needed</strong>
-                <p>Please keep the exact order total ready — our courier collects payment upon delivery.</p>
-              </div>
-            )}
-            {activeMethod === "bkash" && (
-              <div className="co-note">
-                <strong>bKash merchant instruction</strong>
-                <p>Your order is stored first. Once placed, send the order total to our official bKash merchant number with your order number as the reference. The order stays pending until payment is verified.</p>
-              </div>
-            )}
-            {activeMethod === "nagad" && (
-              <div className="co-note">
-                <strong>Nagad instruction</strong>
-                <p>Your order is stored first. Send payment to our official Nagad number using your order number as reference. The order stays pending until payment is verified.</p>
-              </div>
-            )}
-            {activeMethod === "bank" && (
-              <div className="co-note">
-                <strong>Bank transfer instruction</strong>
-                <p>Your order is saved as awaiting bank payment. Our team verifies the transfer and confirms your order once it clears.</p>
-              </div>
-            )}
-
-            <button
-              className="btn btn-primary co-pay-btn"
-              onClick={pay}
-              disabled={state === "processing"}
-            >
-              {state === "processing" ? "Placing Your Order…" : activeMethod === "cod" ? "Place COD Order" : `Place ${activeMethod.toUpperCase()} Order`}
-            </button>
-            <p className="co-secure">
-              <Lock size={13} aria-hidden="true" /> Your order details are sent securely to our order system.
-            </p>
+          <div className="pm-methods" role="radiogroup" aria-label="Choose a payment method">
+            {(methods.length ? methods : PAYMENT_METHODS.slice(0, 1)).map(([id, title, short, , Icon, badge]) => {
+              const selected = activeMethod === id;
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  role="radio"
+                  aria-checked={selected}
+                  aria-label={title}
+                  title={title}
+                  className={`pm-method${selected ? " selected" : ""}`}
+                  onClick={() => setMethod(id)}
+                >
+                  <span className="pm-micon" aria-hidden="true">
+                    {badge ? (
+                      <span className="pm-logo" style={{ background: badge.bg }}>{badge.text}</span>
+                    ) : (
+                      Icon && <Icon size={22} />
+                    )}
+                  </span>
+                  <span className="pm-mname">{short}</span>
+                </button>
+              );
+            })}
           </div>
 
-          <aside className="co-summary" aria-label="Payment summary">
-            <h3>Summary</h3>
-            {cart.map((x) => (
-              <div className="co-sumline co-sumitem" key={x.key}>
-                <span className="co-sumthumb" aria-hidden="true">
-                  {x.image ? <img src={x.image} alt="" /> : <span className="orb nut" />}
-                </span>
-                <span className="co-sumname">
-                  {x.name} ({x.size}) × {x.qty}
-                </span>
-                <span>৳{(Number(x.price || 0) * Number(x.qty || 1)).toLocaleString()}</span>
+          {active && (
+            <div className="pm-panel">
+              <div className="pm-panel-head">
+                {active[5] ? (
+                  <span className="pm-logo pm-logo-lg" style={{ background: active[5].bg }} aria-hidden="true">
+                    {active[5].text}
+                  </span>
+                ) : (
+                  ActiveIcon && (
+                    <span className="pm-panel-icon" aria-hidden="true">
+                      <ActiveIcon size={22} />
+                    </span>
+                  )
+                )}
+                <div>
+                  <strong>{active[1]}</strong>
+                  <p>{active[3]}</p>
+                </div>
               </div>
-            ))}
-            <div className="co-sumline">
+              {activeMethod === "cod" && (
+                <p className="pm-hint">No advance needed — please keep the exact order total ready for our courier.</p>
+              )}
+              {activeMethod === "bkash" && (
+                <p className="pm-hint">Your order is stored first. Once placed, send the total to our official bKash merchant number with your order number as reference. The order stays pending until payment is verified.</p>
+              )}
+              {activeMethod === "nagad" && (
+                <p className="pm-hint">Your order is stored first. Send payment to our official Nagad number using your order number as reference. The order stays pending until payment is verified.</p>
+              )}
+              {activeMethod === "bank" && (
+                <p className="pm-hint">Your order is saved as awaiting bank payment. Our team verifies the transfer and confirms your order once it clears.</p>
+              )}
+              {settings.payment_instructions && (
+                <p className="pm-hint"><strong>Note: </strong>{settings.payment_instructions}</p>
+              )}
+            </div>
+          )}
+
+          <div className="pm-summary" aria-label="Order summary">
+            <div className="pm-sumline">
               <span>Subtotal</span>
               <span>৳{total.toLocaleString()}</span>
             </div>
-            <div className="co-sumline">
+            <div className="pm-sumline">
               <span>Delivery</span>
               <span>{delivery ? "৳" + delivery : "Free"}</span>
             </div>
             {taxRate > 0 && (
-              <div className="co-sumline">
+              <div className="pm-sumline">
                 <span>Tax ({taxRate}%)</span>
                 <span>৳{tax.toLocaleString()}</span>
               </div>
             )}
-            <div className="co-sumline co-sumtotal">
+            <div className="pm-sumline pm-sumtotal">
               <span>Total</span>
               <span>৳{grand.toLocaleString()}</span>
             </div>
             {customer && (
-              <div className="co-deliver-to">
-                <div className="muted">Delivering to</div>
-                <strong>{customer.name}</strong> ({customer.phone})
-                <div className="muted">
-                  {customer.address}, {customer.area || customer.district}
-                </div>
+              <div className="pm-deliver-to">
+                <span className="muted">Delivering to </span>
+                <strong>{customer.name}</strong>
+                <span className="muted"> · {customer.address}, {customer.area || customer.district}</span>
               </div>
             )}
-          </aside>
+          </div>
+
+          <button
+            className="pm-pay"
+            onClick={pay}
+            disabled={state === "processing"}
+          >
+            {state === "processing" ? "Placing Your Order…" : activeMethod === "cod" ? "Place COD Order" : `Place ${activeMethod.toUpperCase()} Order`}
+          </button>
+          <p className="pm-secure">
+            <ShieldCheck size={14} aria-hidden="true" /> Orders are confirmed by our backend before anything is finalized.
+          </p>
         </div>
       </section>
     </>
