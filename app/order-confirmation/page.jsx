@@ -50,7 +50,7 @@ export default function Confirmation() {
             <div style={{ padding: 40 }}>Loading order confirmation…</div>
           ) : order ? (
             <>
-              <div style={{ width: 68, height: 68, borderRadius: '50%', background: '#eaf6ec', color: 'var(--green)', display: 'grid', placeItems: 'center', margin: '0 auto 16px' }}>
+              <div style={{ width: 68, height: 68, borderRadius: '50%', background: '#F1F7EF', color: 'var(--green)', display: 'grid', placeItems: 'center', margin: '0 auto 16px' }}>
                 <CheckCircle2 size={40} />
               </div>
               <div className="kicker">Thank you for choosing Pure Roots</div>
@@ -59,7 +59,7 @@ export default function Confirmation() {
                 Your order has been recorded in our system. You can track fulfillment and delivery progress in real time.
               </p>
 
-              <div className="notice" style={{ maxWidth: 520, margin: "0 auto 26px", textAlign: "left", background: "#f8faf8", border: "1px solid #dbe6dd", borderRadius: 14, padding: 18 }}>
+              <div className="notice" style={{ maxWidth: 520, margin: "0 auto 26px", textAlign: "left", background: "#FBF9F4", border: "1px solid #E1E5DF", borderRadius: 14, padding: 18 }}>
                 <div className="info-grid">
                   <div>
                     <span className="muted" style={{ display: 'block', fontSize: 11, textTransform: 'uppercase', letterSpacing: 1 }}>Order Number</span>

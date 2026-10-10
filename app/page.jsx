@@ -143,7 +143,7 @@ export default async function Home() {
       <section className="section">
         <div className="container">
           <div className="newsletter">
-            <div className="kicker" style={{ color: "#C9A45C" }}>
+            <div className="kicker" style={{ color: "#C8A45D" }}>
               Stay in the loop
             </div>
             <h2>Get nutrition tips, new product updates & special offers.</h2>

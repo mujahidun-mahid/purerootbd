@@ -31,7 +31,7 @@ export default function Footer() {
             ) : (
               <>
                 {siteName}
-                <small style={{ color: "#C9A45C" }}>{tagline}</small>
+                <small style={{ color: "#C8A45D" }}>{tagline}</small>
               </>
             )}
           </div>

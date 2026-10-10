@@ -134,7 +134,7 @@ export default function Track() {
         <div className="container track-wrap" style={{ maxWidth: 900 }}>
           <form onSubmit={searchOrders} className="tracking-form track-search-card" style={{ padding: 24, borderRadius: 20, background: '#fff', border: '1px solid var(--border)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 18 }}>
-              <div style={{ width: 42, height: 42, borderRadius: 12, background: '#edf7ef', color: 'var(--green)', display: 'grid', placeItems: 'center' }}>
+              <div style={{ width: 42, height: 42, borderRadius: 12, background: '#F1F7EF', color: 'var(--green)', display: 'grid', placeItems: 'center' }}>
                 <Search size={20} />
               </div>
               <div>

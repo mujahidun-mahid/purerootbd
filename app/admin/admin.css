@@ -6,21 +6,21 @@
 .admin-app {
   --a-bg: #f4f6f5;
   --a-panel: #ffffff;
-  --a-ink: #12211a;
-  --a-ink-2: #4a5c53;
-  --a-muted: #7b8b83;
-  --a-line: #e3e9e5;
+  --a-ink: #252824;
+  --a-ink-2: #70766F;
+  --a-muted: #8A9489;
+  --a-line: #E1E5DF;
   --a-line-soft: #eef2ef;
-  --a-brand: #1f6b3a;
-  --a-brand-2: #2e8b57;
-  --a-brand-soft: #eaf5ee;
+  --a-brand: #18794E;
+  --a-brand-2: #2F8F62;
+  --a-brand-soft: #F1F7EF;
   --a-side: #0c1f16;
   --a-side-2: #122a1e;
   --a-side-text: #a9c4b5;
-  --a-gold: #c9a45c;
-  --a-red: #c0392b;
+  --a-gold: #C8A45D;
+  --a-red: #B42318;
   --a-red-soft: #fdeceb;
-  --a-amber: #b7791f;
+  --a-amber: #946200;
   --a-amber-soft: #fdf3e2;
   --a-blue: #2b6cb0;
   --a-blue-soft: #e9f1fb;
@@ -44,7 +44,7 @@
   --a-fs-md: 14px;
   --a-fs-lg: 17px;
 
-  --a-ring: 0 0 0 3px rgba(46, 139, 87, 0.14);
+  --a-ring: 0 0 0 3px rgba(24, 121, 78, 0.14);
   --a-fast: 0.15s;
   --a-ease: cubic-bezier(0.16, 1, 0.3, 1);
 
