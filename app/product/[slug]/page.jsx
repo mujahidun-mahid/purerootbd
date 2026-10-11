@@ -14,6 +14,12 @@ export default function ProductPage({params}){
   const defaultSize=(pkgList)=>pkgList&&pkgList.length?pkgList[Math.min(1,pkgList.length-1)].size:"";
   const [size,setSize]=useState(()=>defaultSize(p?.packages));
   const [qty,setQty]=useState(1);
+  const [photo,setPhoto]=useState(0);
+
+  useEffect(()=>{ setPhoto(0); },[params.slug]);
+
+  const gallery = p && Array.isArray(p.images) && p.images.length ? p.images : (p?.image ? [p.image] : []);
+  const current = gallery[Math.min(photo, Math.max(0, gallery.length - 1))];
 
   useEffect(()=>{
     if(p?.packages?.length&&!p.packages.some(x=>x.size===size)) setSize(defaultSize(p.packages));
@@ -33,15 +39,27 @@ export default function ProductPage({params}){
       <div className="detail">
         <div>
           <div className="gallery-main">
-            {p.image
-              ? <img className="gallery-photo" src={p.image} alt={p.name}/>
+            {current
+              ? <img className="gallery-photo" src={current} alt={`${p.name} — photo ${Math.min(photo, gallery.length - 1) + 1}`}/>
               : <div className={`orb ${orbClass}`}/>}
           </div>
-          <div className="thumbs">
-            <div className="thumb">Front</div>
-            <div className="thumb">Detail</div>
-            <div className="thumb">Pack</div>
-          </div>
+          {gallery.length > 1 && (
+            <div className="thumbs" role="tablist" aria-label="Product photos">
+              {gallery.map((src, i) => (
+                <button
+                  key={`${src}-${i}`}
+                  type="button"
+                  role="tab"
+                  aria-selected={i === photo}
+                  aria-label={`View photo ${i + 1} of ${gallery.length}`}
+                  className={`thumb thumb-btn${i === photo ? " active" : ""}`}
+                  onClick={() => setPhoto(i)}
+                >
+                  <img src={src} alt=""/>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
         <div>
           <div className="kicker">{p.category}</div>

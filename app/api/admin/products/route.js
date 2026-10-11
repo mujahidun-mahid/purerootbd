@@ -4,11 +4,11 @@ import { getSupabaseAdmin, adminAuthorized } from '@/lib/supabaseServer';
 export const dynamic = 'force-dynamic';
 
 const COLUMNS =
-  'id,name,slug,category,price,old_price,image,stock,packages,rating,reviews,short,description,ingredients,nutrition,benefits,use,storage,related,active,sort_order,created_at,updated_at';
+  'id,name,slug,category,price,old_price,image,images,stock,packages,rating,reviews,short,description,ingredients,nutrition,benefits,use,storage,related,active,sort_order,created_at,updated_at';
 
 const FIELDS = {
   name: 'name', slug: 'slug', category: 'category', price: 'price',
-  oldPrice: 'old_price', image: 'image', stock: 'stock', packages: 'packages',
+  oldPrice: 'old_price', image: 'image', images: 'images', stock: 'stock', packages: 'packages',
   rating: 'rating', reviews: 'reviews', short: 'short', description: 'description',
   ingredients: 'ingredients', nutrition: 'nutrition', benefits: 'benefits',
   use: 'use', storage: 'storage', related: 'related', active: 'active',
@@ -33,13 +33,17 @@ function buildRow(body) {
     } else if (col === 'stock' || col === 'rating' || col === 'reviews') {
       const n = Number(v || 0);
       row[col] = Number.isNaN(n) ? 0 : n;
-    } else if (col === 'packages' || col === 'related') {
-      row[col] = Array.isArray(v) ? v : [];
+    } else if (col === 'packages' || col === 'related' || col === 'images') {
+      row[col] = Array.isArray(v) ? v.filter((u) => String(u || '').trim() !== '') : [];
     } else if (col === 'active') {
       row[col] = v !== false && v !== 'false';
     } else {
       row[col] = typeof v === 'string' ? v.trim() : v;
     }
+  }
+  // Keep the legacy cover column in sync when only the gallery is sent.
+  if ('images' in row && !('image' in row)) {
+    row.image = row.images.length ? row.images[0] : '';
   }
   return row;
 }

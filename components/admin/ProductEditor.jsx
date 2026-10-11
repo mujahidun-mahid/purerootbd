@@ -4,6 +4,14 @@ import { Plus, Trash2, ImageIcon } from 'lucide-react';
 import useCategories from '@/components/useCategories';
 import { Field } from './ui';
 
+function galleryOf(product) {
+  if (!product) return [];
+  if (Array.isArray(product.images) && product.images.length) {
+    return product.images.filter((u) => String(u || '').trim() !== '');
+  }
+  return product.image ? [product.image] : [];
+}
+
 function buildState(product) {
   if (!product) {
     return {
@@ -14,6 +22,7 @@ function buildState(product) {
       oldPrice: '',
       stock: '',
       image: '',
+      images: [],
       short: '',
       description: '',
       ingredients: '',
@@ -37,6 +46,7 @@ function buildState(product) {
     oldPrice: product.oldPrice ?? product.old_price ?? '',
     stock: product.stock ?? '',
     image: product.image || '',
+    images: galleryOf(product),
     short: product.short || '',
     description: product.description || '',
     ingredients: product.ingredients || '',
@@ -61,44 +71,88 @@ export default function ProductEditor({ product, saving, onClose, onSave, error 
   const [localError, setLocalError] = useState('');
 
   const isNew = !product;
-  const [previewSrc, setPreviewSrc] = useState('');
-  const previewTimer = useRef(null);
+  const [urlInput, setUrlInput] = useState('');
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState('');
   const fileRef = useRef(null);
 
   useEffect(() => {
-    const value = String(form.image || '').trim();
-    if (previewTimer.current) clearTimeout(previewTimer.current);
-    previewTimer.current = setTimeout(() => {
-      const usable = /^https?:\/\/\S+\.\S+/i.test(value) || (value.startsWith('data:image/') && value.includes(','));
-      setPreviewSrc(usable ? value : '');
-    }, 500);
-    return () => {
-      if (previewTimer.current) clearTimeout(previewTimer.current);
-    };
-  }, [form.image]);
-
-  useEffect(() => {
     setForm(buildState(product));
     setSlugTouched(Boolean(product));
     setLocalError('');
+    setUrlInput('');
   }, [product]);
 
   const set = (key, value) => setForm((f) => ({ ...f, [key]: value }));
 
-  const uploadFile = async (file) => {
-    if (!file) return;
+  const gallery = Array.isArray(form.images) ? form.images : [];
+
+  const pushImages = (urls) => {
+    const clean = urls.map((u) => String(u || '').trim()).filter(Boolean);
+    if (!clean.length) return;
+    setForm((f) => {
+      const next = [...(Array.isArray(f.images) ? f.images : []), ...clean];
+      return { ...f, images: next, image: next[0] || '' };
+    });
+  };
+
+  const moveImage = (index, dir) => {
+    setForm((f) => {
+      const next = [...(Array.isArray(f.images) ? f.images : [])];
+      const to = index + dir;
+      if (to < 0 || to >= next.length) return f;
+      const [moved] = next.splice(index, 1);
+      next.splice(to, 0, moved);
+      return { ...f, images: next, image: next[0] || '' };
+    });
+  };
+
+  const setCover = (index) => {
+    setForm((f) => {
+      const next = [...(Array.isArray(f.images) ? f.images : [])];
+      if (index <= 0 || index >= next.length) return f;
+      const [picked] = next.splice(index, 1);
+      next.unshift(picked);
+      return { ...f, images: next, image: next[0] || '' };
+    });
+  };
+
+  const removeImage = (index) => {
+    if (!window.confirm('Remove this image from the gallery?')) return;
+    setForm((f) => {
+      const next = (Array.isArray(f.images) ? f.images : []).filter((_, i) => i !== index);
+      return { ...f, images: next, image: next[0] || '' };
+    });
+  };
+
+  const addUrl = () => {
+    const value = urlInput.trim();
+    if (!value) return;
+    if (!/^https?:\/\/\S+\.\S+/i.test(value)) {
+      setUploadError('That does not look like a valid image URL.');
+      return;
+    }
+    setUploadError('');
+    pushImages([value]);
+    setUrlInput('');
+  };
+
+  const uploadFiles = async (files) => {
+    const list = [...(files || [])];
+    if (!list.length) return;
     setUploadError('');
     setUploading(true);
     try {
-      const fd = new FormData();
-      fd.append('file', file);
-      const res = await fetch('/api/admin/images', { method: 'POST', body: fd });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || 'Upload failed.');
-      set('image', data.url);
-      setPreviewSrc(data.url);
+      const urls = [];
+      for (const file of list) {
+        const fd = new FormData();
+        fd.append('file', file);
+        const res = await fetch('/api/admin/images', { method: 'POST', body: fd });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || `Upload failed for ${file.name}.`);
+        if (data.url) urls.push(data.url);
+      }
+      pushImages(urls);
     } catch (e) {
       setUploadError(e.message);
     } finally {
@@ -138,6 +192,10 @@ export default function ProductEditor({ product, saving, onClose, onSave, error 
       .filter((p) => p.size && !Number.isNaN(p.price));
     if (!packages.length) packages.push({ size: '500g', price });
 
+    const images = (Array.isArray(form.images) ? form.images : [])
+      .map((u) => String(u || '').trim())
+      .filter(Boolean);
+
     const payload = {
       id: product?.id,
       name,
@@ -146,7 +204,8 @@ export default function ProductEditor({ product, saving, onClose, onSave, error 
       price,
       oldPrice: form.oldPrice === '' ? null : Number(form.oldPrice),
       stock: form.stock === '' ? 0 : Number(form.stock),
-      image: String(form.image || '').trim(),
+      image: images[0] || '',
+      images,
       short: form.short,
       description: form.description,
       ingredients: form.ingredients,
@@ -180,15 +239,19 @@ export default function ProductEditor({ product, saving, onClose, onSave, error 
         </p>
 
         <div className="editor-grid">
-          <Field label="Product image" hint="full">
+          <Field label={`Product gallery (${gallery.length} image${gallery.length === 1 ? '' : 's'})`} hint="full">
             <div className="img-row">
               <input
                 className="input"
                 type="url"
-                placeholder="https://…/product-image.jpg"
-                value={form.image}
-                onChange={(e) => set('image', e.target.value)}
+                placeholder="https://…/product-image.jpg — paste URL, then Add"
+                value={urlInput}
+                onChange={(e) => setUrlInput(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addUrl(); } }}
               />
+              <button type="button" className="btn btn-outline" onClick={addUrl}>
+                <Plus size={14} /> Add URL
+              </button>
               <button
                 type="button"
                 className="btn btn-outline"
@@ -200,24 +263,37 @@ export default function ProductEditor({ product, saving, onClose, onSave, error 
               <input
                 ref={fileRef}
                 type="file"
+                multiple
                 accept="image/jpeg,image/png,image/webp,image/svg+xml"
                 style={{ display: 'none' }}
-                onChange={(e) => uploadFile(e.target.files && e.target.files[0])}
+                onChange={(e) => uploadFiles(e.target.files)}
               />
             </div>
             {uploadError && <div className="admin-alert error">{uploadError}</div>}
-          </Field>
-
-          <div className="editor-preview full">
-            {previewSrc ? (
-              <img src={previewSrc} alt={form.name || 'Product preview'} />
+            {gallery.length > 0 ? (
+              <div className="gallery-manager">
+                {gallery.map((src, i) => (
+                  <div key={`${src}-${i}`} className="gallery-thumb">
+                    <img src={src} alt={`${form.name || 'Product'} image ${i + 1}`} />
+                    {i === 0 && <span className="gallery-cover">Cover</span>}
+                    <div className="gallery-thumb-actions">
+                      <button type="button" title="Move left" aria-label="Move image left" disabled={i === 0} onClick={() => moveImage(i, -1)}>‹</button>
+                      <button type="button" title="Move right" aria-label="Move image right" disabled={i === gallery.length - 1} onClick={() => moveImage(i, 1)}>›</button>
+                      {i !== 0 && <button type="button" title="Set as cover" aria-label="Set as cover image" onClick={() => setCover(i)}>★</button>}
+                      <button type="button" title="Remove" aria-label="Remove image" onClick={() => removeImage(i)}>×</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
             ) : (
-              <span>
-                <ImageIcon size={16} /> Paste an image URL to preview it. Leave empty to use the
-                category artwork.
-              </span>
+              <div className="editor-preview full" style={{ marginTop: 10 }}>
+                <span>
+                  <ImageIcon size={16} /> Add as many images as you like — URLs or device uploads.
+                  The first image is the cover. Leave empty to use the category artwork.
+                </span>
+              </div>
             )}
-          </div>
+          </Field>
 
           <Field label="Product name">
             <input

@@ -192,6 +192,9 @@ label{font-size:13px;font-weight:700;color:var(--ink);display:block;margin-botto
 .gallery-main{height:clamp(260px,58vw,440px);border-radius:20px;background:linear-gradient(145deg,#F5F5F7,var(--mint-soft));display:grid;place-items:center;overflow:hidden}
 .gallery-main .orb{width:clamp(160px,50vw,260px);height:clamp(160px,50vw,260px);border-radius:50%}
 .thumbs{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}.thumb{width:56px;height:56px;border:1px solid var(--border);border-radius:9px;background:var(--bg);display:grid;place-items:center;font-size:11px;color:var(--muted)}
+.thumb-btn{padding:3px;cursor:pointer;overflow:hidden}
+.thumb-btn img{width:100%;height:100%;object-fit:cover;border-radius:6px;display:block}
+.thumb-btn.active{border-color:var(--green);box-shadow:0 0 0 2px color-mix(in srgb,var(--green) 25%,transparent)}
 .detail h1{font-size:clamp(28px,5vw,44px);line-height:1.1;color:var(--ink);margin:6px 0 10px}
 .detail-price{font-size:clamp(24px,4vw,30px);font-weight:700;color:var(--ink);margin:20px 0}
 .options{display:flex;gap:8px;flex-wrap:wrap}.option{border:1px solid var(--border);padding:10px 12px;border-radius:8;background:#fff}.option.active{border-color:var(--green);color:var(--green);background:var(--mint-soft)}
