@@ -457,7 +457,7 @@ label{font-size:13px;font-weight:700;color:var(--ink);display:block;margin-botto
 .fp-wish{border:0;background:transparent;padding:4px;color:var(--muted);display:grid;place-items:center;transition:.2s}
 .fp-wish:hover{color:var(--green)}
 .fp-wish.active{color:var(--green)}
-.fp-img{display:grid;place-items:center;background:linear-gradient(145deg,#F5F5F7,var(--mint-soft));border-radius:12px;width:100%;aspect-ratio:1/1;overflow:hidden;position:relative}
+.fp-img{display:grid;place-items:center;background:linear-gradient(145deg,#F5F5F7,var(--mint-soft));border-radius:12px;width:100%;aspect-ratio:4/3;overflow:hidden;position:relative}
 .fp-img img{width:100%;height:100%;object-fit:cover;display:block}
 .fp-img .orb{width:104px;height:104px;border-radius:50%;box-shadow:inset -12px -16px 30px rgba(0,0,0,.15),0 12px 25px rgba(0,0,0,.08)}
 .fp-variants{display:flex;gap:6px;flex-wrap:wrap}
