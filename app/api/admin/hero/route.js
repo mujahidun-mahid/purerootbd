@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getSupabaseAdmin, adminAuthorized } from '@/lib/supabaseServer';
+import { validateImageUpload } from '@/lib/uploadValidation';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,19 +15,18 @@ export async function POST(request) {
     if (!file || typeof file.arrayBuffer !== 'function') {
       return NextResponse.json({ error: 'Choose an image file first.' }, { status: 400 });
     }
-    if (!String(file.type || '').startsWith('image/')) {
-      return NextResponse.json({ error: 'Only image files are allowed.' }, { status: 400 });
-    }
-    if (file.size > 6 * 1024 * 1024) {
-      return NextResponse.json({ error: 'Image size must be 6 MB or less.' }, { status: 400 });
+    const bytes = Buffer.from(await file.arrayBuffer());
+    // Same policy as product uploads: JPEG/PNG/WebP only, magic-byte
+    // verified. SVG is rejected (stored-XSS risk when served inline).
+    const check = validateImageUpload({ declaredType: file.type, bytes, maxBytes: 6 * 1024 * 1024 });
+    if (!check.ok) {
+      return NextResponse.json({ error: check.error }, { status: 400 });
     }
 
-    const ext = (String(file.name || 'jpg').split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg';
-    const path = `hero/hero-${Date.now()}.${ext}`;
-    const bytes = Buffer.from(await file.arrayBuffer());
+    const path = `hero/hero-${Date.now()}.${check.ext}`;
 
     const { error: uploadError } = await supabase.storage.from('site-assets').upload(path, bytes, {
-      contentType: file.type || 'image/jpeg',
+      contentType: check.type,
       upsert: false,
       cacheControl: '3600'
     });

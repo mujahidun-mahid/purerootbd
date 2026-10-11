@@ -4,6 +4,7 @@ import { Alert, Field, ModalShell, Toggle, StatCard, Panel } from '../ui';
 import DataTable from '../DataTable';
 import { formatDateTime } from '../constants';
 import { SECTION_TYPES, getDefaultSectionData, sectionRenderers } from '../../PageSections';
+import { sanitizeCmsHtml } from '@/lib/sanitize';
 import FaqItemsEditor from '../FaqItemsEditor';
 
 const PAGE_TEMPLATES = [
@@ -486,7 +487,7 @@ export default function PagesTab({ password }) {
               <div>
                 <h3>{viewing.hero_title}</h3>
                 {viewing.hero_subtitle && <p className="muted">{viewing.hero_subtitle}</p>}
-                <div dangerouslySetInnerHTML={{ __html: viewing.content_html || viewing.content_markdown }} />
+                <div dangerouslySetInnerHTML={{ __html: sanitizeCmsHtml(viewing.content_html || viewing.content_markdown) }} />
               </div>
             )}
           </div>

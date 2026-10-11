@@ -38,8 +38,22 @@ export async function PATCH(request) {
     }
 
     const status = String(body.status).trim();
-    if (!status) {
-      return NextResponse.json({ error: 'Order ID and status are required' }, { status: 400 });
+    // Free-text statuses flow into the public tracking page and status
+    // history, so only known workflow states are accepted.
+    const ALLOWED_STATUSES = new Set([
+      'Order Placed',
+      'Order Confirmed',
+      'Processing',
+      'Packed',
+      'Shipped',
+      'Out for Delivery',
+      'Delivered',
+      'Cancelled',
+      'Awaiting Payment',
+      'Awaiting Bank Transfer',
+    ]);
+    if (!status || !ALLOWED_STATUSES.has(status)) {
+      return NextResponse.json({ error: 'Invalid order status.' }, { status: 400 });
     }
 
     const { data, error } = await supabase

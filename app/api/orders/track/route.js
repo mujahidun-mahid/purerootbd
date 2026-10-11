@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabaseServer';
+import { redactOrderForTracking } from '@/lib/orderPrivacy';
 
 export const dynamic = 'force-dynamic';
 
@@ -34,18 +35,20 @@ export async function POST(request) {
       return NextResponse.json({ error: 'No matching orders found.' }, { status: 404 });
     }
 
-    const primaryOrder = data[0];
+    const phoneVerified = Boolean(phone && normalizePhone(phone));
+    const shape = (row) => (phoneVerified ? row : redactOrderForTracking(row));
+    const primaryOrder = shape(data[0]);
 
     // Fetch status history for this order
     const { data: history } = await supabase
       .from('order_status_history')
       .select('status,changed_at')
-      .eq('order_id', primaryOrder.id)
+      .eq('order_id', data[0].id)
       .order('changed_at', { ascending: true });
 
     return NextResponse.json({
       order: primaryOrder,
-      orders: data,
+      orders: phoneVerified ? data : [primaryOrder],
       history: history || []
     });
   } catch (e) {

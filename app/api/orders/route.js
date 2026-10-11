@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getSupabaseAdmin, getSupabaseConfig } from '@/lib/supabaseServer';
+import { redactOrderForTracking } from '@/lib/orderPrivacy';
 
 export const dynamic = 'force-dynamic';
 
@@ -235,25 +236,31 @@ export async function GET(request) {
     const { data, error } = await query.limit(50);
     if (error) throw error;
 
-    const formatted = (data || []).map(row => ({
-      id: row.id,
-      order: row.order_number,
-      order_number: row.order_number,
-      phone: row.phone,
-      method: row.payment_method,
-      payment_method: row.payment_method,
-      subtotal: Number(row.subtotal || 0),
-      delivery: Number(row.delivery_fee || 0),
-      delivery_fee: Number(row.delivery_fee || 0),
-      total: Number(row.total || 0),
-      status: row.status,
-      payment_status: row.payment_status || 'pending',
-      customer: row.customer,
-      items: row.items,
-      date: new Date(row.placed_at).toLocaleDateString('en-BD'),
-      placed_at: row.placed_at,
-      updated_at: row.updated_at
-    }));
+    // Order-number-only lookups are redacted: order numbers are enumerable,
+    // so full customer PII is only returned when the phone number matches.
+    const phoneVerified = Boolean(phone);
+    const formatted = (data || []).map(row => {
+      if (!phoneVerified) return redactOrderForTracking(row);
+      return {
+        id: row.id,
+        order: row.order_number,
+        order_number: row.order_number,
+        phone: row.phone,
+        method: row.payment_method,
+        payment_method: row.payment_method,
+        subtotal: Number(row.subtotal || 0),
+        delivery: Number(row.delivery_fee || 0),
+        delivery_fee: Number(row.delivery_fee || 0),
+        total: Number(row.total || 0),
+        status: row.status,
+        payment_status: row.payment_status || 'pending',
+        customer: row.customer,
+        items: row.items,
+        date: new Date(row.placed_at).toLocaleDateString('en-BD'),
+        placed_at: row.placed_at,
+        updated_at: row.updated_at
+      };
+    });
 
     return NextResponse.json({ orders: formatted });
   } catch (error) {

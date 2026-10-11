@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { money } from "@/lib/products";
+import { sanitizeCmsHtml } from "@/lib/sanitize";
 import ProductGrid from "./ProductGrid";
 
 export const SECTION_TYPES = [
@@ -86,7 +87,7 @@ export function RichTextSection({ data }) {
   if (!content) return null;
   return (
     <section className="section container">
-      <div className="prose prose-green max-w-none" dangerouslySetInnerHTML={{ __html: content }} />
+      <div className="prose prose-green max-w-none" dangerouslySetInnerHTML={{ __html: sanitizeCmsHtml(content) }} />
     </section>
   );
 }
@@ -109,7 +110,7 @@ export function ImageTextSection({ data }) {
         </div>
         <div className={!imageFirst ? "" : "order-2"}>
           {data.title && <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">{data.title}</h2>}
-          {data.content && <div className="prose prose-gray max-w-none" dangerouslySetInnerHTML={{ __html: data.content }} />}
+          {data.content && <div className="prose prose-gray max-w-none" dangerouslySetInnerHTML={{ __html: sanitizeCmsHtml(data.content) }} />}
         </div>
       </div>
     </section>

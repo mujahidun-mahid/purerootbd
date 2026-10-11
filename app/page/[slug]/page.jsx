@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { getSupabaseAdmin } from "@/lib/supabaseServer";
 import { sectionRenderers } from "@/components/PageSections";
+import { sanitizeCmsHtml } from "@/lib/sanitize";
 
 export const dynamic = "force-dynamic";
 
@@ -64,7 +65,7 @@ export default async function Page({ params }) {
                   {page.hero_cta_text}
                 </a>
               )}
-              <div className="prose prose-green max-w-none mt-8" dangerouslySetInnerHTML={{ __html: page.content_html || page.content_markdown }} />
+              <div className="prose prose-green max-w-none mt-8" dangerouslySetInnerHTML={{ __html: sanitizeCmsHtml(page.content_html || page.content_markdown) }} />
             </div>
           )}
         </main>

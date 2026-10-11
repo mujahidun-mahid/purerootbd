@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getSupabaseAdmin, adminAuthorized } from '@/lib/supabaseServer';
+import { validateImageUpload, isPathInPrefix } from '@/lib/uploadValidation';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,22 +17,20 @@ export async function POST(request) {
     if (!file || typeof file === 'string') {
       return NextResponse.json({ error: 'No file provided.' }, { status: 400 });
     }
-    const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/svg+xml'];
-    if (!allowed.includes(file.type)) {
-      return NextResponse.json({ error: 'Only JPEG, PNG, WebP, or SVG images allowed.' }, { status: 400 });
-    }
-    const maxSize = 5 * 1024 * 1024;
-    if (file.size > maxSize) {
-      return NextResponse.json({ error: 'File too large (max 5MB).' }, { status: 400 });
+    const arrayBuffer = await file.arrayBuffer();
+    const bytes = Buffer.from(arrayBuffer);
+    // MIME type is client-supplied: enforce allowlist AND magic bytes.
+    // SVG is rejected — scripts inside a bucket-served SVG run as stored XSS.
+    const check = validateImageUpload({ declaredType: file.type, bytes, maxBytes: 5 * 1024 * 1024 });
+    if (!check.ok) {
+      return NextResponse.json({ error: check.error }, { status: 400 });
     }
 
-    const ext = file.type.split('/')[1] || 'jpg';
-    const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+    const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}.${check.ext}`;
     const path = `products/${filename}`;
 
-    const arrayBuffer = await file.arrayBuffer();
-    const { data, error } = await supabase.storage.from(BUCKET).upload(path, Buffer.from(arrayBuffer), {
-      contentType: file.type,
+    const { data, error } = await supabase.storage.from(BUCKET).upload(path, bytes, {
+      contentType: check.type,
       upsert: false
     });
     if (error) throw error;
@@ -53,6 +52,9 @@ export async function DELETE(request) {
     const { searchParams } = new URL(request.url);
     const path = searchParams.get('path');
     if (!path) return NextResponse.json({ error: 'Path is required.' }, { status: 400 });
+    if (!isPathInPrefix(path, 'products/')) {
+      return NextResponse.json({ error: 'Invalid file path.' }, { status: 400 });
+    }
 
     const { error } = await supabase.storage.from(BUCKET).remove([path]);
     if (error) throw error;

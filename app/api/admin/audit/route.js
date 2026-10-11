@@ -31,7 +31,18 @@ export async function POST(request) {
   try {
     const body = await request.json().catch(() => ({}));
     const action = String(body?.action || '').trim().slice(0, 80);
-    const detail = body?.detail ?? {};
+    let detail = {};
+    if (body?.detail && typeof body.detail === 'object') {
+      try {
+        const raw = JSON.stringify(body.detail);
+        if (raw.length > 5000) {
+          return NextResponse.json({ error: 'Audit detail too large.' }, { status: 400 });
+        }
+        detail = JSON.parse(raw);
+      } catch {
+        return NextResponse.json({ error: 'Invalid audit detail.' }, { status: 400 });
+      }
+    }
     if (!action) return NextResponse.json({ error: 'Action is required.' }, { status: 400 });
 
     const { data, error } = await supabase

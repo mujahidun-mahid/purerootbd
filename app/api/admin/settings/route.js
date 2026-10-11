@@ -12,6 +12,11 @@ export async function PUT(request) {
     const body = await request.json().catch(() => ({}));
     const key = String(body?.key || '').trim();
     const value = String(body?.value ?? '');
+    // promo_banners carries JSON; 200KB is far above any legitimate use
+    // and blocks oversized payloads from bloating the settings table.
+    if (value.length > 200_000) {
+      return NextResponse.json({ error: 'Setting value too large.' }, { status: 400 });
+    }
     const allowed = [
       'site_name',
       'site_tagline',
