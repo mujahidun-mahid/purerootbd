@@ -26,7 +26,9 @@ export function StoreProvider({ children }) {
   useEffect(() => {
     setCart(readJSON(CART_KEY, []));
     setWishlist(readJSON(WISHLIST_KEY, []));
-    setOrders(readJSON(ORDERS_KEY, []));
+    // One-time scrub: older entries may still carry customer PII.
+    // eslint-disable-next-line no-unused-vars
+    setOrders(readJSON(ORDERS_KEY, []).map(({ customer, phone, ...rest }) => rest));
     setHydrated(true);
   }, []);
 
@@ -101,7 +103,11 @@ export function StoreProvider({ children }) {
 
   const saveOrderLocally = useCallback((saved) => {
     if (!saved) return;
-    setOrders((current) => [saved, ...current.filter((x) => (x.order || x.order_number) !== (saved.order || saved.order_number))].slice(0, 50));
+    // Device-local history only needs fulfillment fields. Strip customer
+    // PII (name/phone/address) so a shared device or an XSS flaw cannot
+    // harvest it from localStorage. Nothing renders these fields locally.
+    const { customer: _customer, phone: _phone, ...local } = saved;
+    setOrders((current) => [local, ...current.filter((x) => (x.order || x.order_number) !== (saved.order || saved.order_number))].slice(0, 50));
   }, []);
 
   const total = useMemo(() => cart.reduce((s, x) => s + Number(x.price || 0) * Number(x.qty || 1), 0), [cart]);
