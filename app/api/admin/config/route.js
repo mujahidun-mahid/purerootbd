@@ -4,7 +4,10 @@ import { getSupabaseConfig, getSupabaseAdmin, adminAuthorized } from '@/lib/supa
 export const dynamic = 'force-dynamic';
 
 export async function GET(request) {
+  // Health counters and credential-mode flags are admin-only: they reveal
+  // order volumes and whether the server runs with the service role.
   const isAuth = adminAuthorized(request);
+  if (!isAuth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const config = getSupabaseConfig();
 
   let dbStatus = 'Not Configured';
