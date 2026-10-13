@@ -2,33 +2,12 @@ import crypto from 'node:crypto';
 import { NextResponse } from 'next/server';
 import { getAdminPassword, getAdminSessionToken } from '@/lib/supabaseServer';
 
-// Minimal per-instance brute-force throttle for the single shared admin
-// password. Best-effort on serverless (memory is per-instance), but it
-// raises the cost of guessing well above zero. 10 tries / 10 min per IP.
-const attempts = new Map();
-const WINDOW_MS = 10 * 60 * 1000;
-const MAX_ATTEMPTS = 10;
+// Brute-force throttle via the shared limiter (best-effort per instance;
+// distributed enforcement belongs in Vercel Firewall, not app code).
+import { isRateLimited, recordHit, bodyTooLarge, tooLargeResponse } from '@/lib/apiSecurity';
 
-function clientIp(request) {
-  return (
-    request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
-    request.headers.get('x-real-ip') ||
-    'unknown'
-  );
-}
-
-function isRateLimited(ip) {
-  const now = Date.now();
-  const list = (attempts.get(ip) || []).filter((t) => now - t < WINDOW_MS);
-  attempts.set(ip, list);
-  return list.length >= MAX_ATTEMPTS;
-}
-
-function recordAttempt(ip) {
-  const list = attempts.get(ip) || [];
-  list.push(Date.now());
-  attempts.set(ip, list);
-}
+const LOGIN_WINDOW_MS = 10 * 60 * 1000;
+const LOGIN_MAX = 10;
 
 function passwordsMatch(a, b) {
   const ab = Buffer.from(String(a || ''));
@@ -39,14 +18,14 @@ function passwordsMatch(a, b) {
 }
 
 export async function POST(request) {
-  const ip = clientIp(request);
-  if (isRateLimited(ip)) {
+  if (bodyTooLarge(request, 16 * 1024)) return tooLargeResponse(16 * 1024);
+  if (isRateLimited(request, { windowMs: LOGIN_WINDOW_MS, max: LOGIN_MAX, key: 'admin-login' })) {
     return NextResponse.json({ error: 'Too many attempts. Try again later.' }, { status: 429 });
   }
   const { password } = await request.json().catch(() => ({}));
   const expected = getAdminPassword();
   if (!expected || !password || !passwordsMatch(password, expected)) {
-    recordAttempt(ip);
+    recordHit(request, { windowMs: LOGIN_WINDOW_MS, key: 'admin-login' });
     return NextResponse.json({ error: 'Invalid password' }, { status: 401 });
   }
 

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getSupabaseAdmin, adminAuthorized } from '@/lib/supabaseServer';
+import { isSafeHttpUrl } from '@/lib/safeUrl';
 
 export const dynamic = 'force-dynamic';
 
@@ -27,6 +28,13 @@ export async function PUT(request, { params }) {
     }
     if ('title' in row && !String(row.title).trim()) {
       return NextResponse.json({ error: 'Title is required.' }, { status: 400 });
+    }
+    for (const key of ['background_image', 'button_link']) {
+      if (!(key in row)) continue;
+      const v = String(row[key] ?? '').trim();
+      if (v !== '' && !isSafeHttpUrl(v) && !v.startsWith('/')) {
+        return NextResponse.json({ error: `Invalid ${key.replace('_', ' ')}: use a site path or http(s) URL.` }, { status: 400 });
+      }
     }
     const { data, error } = await supabase
       .from('promo_cards')

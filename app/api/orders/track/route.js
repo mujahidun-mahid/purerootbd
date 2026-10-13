@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabaseServer';
 import { redactOrderForTracking } from '@/lib/orderPrivacy';
+import { safeError, NO_STORE, bodyTooLarge, tooLargeResponse, throttle } from '@/lib/apiSecurity';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,6 +11,9 @@ function normalizePhone(value) {
 
 export async function POST(request) {
   try {
+    const limited = throttle(request, { windowMs: 60_000, max: 30, key: 'orders-track' });
+    if (limited) return limited;
+    if (bodyTooLarge(request, 64 * 1024)) return tooLargeResponse(64 * 1024);
     const { order_number, phone } = await request.json().catch(() => ({}));
     if (!order_number && !phone) {
       return NextResponse.json({ error: 'Please provide either an order number or mobile number.' }, { status: 400 });
@@ -50,9 +54,8 @@ export async function POST(request) {
       order: primaryOrder,
       orders: phoneVerified ? data : [primaryOrder],
       history: history || []
-    });
+    }, { headers: NO_STORE });
   } catch (e) {
-    console.error('Order tracking error:', e);
-    return NextResponse.json({ error: e.message || 'Unable to track order' }, { status: 500 });
+    return safeError(e, 'Unable to track order.');
   }
 }

@@ -5,6 +5,7 @@ import { Search, UserRound, Heart, ShoppingBag, Menu, X } from "lucide-react";
 import { useState } from "react";
 import { useStore } from "./StoreProvider";
 import { useSiteSettings } from "./SiteSettingsProvider";
+import { safeHref } from "@/lib/safeUrl";
 
 export default function Header() {
   const pathname = usePathname();
@@ -39,7 +40,7 @@ export default function Header() {
         <div className="announcement-bar" role="status">
           <div className="container">
             {String(settings.announcement_url || "").trim() ? (
-              <Link href={settings.announcement_url} style={{ color: "inherit", textDecoration: "underline", textUnderlineOffset: 3 }}>
+              <Link href={safeHref(settings.announcement_url, "/shop")} style={{ color: "inherit", textDecoration: "underline", textUnderlineOffset: 3 }}>
                 {settings.announcement}
               </Link>
             ) : (

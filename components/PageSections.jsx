@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { money } from "@/lib/products";
 import { sanitizeCmsHtml } from "@/lib/sanitize";
+import { safeHref } from "@/lib/safeUrl";
 import ProductGrid from "./ProductGrid";
 
 export const SECTION_TYPES = [
@@ -73,7 +74,7 @@ export function HeroSection({ data }) {
         {data.title && <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4">{data.title}</h1>}
         {data.subtitle && <p className="text-lg md:text-xl text-white/90 mb-8 max-w-2xl">{data.subtitle}</p>}
         {data.cta_text && data.cta_link && (
-          <Link href={data.cta_link} className="inline-flex items-center gap-2 bg-white text-green-800 px-6 py-3 rounded-full font-semibold hover:bg-gray-100 transition-colors">
+          <Link href={safeHref(data.cta_link)} className="inline-flex items-center gap-2 bg-white text-green-800 px-6 py-3 rounded-full font-semibold hover:bg-gray-100 transition-colors">
             {data.cta_text}
           </Link>
         )}
@@ -132,7 +133,7 @@ export function ProductsSection({ data, products = [] }) {
               {title && <h2 className="text-2xl font-bold text-gray-900">{title}</h2>}
             </div>
             {show_view_all && view_all_link && (
-              <Link href={view_all_link} className="btn btn-outline">View All</Link>
+              <Link href={safeHref(view_all_link)} className="btn btn-outline">View All</Link>
             )}
           </div>
         )}
@@ -162,7 +163,7 @@ export function CategoriesSection({ data, categories = [] }) {
               {title && <h2 className="text-2xl font-bold text-gray-900">{title}</h2>}
             </div>
             {show_all_link && all_link && (
-              <Link href={all_link} className="btn btn-outline">View All</Link>
+              <Link href={safeHref(all_link)} className="btn btn-outline">View All</Link>
             )}
           </div>
         )}
@@ -182,7 +183,7 @@ export function CategoriesSection({ data, categories = [] }) {
         {!categories.length && <div className="empty"><p className="muted">No categories to display.</p></div>}
         {show_all_link && all_link && (
           <div style={{ textAlign: "center", marginTop: 20 }}>
-            <Link href={all_link} className="btn btn-outline">View All Categories</Link>
+            <Link href={safeHref(all_link)} className="btn btn-outline">View All Categories</Link>
           </div>
         )}
       </div>
@@ -330,7 +331,7 @@ export function CTABannerSection({ data }) {
       <div className={`container relative flex flex-col justify-center min-h-[200px] ${alignments[alignment] || alignments.center} ${textColors[text_color] || textColors.white}`}>
         {title && <h2 className="text-3xl md:text-4xl font-bold mb-4">{title}</h2>}
         {description && <p className="text-lg mb-8 max-w-2xl opacity-90">{description}</p>}
-        <Link href={button_link} className={`inline-flex items-center gap-2 px-8 py-3 rounded-full font-semibold transition-colors ${
+        <Link href={safeHref(button_link)} className={`inline-flex items-center gap-2 px-8 py-3 rounded-full font-semibold transition-colors ${
           text_color === "white" ? "bg-white text-green-800 hover:bg-gray-100" :
           text_color === "dark" ? "bg-gray-900 text-white hover:bg-gray-800" :
           "bg-white text-green-800 hover:bg-gray-100"

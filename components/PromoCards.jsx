@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, ArrowRight } from "lucide-react";
+import { safeHref } from "@/lib/safeUrl";
 
 function usePerView() {
   const [perView, setPerView] = useState(1);
@@ -48,7 +49,7 @@ function PromoCard({ card }) {
         )}
         <h3>{card.title}</h3>
         {card.description && <p className="muted">{card.description}</p>}
-        <Link className="btn btn-primary" href={card.button_link || "/shop"}>
+        <Link className="btn btn-primary" href={safeHref(card.button_link)}>
           {card.button_text || "Shop Now"} <ArrowRight size={16} />
         </Link>
       </div>

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getSupabaseAdmin, adminAuthorized } from '@/lib/supabaseServer';
+import { isSafeHttpUrl } from '@/lib/safeUrl';
 
 export const dynamic = 'force-dynamic';
 
@@ -45,6 +46,12 @@ export async function POST(request) {
     const row = { title, updated_at: new Date().toISOString() };
     for (const key of FIELDS) {
       if (key !== 'title' && key in body) row[key] = body[key];
+    }
+    for (const key of ['background_image', 'button_link']) {
+      const v = String(row[key] ?? '').trim();
+      if (v !== '' && !isSafeHttpUrl(v) && !v.startsWith('/')) {
+        return NextResponse.json({ error: `Invalid ${key.replace('_', ' ')}: use a site path or http(s) URL.` }, { status: 400 });
+      }
     }
     if (row.is_active === undefined) row.is_active = true;
     if (row.display_order === undefined) row.display_order = 0;

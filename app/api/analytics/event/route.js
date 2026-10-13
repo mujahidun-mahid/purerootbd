@@ -1,10 +1,16 @@
 import { NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabaseServer';
+import { bodyTooLarge, tooLargeResponse, throttle } from '@/lib/apiSecurity';
 
 const ALLOWED_EVENTS = new Set(['page_view', 'heartbeat', 'admin_action']);
 
 export async function POST(request) {
   try {
+    // Heartbeat fires every ~20s per visitor; 60/min leaves ample headroom
+    // while capping log-spam abuse from a single IP.
+    const limited = throttle(request, { windowMs: 60_000, max: 60, key: 'analytics' });
+    if (limited) return limited;
+    if (bodyTooLarge(request, 16 * 1024)) return tooLargeResponse(16 * 1024);
     const body = await request.json();
     if (!body.session_id) return NextResponse.json({ ok: false, error: 'session_id is required.' }, { status: 400 });
     const supabase = getSupabaseAdmin();

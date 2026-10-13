@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { safeHref } from "@/lib/safeUrl";
 
 export const DEFAULT_PROMO_BANNERS = [
   {
@@ -76,12 +77,12 @@ export default function PromoGrid({ hero, banners = [] }) {
             {hero.offer && <div className="promo-offer">{hero.offer}</div>}
             <div className="hero-actions">
               {hero.cta_link && (
-                <Link className="btn btn-primary" href={hero.cta_link}>
+                <Link className="btn btn-primary" href={safeHref(hero.cta_link)}>
                   {hero.cta_text || "Shop Now"}
                 </Link>
               )}
               {hero.secondary_link && (
-                <Link className="btn btn-outline" href={hero.secondary_link}>
+                <Link className="btn btn-outline" href={safeHref(hero.secondary_link)}>
                   {hero.secondary_text || "Learn More"}
                 </Link>
               )}
@@ -118,7 +119,7 @@ export default function PromoGrid({ hero, banners = [] }) {
                 <h3>{b.title}</h3>
                 {b.description && <p className="muted">{b.description}</p>}
                 {b.cta_link && (
-                  <Link className="promo-cta" href={b.cta_link}>
+                  <Link className="promo-cta" href={safeHref(b.cta_link)}>
                     {b.cta_text || "Shop Now"} →
                   </Link>
                 )}

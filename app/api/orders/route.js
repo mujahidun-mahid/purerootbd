@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getSupabaseAdmin, getSupabaseConfig } from '@/lib/supabaseServer';
 import { redactOrderForTracking } from '@/lib/orderPrivacy';
+import { safeError, NO_STORE, bodyTooLarge, tooLargeResponse, throttle } from '@/lib/apiSecurity';
 
 export const dynamic = 'force-dynamic';
 
@@ -39,6 +40,9 @@ async function getDeliveryPolicy(supabase) {
 
 export async function POST(request) {
   try {
+    const limited = throttle(request, { windowMs: 60_000, max: 30, key: 'orders-post' });
+    if (limited) return limited;
+    if (bodyTooLarge(request, 512 * 1024)) return tooLargeResponse(512 * 1024);
     const body = await request.json().catch(() => ({}));
     const customer = body.customer || {};
     const items = Array.isArray(body.items) ? body.items : [];
@@ -184,10 +188,7 @@ export async function POST(request) {
       .single();
 
     if (error) {
-      console.error('Supabase order insert error details:', error);
-      return NextResponse.json({
-        error: `Database write failed: ${error.message || 'Check database permissions or schema.'}`
-      }, { status: 500 });
+      return safeError(error, 'Could not save the order right now.');
     }
 
     // Insert order status history entry
@@ -208,8 +209,7 @@ export async function POST(request) {
       }
     }, { status: 201 });
   } catch (error) {
-    console.error('Order creation general error:', error);
-    return NextResponse.json({ error: error.message || 'Unable to create order right now.' }, { status: 500 });
+    return safeError(error, 'Unable to create order right now.');
   }
 }
 
@@ -262,15 +262,17 @@ export async function GET(request) {
       };
     });
 
-    return NextResponse.json({ orders: formatted });
+    return NextResponse.json({ orders: formatted }, { headers: NO_STORE });
   } catch (error) {
-    console.error('Orders query error:', error);
-    return NextResponse.json({ error: error.message || 'Unable to retrieve orders.' }, { status: 500 });
+    return safeError(error, 'Unable to retrieve orders.');
   }
 }
 
 export async function PATCH(request) {
   try {
+    const limited = throttle(request, { windowMs: 60_000, max: 15, key: 'orders-cancel' });
+    if (limited) return limited;
+    if (bodyTooLarge(request, 64 * 1024)) return tooLargeResponse(64 * 1024);
     const body = await request.json().catch(() => ({}));
     const { order_number, phone, status } = body;
 
@@ -317,9 +319,8 @@ export async function PATCH(request) {
       .insert({ order_id: order.id, status: 'Cancelled' });
     if (historyError) console.warn('Status history insert error:', historyError.message);
 
-    return NextResponse.json({ order: updated });
+    return NextResponse.json({ order: updated }, { headers: NO_STORE });
   } catch (error) {
-    console.error('Order cancellation error:', error);
-    return NextResponse.json({ error: error.message || 'Unable to cancel order' }, { status: 500 });
+    return safeError(error, 'Unable to cancel order.');
   }
 }

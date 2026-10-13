@@ -1,5 +1,17 @@
 import { NextResponse } from 'next/server';
 import { getSupabaseAdmin, adminAuthorized } from '@/lib/supabaseServer';
+import { isSafeHttpUrl } from '@/lib/safeUrl';
+
+// Keys whose values are rendered as link/image URLs. Reject dangerous
+// schemes (javascript:, data:) at write time, defense in depth alongside
+// the render-side safeHref guard.
+const URL_KEYS = new Set([
+  'logo_image_url',
+  'announcement_url',
+  'hero_image_url',
+  'hero_cta_link',
+  'hero_secondary_link',
+]);
 
 export const dynamic = 'force-dynamic';
 
@@ -62,6 +74,9 @@ export async function PUT(request) {
     ];
     if (!allowed.includes(key)) {
       return NextResponse.json({ error: 'Unsupported setting key.' }, { status: 400 });
+    }
+    if (URL_KEYS.has(key) && value !== '' && !isSafeHttpUrl(value) && !value.startsWith('/')) {
+      return NextResponse.json({ error: 'Enter a valid site path or http(s) URL.' }, { status: 400 });
     }
 
     const { data, error } = await supabase
