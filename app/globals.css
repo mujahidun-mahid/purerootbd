@@ -164,7 +164,7 @@ label{font-size:13px;font-weight:700;color:var(--ink);display:block;margin-botto
 /* ---------- grids (stack first, widen later) ---------- */
 .grid{display:grid;gap:14px}
 .cat-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
-.cat{background:#fff;border:1px solid var(--border);padding:16px;border-radius:16px;min-height:130px;display:flex;flex-direction:column;justify-content:end;transition:.2s}
+.cat{background:#fff;border:1px solid var(--border);padding:16px;border-radius:16px;min-height:130px;display:flex;flex-direction:column;justify-content:flex-end;transition:.2s}
 .cat:hover{transform:translateY(-3px);box-shadow:0 12px 35px rgba(98,70,165,.08)}
 .cat-icon{font-size:28px;margin-bottom:auto}.cat strong{color:var(--dark)}
 .product-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
@@ -761,4 +761,123 @@ a.co-step-label:hover{text-decoration:underline}
 }
 @media(min-width:981px){
   .acct-wish-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+}
+
+/* ============================================================
+   MOBILE REDESIGN — reference-inspired layout, brand preserved
+   Mobile-first (<=980px). Desktop restores original composition.
+   ============================================================ */
+.home-stack{display:flex;flex-direction:column;min-width:0}
+.home-stack>*{min-width:0;max-width:100%}
+
+/* A. Compact mobile header (homepage only, mobile only) */
+.m-home-head{padding:14px 0 6px;background:#fff}
+.m-home-head-inner{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.m-home-eyebrow{display:block;font-size:12.5px;color:var(--muted);font-weight:500}
+.m-home-title{margin:2px 0 0;font-size:22px;line-height:1.2;letter-spacing:-.4px;color:var(--dark);font-weight:800}
+.m-home-avatar{flex:0 0 auto;width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:var(--mint-soft);border:1px solid var(--border);color:var(--dark)}
+.m-home-search{display:flex;align-items:center;gap:10px;margin-top:12px;background:var(--soft-gray);border:1px solid var(--border);border-radius:12px;padding:0 14px;min-height:44px;color:var(--muted);font-size:14px}
+.m-home-search span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* B. Promotional banner — compact horizontal, brand green */
+.m-promo-wrap{padding:10px 0 4px;background:#fff}
+.m-promo{display:grid;grid-template-columns:1.15fr .85fr;gap:12px;align-items:center;background:var(--green);color:#FEFAE0;border-radius:20px;padding:18px 16px 18px 18px;overflow:hidden;position:relative;min-height:148px}
+.m-promo-copy{display:flex;flex-direction:column;align-items:flex-start;gap:8px;min-width:0}
+.m-promo-offer{display:inline-block;background:var(--gold);color:var(--dark);font-size:11px;font-weight:800;letter-spacing:.4px;padding:5px 11px;border-radius:999px}
+.m-promo-title{margin:0;font-size:20px;line-height:1.2;letter-spacing:-.3px;color:#fff;font-weight:800;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.m-promo-sub{margin:0;font-size:13px;line-height:1.5;color:rgba(254,250,224,.85);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.m-promo-cta{display:inline-flex;align-items:center;min-height:44px;font-size:13.5px;font-weight:800;color:#fff;padding:8px 0}
+.m-promo-art{position:relative;min-height:120px;border-radius:14px;overflow:hidden;background:rgba(255,255,255,.08);display:grid;place-items:center}
+.m-promo-art img{width:100%;height:100%;object-fit:cover;display:block;position:absolute;inset:0}
+.m-promo-orb{position:absolute;border-radius:50%}
+.m-promo-orb.a{width:110px;height:110px;right:6%;top:8%;background:radial-gradient(circle at 30% 25%,#e7c89f,#a9703f 55%,#724523)}
+.m-promo-orb.b{width:70px;height:70px;left:10%;bottom:6%;background:radial-gradient(circle,#ffe69a,#c99222 55%,#8a5c12)}
+
+/* C. Horizontally scrollable categories — thumbnail + label */
+.cat-strip{background:#fff}
+.cat-strip-track{gap:14px;padding:14px 0;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch}
+.cat-strip-item{flex:0 0 auto;width:68px;scroll-snap-align:start;display:flex;flex-direction:column;align-items:center;gap:8px;border:0;background:transparent;border-radius:0;padding:0;min-width:0}
+.cat-strip-icon{width:60px;height:60px;border-radius:20px;background:var(--soft-gray);border:1px solid var(--border);display:grid;place-items:center;font-size:26px;overflow:hidden;flex:0 0 auto}
+.cat-strip-icon img{width:100%;height:100%;object-fit:cover;display:block}
+.cat-strip-name{font-size:12px;font-weight:600;color:var(--ink);white-space:normal;text-align:center;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:32px}
+.cat-strip-count{display:none}
+.cat-strip-item.active .cat-strip-icon{border-color:var(--green);box-shadow:0 0 0 2px color-mix(in srgb,var(--green) 25%,transparent);background:var(--mint-soft)}
+.cat-strip-item.active .cat-strip-name{color:var(--green);font-weight:800}
+
+/* D. Section heading + View-all */
+.fp-title-row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:6px}
+.fp-title-row h2{font-size:20px}
+.fp-viewall{flex:0 0 auto;font-size:13px;font-weight:700;color:var(--green);min-height:44px;display:inline-flex;align-items:center;padding:0 4px;white-space:nowrap}
+.fp-viewall:hover{text-decoration:underline}
+.fp-filters{display:flex;gap:2px;flex-wrap:nowrap;overflow-x:auto;max-width:100%;padding:2px 2px 8px;margin-bottom:6px;scrollbar-width:thin;-webkit-overflow-scrolling:touch}
+.fp-filter{flex:0 0 auto;min-height:44px}
+.fp-head{min-width:0;max-width:100%}
+
+/* E. Compact two-column product grid (mobile refinements) */
+.fp-section{padding-top:20px}
+.fp-grid{gap:12px}
+.fp-card{min-width:0;overflow:hidden}
+.fp-card-top{min-height:28px}
+.fp-img{aspect-ratio:1/1}
+.fp-title{min-height:35px;overflow-wrap:anywhere}
+.fp-price-row{min-width:0}
+.fp-actions{min-width:0}
+
+/* F. Floating bottom navigation */
+.bottom-nav{
+  left:12px;right:12px;bottom:calc(10px + env(safe-area-inset-bottom,0));
+  grid-template-columns:repeat(5,1fr);
+  border:1px solid var(--border);
+  border-radius:22px;
+  box-shadow:0 8px 30px rgba(10,64,12,.12);
+  padding:6px 4px;
+}
+.bottom-nav-item{min-height:56px;padding:6px 2px 4px}
+.bottom-nav-item.center .bottom-nav-icon{
+  width:52px;height:52px;border-radius:50%;
+  background:var(--green);color:#fff;
+  display:grid;place-items:center;
+  margin-top:-26px;
+  border:4px solid #fff;
+  box-shadow:0 6px 18px rgba(10,64,12,.28);
+}
+.bottom-nav-item.center.active .bottom-nav-icon{background:var(--dark)}
+.bottom-nav-item.center.active .bottom-nav-icon svg{stroke:#fff}
+.bottom-nav-badge{top:2px;right:6px;z-index:1}
+
+/* Prevent floating nav from covering content */
+@media(max-width:980px){
+  main{padding-bottom:calc(120px + env(safe-area-inset-bottom,0))}
+  .footer{margin-bottom:calc(120px + env(safe-area-inset-bottom,0))}
+  /* Keep products high: collapse large desktop hero + showcase on phones */
+  .home-hero,.home-featcat{display:none}
+  .home-m-head{order:1}
+  .home-m-promo{order:2}
+  .home-cats{order:3}
+  .home-featured{order:4}
+  .home-promocards{order:5}
+}
+
+/* Desktop: hide mobile-only chrome, restore original order + layout */
+@media(min-width:981px){
+  .home-m-head,.home-m-promo{display:none}
+  .home-cats{order:1}
+  .home-hero{order:2}
+  .home-featcat{order:3}
+  .home-promocards{order:4}
+  .home-featured{order:5}
+  .fp-title-row h2{font-size:clamp(24px,4.5vw,34px)}
+}
+
+/* Narrow phones 320–390px: tighten to prevent overflow */
+@media(max-width:390px){
+  .container{width:calc(100% - 24px)}
+  .m-home-title{font-size:20px}
+  .m-promo{padding:16px 14px;gap:10px}
+  .m-promo-title{font-size:18px}
+  .fp-grid{gap:10px}
+  .fp-card{padding:8px}
+  .fp-buy{font-size:12px}
+  .cat-strip-item{width:62px}
+  .cat-strip-icon{width:56px;height:56px}
 }
