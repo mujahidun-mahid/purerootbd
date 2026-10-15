@@ -47,13 +47,18 @@ export default function FeaturedProducts({
   if (!enabled) return null;
 
   return (
-    <section className="section" aria-labelledby="featured-products-h">
+    <section className="section fp-section" aria-labelledby="featured-products-h">
       <div className="container">
         <div className="fp-head">
-          <div>
-            <div className="kicker">Handpicked</div>
-            <h2 id="featured-products-h">{title}</h2>
-            {subtitle && <p className="muted" style={{ margin: "8px 0 0" }}>{subtitle}</p>}
+          <div className="fp-title-row">
+            <div>
+              <div className="kicker">Handpicked</div>
+              <h2 id="featured-products-h">{title}</h2>
+              {subtitle && <p className="muted" style={{ margin: "8px 0 0" }}>{subtitle}</p>}
+            </div>
+            <Link className="fp-viewall" href="/shop" aria-label={`View all ${title}`}>
+              View all →
+            </Link>
           </div>
           <nav className="fp-filters" aria-label="Filter products by category">
             {filters.map((f) => (

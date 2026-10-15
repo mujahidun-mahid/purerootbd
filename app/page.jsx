@@ -7,6 +7,8 @@ import { loadProducts, loadCategories } from "@/lib/products-server";
 import { loadPromoCards } from "@/lib/promo-cards";
 import { getSiteSettings } from "@/lib/site-settings";
 import NewsletterForm from "@/components/NewsletterForm";
+import MobileHomeHeader from "@/components/MobileHomeHeader";
+import MobilePromoBanner from "@/components/MobilePromoBanner";
 
 export const dynamic = 'force-dynamic';
 
@@ -45,14 +47,35 @@ export default async function Home() {
   const featuredLimit = Math.max(1, parseInt(settings.featured_limit, 10) || 10);
 
   return (
-    <>
+    <div className="home-stack">
+      <div className="home-m-head">
+        <MobileHomeHeader />
+      </div>
+      <div className="home-m-promo">
+        <MobilePromoBanner hero={hero} card={promoCards[0]} />
+      </div>
       {(settings.category_strip_enabled ?? "true") !== "false" && (
-        <CategoryStrip categories={categories} counts={counts} />
+        <div className="home-cats">
+          <CategoryStrip categories={categories} counts={counts} />
+        </div>
       )}
 
-      <PromoGrid hero={hero} banners={banners} />
+      <div className="home-featured">
+        <FeaturedProducts
+          products={products}
+          limit={featuredLimit}
+          title={settings.featured_title || "Featured Products"}
+          subtitle={settings.featured_subtitle || ""}
+          enabled={(settings.featured_enabled ?? "true") !== "false"}
+          productIds={featuredIds}
+        />
+      </div>
 
-      <section className="section feat-cat-section" aria-labelledby="feat-cat-h">
+      <div className="home-hero">
+        <PromoGrid hero={hero} banners={banners} />
+      </div>
+
+      <section className="section feat-cat-section home-featcat" aria-labelledby="feat-cat-h">
         <div className="container">
           <div className="feat-cat-head">
             <h2 id="feat-cat-h">Featured Categories</h2>
@@ -77,16 +100,9 @@ export default async function Home() {
         </div>
       </section>
 
-      <PromoCards cards={promoCards} carousel={promoCarousel} />
-
-      <FeaturedProducts
-        products={products}
-        limit={featuredLimit}
-        title={settings.featured_title || "Featured Products"}
-        subtitle={settings.featured_subtitle || ""}
-        enabled={(settings.featured_enabled ?? "true") !== "false"}
-        productIds={featuredIds}
-      />
+      <div className="home-promocards">
+        <PromoCards cards={promoCards} carousel={promoCarousel} />
+      </div>
 
       <section className="section">
         <div className="container">
@@ -151,6 +167,6 @@ export default async function Home() {
           </div>
         </div>
       </section>
-    </>
+    </div>
   );
 }
