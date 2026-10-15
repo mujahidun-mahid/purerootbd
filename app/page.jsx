@@ -1,7 +1,7 @@
 import Link from "next/link";
 import FeaturedProducts from "@/components/FeaturedProducts";
 import CategoryStrip from "@/components/CategoryStrip";
-import PromoGrid, { parsePromoBanners } from "@/components/PromoGrid";
+import PromoGrid from "@/components/PromoGrid";
 import PromoCards from "@/components/PromoCards";
 import { loadProducts, loadCategories } from "@/lib/products-server";
 import { loadPromoCards } from "@/lib/promo-cards";
@@ -25,7 +25,6 @@ export default async function Home() {
     autoplay: (settings.promo_autoplay ?? "false") === "true",
     interval: Math.max(2000, parseInt(settings.promo_interval_ms, 10) || 6000),
   };
-  const banners = parsePromoBanners(settings.promo_banners);
   const counts = {};
   products.forEach((p) => {
     if (p.category) counts[p.category] = (counts[p.category] || 0) + 1;
@@ -50,7 +49,7 @@ export default async function Home() {
         <CategoryStrip categories={categories} counts={counts} />
       )}
 
-      <PromoGrid hero={hero} banners={banners} />
+      <PromoGrid hero={hero} />
 
       <section className="section feat-cat-section" aria-labelledby="feat-cat-h">
         <div className="container">

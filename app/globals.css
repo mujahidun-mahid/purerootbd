@@ -370,39 +370,44 @@ label{font-size:13px;font-weight:700;color:var(--ink);display:block;margin-botto
 .cat-strip-name{font-size:13px;font-weight:700;color:var(--dark);white-space:nowrap}
 .cat-strip-count{font-size:11px;color:var(--muted);white-space:nowrap}
 
-/* ---------- promo hero grid (main + secondary banners) ---------- */
-.promo-grid-section{padding:34px 0 8px}
-.promo-grid{display:grid;grid-template-columns:1fr;gap:14px}
-.promo-main{background:linear-gradient(120deg,var(--cream) 0%,#fff 60%);border:1px solid var(--border);border-radius:24px;overflow:hidden;display:grid;grid-template-columns:1fr;min-height:320px}
-.promo-main-copy{padding:28px 24px;display:flex;flex-direction:column;justify-content:center;gap:12px}
-.promo-main-copy h1{font-size:clamp(30px,5vw,54px);line-height:1.05;margin:0;color:var(--dark)}
-.promo-main-copy p{font-size:clamp(15px,1.7vw,17px);line-height:1.65;color:var(--muted);margin:0;max-width:520px}
+/* ---------- unified pure roots hero (single panel, no side cards) ---------- */
+.pr-hero-section{padding:34px 0 8px}
+.pr-hero{position:relative;overflow:hidden;border:1px solid var(--border);border-radius:28px;
+  background:
+    radial-gradient(1100px 320px at 50% -80px,rgba(240,208,137,.55),rgba(240,208,137,0) 70%),
+    radial-gradient(600px 300px at 85% 10%,rgba(247,227,176,.5),rgba(247,227,176,0) 70%),
+    repeating-linear-gradient(0deg,rgba(177,171,134,.06) 0 2px,transparent 2px 5px),
+    repeating-linear-gradient(90deg,rgba(177,171,134,.06) 0 2px,transparent 2px 5px),
+    linear-gradient(180deg,#FDFAF0 0%,#FBF4E2 60%,#F6EDD6 100%);
+  box-shadow:0 20px 60px rgba(10,64,12,.08)}
+.pr-hero-glow{position:absolute;inset:0;pointer-events:none;background:
+  radial-gradient(700px 200px at 20% 0%,rgba(255,236,170,.8),rgba(255,236,170,0) 65%),
+  radial-gradient(500px 220px at 80% 6%,rgba(232,162,176,.18),rgba(232,162,176,0) 70%)}
+.pr-hero-mark{position:absolute;top:18px;right:22px;pointer-events:none;opacity:.9}
+.pr-hero-inner{position:relative;z-index:1;display:grid;grid-template-columns:1fr;gap:8px;padding:40px 24px 0}
+.pr-hero-art{order:-1;width:100%;max-width:520px;margin:0 auto}
+.pr-hero-art svg{display:block;width:100%;height:auto}
+.pr-hero-copy{display:flex;flex-direction:column;align-items:center;text-align:center;gap:12px;padding:8px 0 0}
+.pr-hero-copy h1{font-size:clamp(32px,6vw,54px);line-height:1.06;margin:0;color:var(--dark);max-width:14ch}
+.pr-hero-copy p{font-size:clamp(15px,1.7vw,17px);line-height:1.65;color:var(--muted);margin:0;max-width:520px}
 .promo-offer{display:inline-block;width:fit-content;background:var(--green);color:#fff;font-size:13px;font-weight:800;padding:6px 14px;border-radius:999px}
-.promo-main-art{min-height:240px;position:relative;overflow:hidden;background:linear-gradient(145deg,var(--mint),var(--cream))}
-.promo-side{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-.promo-side .promo-card:first-child{grid-column:1/-1}
-.promo-card{background:#fff;border:1px solid var(--border);border-radius:20px;overflow:hidden;display:flex;flex-direction:column;transition:.2s;min-width:0}
-.promo-card:hover{transform:translateY(-3px);box-shadow:0 12px 35px rgba(98,70,165,.10)}
-.promo-card-art{height:120px;overflow:hidden;background:linear-gradient(145deg,#F5F5F7,var(--mint-soft));display:grid;place-items:center}
-.promo-card-art img{width:100%;height:100%;object-fit:cover;display:block}
-.promo-art-fallback{font-size:34px;color:var(--green)}
-.promo-card-copy{padding:16px;display:flex;flex-direction:column;gap:6px}
-.promo-eyebrow{font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--green)}
-.promo-card-copy h3{margin:0;font-size:17px;color:var(--dark)}
-.promo-card-copy p{margin:0}
-.promo-cta{font-size:13px;font-weight:800;color:var(--green);margin-top:4px}
-.promo-cta:hover{text-decoration:underline}
+.pr-hero-copy .hero-actions{align-items:center}
+.pr-hero-meadow{position:relative;z-index:0;margin-top:-6px}
+.pr-hero-meadow svg{display:block;width:100%;height:110px}
+.pr-hero-foot{position:relative;z-index:1;text-align:center;font-size:12px;font-weight:800;letter-spacing:3px;text-transform:uppercase;color:var(--green);padding:6px 0 20px}
 @media(min-width:768px){
-  .promo-main{grid-template-columns:1.05fr .95fr;align-items:stretch}
-  .promo-main-art{min-height:340px}
-  .promo-main-copy{padding:40px}
+  .pr-hero-inner{grid-template-columns:1.02fr .98fr;align-items:center;gap:24px;padding:56px 48px 0}
+  .pr-hero-art{order:2;max-width:none}
+  .pr-hero-copy{order:1;align-items:flex-start;text-align:left}
+  .pr-hero-copy .hero-actions{justify-content:flex-start}
+  .pr-hero-meadow svg{height:140px}
 }
 @media(min-width:981px){
-  .promo-grid-section{padding:44px 0 12px}
-  .promo-grid{grid-template-columns:62% 1fr;gap:18px}
-  .promo-main{min-height:420px}
-  .promo-side{grid-template-columns:1fr 1fr;align-content:stretch}
-  .promo-card-art{height:140px}
+  .pr-hero-section{padding:44px 0 12px}
+  .pr-hero-inner{padding:64px 64px 0}
+}
+@media(max-width:390px){
+  .pr-hero-inner{padding:32px 18px 0}
 }
 
 /* ---------- homepage promo banner cards ---------- */
