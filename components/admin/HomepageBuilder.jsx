@@ -11,6 +11,7 @@ const EMPTY_BANNER = {
   cta_text: 'Shop Now',
   cta_link: '/shop',
   bg: '',
+  badge: '',
   enabled: true,
   order: 1,
 };
@@ -166,6 +167,7 @@ export default function HomepageBuilder({ identity, setIdentity, saveIdentity, l
             <div className="full"><label>Image URL (optional — blank uses brand gradient)</label><input className="input" value={form.image} onChange={(e) => setForm({ ...form, image: e.target.value })} placeholder="https://…" /></div>
             <div><label>Button Label</label><input className="input" value={form.cta_text} onChange={(e) => setForm({ ...form, cta_text: e.target.value })} placeholder="Shop Now" /></div>
             <div><label>Button Link</label><input className="input" value={form.cta_link} onChange={(e) => setForm({ ...form, cta_link: e.target.value })} placeholder="/shop" /></div>
+            <div><label>Discount Badge (optional)</label><input className="input" value={form.badge || ''} onChange={(e) => setForm({ ...form, badge: e.target.value })} placeholder="20% OFF" /></div>
           </div>
           <div className="settings-actions">
             <button type="button" className="btn btn-primary" onClick={saveBanner} disabled={!form.title.trim()}>Stage Banner</button>

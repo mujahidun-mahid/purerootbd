@@ -1,60 +1,13 @@
 import Link from "next/link";
 import { safeHref } from "@/lib/safeUrl";
+import { DEFAULT_PROMO_BANNERS, parseHeroBanners } from "@/lib/hero-offers";
 
-export const DEFAULT_PROMO_BANNERS = [
-  {
-    id: "promo-new",
-    slot: "secondary1",
-    eyebrow: "Just Landed",
-    title: "New Arrivals",
-    description: "Fresh picks added to the shelves this week.",
-    image: "",
-    cta_text: "Explore",
-    cta_link: "/shop",
-    bg: "",
-    enabled: true,
-    order: 1,
-  },
-  {
-    id: "promo-deals",
-    slot: "secondary2",
-    eyebrow: "While Stock Lasts",
-    title: "Limited-Time Offers",
-    description: "Special prices on customer favourites.",
-    image: "",
-    cta_text: "Grab Deals",
-    cta_link: "/shop",
-    bg: "",
-    enabled: true,
-    order: 2,
-  },
-  {
-    id: "promo-collections",
-    slot: "secondary3",
-    eyebrow: "Curated For You",
-    title: "Featured Collections",
-    description: "Bundles for everyday wellness routines.",
-    image: "",
-    cta_text: "View More",
-    cta_link: "/shop",
-    bg: "",
-    enabled: true,
-    order: 3,
-  },
-];
+export { DEFAULT_PROMO_BANNERS };
 
 export function parsePromoBanners(raw) {
   if (!raw) return [...DEFAULT_PROMO_BANNERS];
-  try {
-    const list = JSON.parse(raw);
-    if (!Array.isArray(list)) return [...DEFAULT_PROMO_BANNERS];
-    return list
-      .filter((b) => b && b.enabled !== false && b.title)
-      .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
-      .slice(0, 3);
-  } catch {
-    return [...DEFAULT_PROMO_BANNERS];
-  }
+  const list = parseHeroBanners(raw).filter((b) => b.enabled);
+  return list.length ? list : [...DEFAULT_PROMO_BANNERS];
 }
 
 function BannerArt({ banner, large }) {
@@ -117,6 +70,7 @@ export default function PromoGrid({ hero, banners = [] }) {
               <div className="promo-card-copy">
                 {b.eyebrow && <div className="promo-eyebrow">{b.eyebrow}</div>}
                 <h3>{b.title}</h3>
+                {b.badge && <span className="promo-badge">{b.badge}</span>}
                 {b.description && <p className="muted">{b.description}</p>}
                 {b.cta_link && (
                   <Link className="promo-cta" href={safeHref(b.cta_link)}>

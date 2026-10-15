@@ -362,7 +362,17 @@ label{font-size:13px;font-weight:700;color:var(--ink);display:block;margin-botto
 
 /* ---------- category strip (horizontal scroll) ---------- */
 .cat-strip{background:#fff;border-bottom:1px solid var(--border)}
-.cat-strip-track{display:flex;gap:10px;overflow-x:auto;padding:12px 0;scroll-snap-type:x mandatory;scrollbar-width:thin}
+.cat-strip-track{display:flex;gap:10px;overflow-x:auto;max-width:100%;padding:12px;scroll-snap-type:x mandatory;scrollbar-width:thin;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;scroll-padding-inline:12px}
+@media(hover:none){
+  .cat-strip-track{scrollbar-width:none}
+  .cat-strip-track::-webkit-scrollbar{display:none}
+}
+@media(min-width:768px){
+  .cat-strip-track{gap:12px}
+}
+@media(min-width:981px){
+  .cat-strip-track{padding:14px 4px;scroll-padding-inline:4px}
+}
 .cat-strip-item{flex:0 0 auto;scroll-snap-align:start;display:flex;align-items:center;gap:10px;border:1px solid var(--border);border-radius:999px;padding:6px 16px 6px 6px;background:var(--bg);transition:.2s;min-width:0}
 .cat-strip-item:hover{border-color:var(--green);transform:translateY(-1px)}
 .cat-strip-icon{width:36px;height:36px;border-radius:50%;background:#fff;display:grid;place-items:center;font-size:20px;overflow:hidden;flex:0 0 auto}
@@ -388,6 +398,7 @@ label{font-size:13px;font-weight:700;color:var(--ink);display:block;margin-botto
 .promo-art-fallback{font-size:34px;color:var(--green)}
 .promo-card-copy{padding:16px;display:flex;flex-direction:column;gap:6px}
 .promo-eyebrow{font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--green)}
+.promo-badge{display:inline-block;width:fit-content;background:var(--gold);color:var(--dark);font-size:11px;font-weight:800;letter-spacing:.4px;padding:4px 12px;border-radius:999px;margin-top:2px}
 .promo-card-copy h3{margin:0;font-size:17px;color:var(--dark)}
 .promo-card-copy p{margin:0}
 .promo-cta{font-size:13px;font-weight:800;color:var(--green);margin-top:4px}
