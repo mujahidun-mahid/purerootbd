@@ -154,8 +154,7 @@ label{font-size:13px;font-weight:700;color:var(--ink);display:block;margin-botto
 .section-head{display:flex;flex-direction:column;align-items:flex-start;gap:12px;margin-bottom:24px}
 .section h2{font-size:clamp(24px,4.5vw,34px);line-height:1.15;margin:0;color:var(--dark)}
 .section-head p{margin:8px 0 0;color:var(--muted)}
-.page-head{background:var(--bg);padding:34px 0}
-.page-head h1{margin:0 0 8px;color:var(--dark);font-size:clamp(27px,5vw,42px);line-height:1.12}
+.page-head{display:none !important}
 .crumb{font-size:13px;color:var(--muted)}
 .muted{color:var(--muted);font-size:14px;line-height:1.55}
 .empty{text-align:center;padding:50px 16px;border:1px dashed var(--border);border-radius:15px}
@@ -403,6 +402,28 @@ label{font-size:13px;font-weight:700;color:var(--ink);display:block;margin-botto
 .promo-card-copy p{margin:0}
 .promo-cta{font-size:13px;font-weight:800;color:var(--green);margin-top:4px}
 .promo-cta:hover{text-decoration:underline}
+/* mini carousels inside promo-side cards (responsive, 1 slide per view) */
+.mini-carousel{display:flex;flex-direction:column;gap:8px;min-width:0}
+.mini-viewport{overflow:hidden;border-radius:12px;min-width:0}
+.mini-track{display:flex;transition:transform .45s ease;min-width:0}
+.mini-slide{flex:0 0 100%;min-width:0;box-sizing:border-box;display:flex;flex-direction:column;gap:6px;padding:2px 1px}
+.mini-slide-art{height:96px;border-radius:12px;overflow:hidden;background:linear-gradient(145deg,#F5F5F7,var(--mint-soft))}
+.mini-slide-art img{width:100%;height:100%;object-fit:cover;display:block}
+.mini-nav{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:6px}
+.mini-dots{display:flex;gap:6px;align-items:center}
+.mini-dot{width:8px;height:8px;border-radius:50%;border:0;background:#d4dcd4;padding:0;cursor:pointer;transition:.2s}
+.mini-dot.active{background:var(--green);transform:scale(1.25)}
+.mini-arrows{display:flex;gap:6px}
+.mini-arrow{width:26px;height:26px;border-radius:50%;border:1px solid var(--border);background:#fff;color:var(--dark);font-size:16px;line-height:1;display:grid;place-items:center;cursor:pointer;padding:0 0 2px}
+.mini-arrow:hover{background:var(--bg)}
+@media(max-width:520px){
+  .promo-side{grid-template-columns:1fr}
+  .promo-side .promo-card:first-child{grid-column:auto}
+  .mini-slide-art{height:120px}
+}
+@media(prefers-reduced-motion:reduce){
+  .mini-track{transition:none}
+}
 @media(min-width:768px){
   .promo-main{grid-template-columns:1.05fr .95fr;align-items:stretch}
   .promo-main-art{min-height:340px}
