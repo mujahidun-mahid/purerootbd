@@ -1,23 +1,13 @@
 import Link from "next/link";
 import { safeHref } from "@/lib/safeUrl";
-import { DEFAULT_PROMO_BANNERS, parseHeroBanners } from "@/lib/hero-offers";
+import { DEFAULT_PROMO_BANNERS, parseHeroBanners, isRemovedPromoBanner } from "@/lib/hero-offers";
 import MiniCarousel from "@/components/MiniCarousel";
 
 export { DEFAULT_PROMO_BANNERS };
 
-function isRemovedBanner(b) {
-  if (!b || typeof b !== "object") return true;
-  if (b.id === "promo-new" || b.slot === "secondary1") return true;
-  const title = String(b.title || "").trim().toLowerCase();
-  const eyebrow = String(b.eyebrow || "").trim().toLowerCase();
-  if (title === "new arrivals" && (eyebrow === "just landed" || !eyebrow)) return true;
-  return false;
-}
-
 export function parsePromoBanners(raw) {
   if (!raw) return [...DEFAULT_PROMO_BANNERS];
-  const list = parseHeroBanners(raw).filter((b) => b.enabled && !isRemovedBanner(b));
-  return list.length ? list : [...DEFAULT_PROMO_BANNERS];
+  return parseHeroBanners(raw).filter((b) => b.enabled && !isRemovedPromoBanner(b));
 }
 
 function BannerArt({ banner, large }) {
@@ -58,10 +48,15 @@ function SideCard({ banner }) {
 }
 
 export default function PromoGrid({ hero, banners = [] }) {
-  const list = banners.length ? banners : [...DEFAULT_PROMO_BANNERS];
+  const list = (Array.isArray(banners) ? banners : []).filter(
+    (b) => b && b.enabled !== false && !isRemovedPromoBanner(b)
+  );
   return (
     <section className="section promo-grid-section" aria-label="Promotions">
-      <div className="container promo-grid">
+      <div
+        className="container promo-grid"
+        style={list.length ? undefined : { gridTemplateColumns: "1fr" }}
+      >
         <article className="promo-main">
           <div className="promo-main-copy">
             {hero.eyebrow && <div className="kicker">{hero.eyebrow}</div>}
@@ -99,11 +94,13 @@ export default function PromoGrid({ hero, banners = [] }) {
           </div>
         </article>
 
-        <div className="promo-side">
-          {list.map((b) => (
-            <SideCard key={b.id || b.title} banner={b} />
-          ))}
-        </div>
+        {list.length > 0 && (
+          <div className="promo-side">
+            {list.map((b) => (
+              <SideCard key={b.id || b.title} banner={b} />
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );

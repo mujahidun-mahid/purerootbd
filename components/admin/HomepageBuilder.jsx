@@ -214,7 +214,7 @@ export default function HomepageBuilder({ identity, setIdentity, saveIdentity, l
           })}
         </div>
       ) : (
-        <p className="muted">No custom banners yet — the homepage shows three brand-styled defaults. Add your own to replace them.</p>
+        <p className="muted">No custom banners — the hero side cards are hidden. Add a banner to show one.</p>
       )}
 
       {editing >= 0 && (
