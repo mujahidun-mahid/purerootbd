@@ -5,9 +5,18 @@ import MiniCarousel from "@/components/MiniCarousel";
 
 export { DEFAULT_PROMO_BANNERS };
 
+function isRemovedBanner(b) {
+  if (!b || typeof b !== "object") return true;
+  if (b.id === "promo-new" || b.slot === "secondary1") return true;
+  const title = String(b.title || "").trim().toLowerCase();
+  const eyebrow = String(b.eyebrow || "").trim().toLowerCase();
+  if (title === "new arrivals" && (eyebrow === "just landed" || !eyebrow)) return true;
+  return false;
+}
+
 export function parsePromoBanners(raw) {
   if (!raw) return [...DEFAULT_PROMO_BANNERS];
-  const list = parseHeroBanners(raw).filter((b) => b.enabled);
+  const list = parseHeroBanners(raw).filter((b) => b.enabled && !isRemovedBanner(b));
   return list.length ? list : [...DEFAULT_PROMO_BANNERS];
 }
 
