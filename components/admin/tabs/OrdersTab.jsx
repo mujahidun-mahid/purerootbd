@@ -168,18 +168,11 @@ export default function OrdersTab({
                       <strong>{c.name || 'Customer'}</strong>
                       <small>{o.phone}</small>
                     </span>
-                    <span className="oc-cell oc-payment">
-                      <strong>{paymentLabel(o.payment_method)}</strong>
-                      <small>Payment</small>
+                    <span className="oc-cell oc-single oc-payment">{paymentLabel(o.payment_method)}</span>
+                    <span className="oc-cell oc-single oc-items">
+                      {itemCount} {itemCount === 1 ? 'item' : 'items'}
                     </span>
-                    <span className="oc-cell oc-items">
-                      <strong>{itemCount}</strong>
-                      <small>item{itemCount === 1 ? '' : 's'}</small>
-                    </span>
-                    <span className="oc-cell oc-total">
-                      <strong>{money(o.total)}</strong>
-                      <small>Total</small>
-                    </span>
+                    <span className="oc-cell oc-single oc-total">{money(o.total)}</span>
                     <span className="oc-cell oc-status">
                       <StatusPill status={o.status} />
                     </span>
@@ -191,13 +184,19 @@ export default function OrdersTab({
                       <div className="oc-pad">
                         <div className="order-card-grid">
                           <div className="oc-section">
-                            <h4>Ordered Items ({items.length})</h4>
-                            <div className="detail-items">
+                            <div className="oc-sec-head">
+                              <h4>Ordered Items</h4>
+                              <span className="oc-chip">
+                                {items.length} {items.length === 1 ? 'item' : 'items'}
+                              </span>
+                            </div>
+
+                            <div className="oc-itemlist">
                               {items.map((x, i) => {
                                 const unit = Number(x.price) || 0;
                                 const qty = Number(x.qty) || 1;
                                 return (
-                                  <div key={i}>
+                                  <div className="oc-item" key={i}>
                                     <span className="order-line">
                                       {x.image ? (
                                         <img
@@ -217,46 +216,47 @@ export default function OrdersTab({
                                         </small>
                                       </span>
                                     </span>
-                                    <b>{money(unit * qty)}</b>
+                                    <b className="oc-item-total">{money(unit * qty)}</b>
                                   </div>
                                 );
                               })}
                             </div>
 
-                            <div className="oc-totals">
-                              <div>
-                                <span>Subtotal</span>
-                                <b>{money(o.subtotal)}</b>
-                              </div>
-                              <div>
-                                <span>Delivery Fee</span>
-                                <b>{money(o.delivery_fee)}</b>
-                              </div>
-                              <div className="oc-total-row">
-                                <span>Total</span>
-                                <b>{money(o.total)}</b>
-                              </div>
+                            <div className="oc-sumrow">
+                              <span>
+                                Subtotal <b>{money(o.subtotal)}</b>
+                              </span>
+                              <span>
+                                Delivery <b>{money(o.delivery_fee)}</b>
+                              </span>
+                              <span className="oc-sumtotal">
+                                Total <b>{money(o.total)}</b>
+                              </span>
                             </div>
                           </div>
 
                           <div className="oc-section">
-                            <h4>Delivery Information</h4>
-                            <div className="detail-box" style={{ marginTop: 0 }}>
+                            <div className="oc-sec-head">
+                              <h4>Delivery</h4>
+                            </div>
+                            <div className="oc-delivery">
                               <div>
-                                <strong>{c.name || 'Customer'}</strong> • {o.phone}
-                                {c.email ? ` • ${c.email}` : ''}
+                                <strong>{c.name || 'Customer'}</strong> · {o.phone}
+                                {c.email ? ` · ${c.email}` : ''}
                               </div>
-                              <div style={{ color: 'var(--a-ink-2)' }}>
+                              <div>
                                 {c.address}
                                 {c.area ? `, ${c.area}` : ''}
                                 {c.district ? `, ${c.district}` : ''}
                                 {c.division ? `, ${c.division}` : ''}
                               </div>
-                              {c.notes && <div className="note">Customer Note: {c.notes}</div>}
+                              {c.notes && <div className="oc-note">Note: {c.notes}</div>}
                             </div>
 
-                            <h4>Status Timeline</h4>
-                            <div className="timeline">
+                            <div className="oc-sec-head oc-mt">
+                              <h4>Status Timeline</h4>
+                            </div>
+                            <div className="oc-timeline">
                               {timelineRows.map((x, i) => (
                                 <div className="timeline-row" key={i}>
                                   <i className={i === timelineRows.length - 1 ? 'current' : ''} />
