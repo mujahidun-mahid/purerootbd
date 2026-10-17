@@ -28,6 +28,10 @@ function paymentLabel(method) {
   return method === 'cod' ? 'Cash on Delivery' : String(method);
 }
 
+function fullAddress(c) {
+  return [c.address, c.area, c.district, c.division].filter(Boolean).join(', ');
+}
+
 export default function OrdersTab({
   orders,
   allOrdersCount,
@@ -168,10 +172,39 @@ export default function OrdersTab({
                       <strong>{c.name || 'Customer'}</strong>
                       <small>{o.phone}</small>
                     </span>
-                    <span className="oc-cell oc-single oc-payment">{paymentLabel(o.payment_method)}</span>
-                    <span className="oc-cell oc-single oc-items">
-                      {itemCount} {itemCount === 1 ? 'item' : 'items'}
+                    <span className="oc-cell oc-product">
+                      {items.length ? (
+                        <span className="oc-prod">
+                          <span className="oc-prod-thumbs">
+                            {items.slice(0, 3).map((x, i) =>
+                              x.image ? (
+                                <img key={i} src={x.image} alt="" />
+                              ) : (
+                                <span key={i} className="oc-prod-ph" aria-hidden="true">
+                                  📦
+                                </span>
+                              )
+                            )}
+                          </span>
+                          <span className="oc-prod-info">
+                            <strong>
+                              {items[0].name}
+                              {items.length > 1 ? ` +${items.length - 1} more` : ''}
+                            </strong>
+                            <small>
+                              {items.length > 1
+                                ? `${items.length} items · ${money(o.total)}`
+                                : `${items[0].size} × ${items[0].qty} · ${money(
+                                    (Number(items[0].price) || 0) * (Number(items[0].qty) || 1)
+                                  )}`}
+                            </small>
+                          </span>
+                        </span>
+                      ) : (
+                        <small>No items</small>
+                      )}
                     </span>
+                    <span className="oc-cell oc-single oc-payment">{paymentLabel(o.payment_method)}</span>
                     <span className="oc-cell oc-single oc-total">{money(o.total)}</span>
                     <span className="oc-cell oc-status">
                       <StatusPill status={o.status} />
@@ -182,74 +215,89 @@ export default function OrdersTab({
                   <div className="order-card-body" id={`order-body-${o.id}`}>
                     <div className="oc-inner">
                       <div className="oc-pad">
-                        <div className="oc-sec-head">
-                          <h4>Ordered Items</h4>
-                          <span className="oc-chip">
-                            {items.length} {items.length === 1 ? 'item' : 'items'}
-                          </span>
-                        </div>
-
-                        <div className="oc-itemgrid">
-                          {items.map((x, i) => {
-                            const unit = Number(x.price) || 0;
-                            const qty = Number(x.qty) || 1;
-                            return (
-                              <div className="oc-tile" key={i}>
-                                <div className="oc-tile-img">
-                                  {x.image ? (
-                                    <img src={x.image} alt={x.name || 'Ordered product'} />
-                                  ) : (
-                                    <span className="oc-tile-empty" aria-hidden="true">
-                                      📦
-                                    </span>
-                                  )}
-                                </div>
-                                <strong className="oc-tile-name">{x.name}</strong>
-                                <span className="oc-tile-meta">
-                                  {x.size} · ৳{unit.toLocaleString('en-BD')} × {qty}
-                                </span>
-                                <b className="oc-tile-price">{money(unit * qty)}</b>
+                        <div className="oc-top">
+                          <div className="oc-col">
+                            <h3 className="oc-title">Order &amp; Items Detail</h3>
+                            <div className="oc-items-flex">
+                              <div className="oc-itemgrid">
+                                {items.map((x, i) => {
+                                  const unit = Number(x.price) || 0;
+                                  const qty = Number(x.qty) || 1;
+                                  return (
+                                    <div className="oc-tile" key={i}>
+                                      <div className="oc-tile-img">
+                                        {x.image ? (
+                                          <img src={x.image} alt={x.name || 'Ordered product'} />
+                                        ) : (
+                                          <span className="oc-tile-empty" aria-hidden="true">
+                                            📦
+                                          </span>
+                                        )}
+                                      </div>
+                                      <strong className="oc-tile-name">{x.name}</strong>
+                                      <span className="oc-tile-meta">
+                                        {x.size} · ৳{unit.toLocaleString('en-BD')} × {qty}
+                                      </span>
+                                      <b className="oc-tile-price">{money(unit * qty)}</b>
+                                    </div>
+                                  );
+                                })}
                               </div>
-                            );
-                          })}
-                        </div>
 
-                        <div className="oc-sumrow">
-                          <span>
-                            Subtotal <b>{money(o.subtotal)}</b>
-                          </span>
-                          <span>
-                            Delivery <b>{money(o.delivery_fee)}</b>
-                          </span>
-                          <span className="oc-sumtotal">
-                            Total <b>{money(o.total)}</b>
-                          </span>
-                        </div>
-
-                        <div className="oc-cols">
-                          <div>
-                            <div className="oc-sec-head">
-                              <h4>Delivery</h4>
+                              <div className="oc-count" aria-label={`${itemCount} item(s)`}>
+                                <b>{itemCount}</b>
+                                <span>item(s)</span>
+                              </div>
                             </div>
-                            <div className="oc-delivery">
+                          </div>
+
+                          <div className="oc-col">
+                            <h3 className="oc-title">Payment &amp; Logistics Summary</h3>
+                            <div className="oc-card">{paymentLabel(o.payment_method)}</div>
+                            <div className="oc-card">
+                              <strong>{c.name || 'Customer'}</strong>
+                              <div>{o.phone}</div>
+                              {c.email && <div>{c.email}</div>}
+                              <div className="oc-addr">{fullAddress(c)}</div>
+                            </div>
+                          </div>
+
+                          <div className="oc-col">
+                            <h3 className="oc-title">Totals</h3>
+                            <div className="oc-card oc-totals">
+                              <div>
+                                <span>Subtotal:</span>
+                                <b>{money(o.subtotal)}</b>
+                              </div>
+                              <div>
+                                <span>Delivery:</span>
+                                <b>{money(o.delivery_fee)}</b>
+                              </div>
+                              <div className="oc-grand">
+                                <span>Total:</span>
+                                <b>{money(o.total)}</b>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="oc-bottom">
+                          <h3 className="oc-title">Status and Timeline</h3>
+
+                          <div>
+                            <div className="oc-sub">Delivery</div>
+                            <div className="oc-card">
                               <div>
                                 <strong>{c.name || 'Customer'}</strong> · {o.phone}
                                 {c.email ? ` · ${c.email}` : ''}
                               </div>
-                              <div>
-                                {c.address}
-                                {c.area ? `, ${c.area}` : ''}
-                                {c.district ? `, ${c.district}` : ''}
-                                {c.division ? `, ${c.division}` : ''}
-                              </div>
+                              <div className="oc-addr">{fullAddress(c)}</div>
                               {c.notes && <div className="oc-note">Note: {c.notes}</div>}
                             </div>
                           </div>
 
                           <div>
-                            <div className="oc-sec-head">
-                              <h4>Status Timeline</h4>
-                            </div>
+                            <div className="oc-sub">Status Timeline</div>
                             <div className="oc-timeline">
                               {timelineRows.map((x, i) => (
                                 <div className="timeline-row" key={i}>
