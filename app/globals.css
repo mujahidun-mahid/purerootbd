@@ -663,6 +663,10 @@ a.co-step-label:hover{text-decoration:underline}
 .pm-summary{background:#fff;border:1px solid var(--border);border-radius:20px;padding:20px}
 .pm-sumline{display:flex;justify-content:space-between;gap:12px;margin:10px 0;color:var(--muted);font-size:14px}
 .pm-sumline:first-child{margin-top:0}
+.pm-sumitem{align-items:center}
+.pm-sumname{display:flex;align-items:center;gap:10px;min-width:0;color:var(--ink)}
+.pm-sumname strong{font-size:14px}
+.pm-sumname small{color:var(--muted);font-size:12.5px}
 .pm-sumtotal{font-size:17px;font-weight:800;color:var(--ink);border-top:1px solid var(--border);padding-top:14px;margin-bottom:0}
 .pm-deliver-to{margin-top:12px;padding-top:12px;border-top:1px solid var(--border);font-size:13px}
 .pm-deliver-to strong{color:var(--ink)}

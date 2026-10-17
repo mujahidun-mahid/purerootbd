@@ -54,14 +54,17 @@ export function StoreProvider({ children }) {
     setToast(message ? { message, type } : null);
   }, []);
 
-  const add = useCallback((product, size = "500g", qty = 1) => {
+  const add = useCallback((product, size = "500g", qty = 1, image = "") => {
     const pkg = product.packages?.find((x) => x.size === size) || product.packages?.[0] || { size: "500g", price: product.price || 0 };
     const amount = Math.max(1, Number(qty) || 1);
-    const key = `${product.id}-${pkg.size}`;
+    const cover = String(product.image || "").trim();
+    const selected = String(image || "").trim() || cover;
+    // Same product + size + photo merges; a different selected photo is its own line item.
+    const key = selected && selected !== cover ? `${product.id}-${pkg.size}-${selected}` : `${product.id}-${pkg.size}`;
     setCart((c) => {
       const found = c.find((x) => x.key === key);
       if (found) {
-        return c.map((x) => (x.key === key ? { ...x, qty: x.qty + amount } : x));
+        return c.map((x) => (x.key === key ? { ...x, qty: x.qty + amount, image: selected || x.image } : x));
       }
       return [
         ...c,
@@ -74,7 +77,7 @@ export function StoreProvider({ children }) {
           price: pkg.price,
           qty: amount,
           imageType: product.category || "nuts",
-          image: product.image || ""
+          image: selected
         }
       ];
     });
@@ -84,6 +87,26 @@ export function StoreProvider({ children }) {
 
   const remove = useCallback((key) => {
     setCart((c) => c.filter((x) => x.key !== key));
+  }, []);
+
+  const buyNow = useCallback((product, size = "500g", qty = 1, image = "") => {
+    const pkg = product.packages?.find((x) => x.size === size) || product.packages?.[0] || { size: "500g", price: product.price || 0 };
+    const amount = Math.max(1, Number(qty) || 1);
+    const selected = String(image || "").trim() || product.image || "";
+    // Buy Now checks out ONLY the selected variant — it replaces the cart.
+    const line = {
+      key: `${product.id}-${pkg.size}-${selected || "cover"}`,
+      productId: product.id,
+      slug: product.slug,
+      name: product.name,
+      size: pkg.size,
+      price: pkg.price,
+      qty: amount,
+      imageType: product.category || "nuts",
+      image: selected
+    };
+    setCart([line]);
+    return line.key;
   }, []);
 
   const update = useCallback((key, qty) => {
@@ -119,6 +142,7 @@ export function StoreProvider({ children }) {
         cart,
         cartCount,
         add,
+        buyNow,
         remove,
         update,
         clearCart,

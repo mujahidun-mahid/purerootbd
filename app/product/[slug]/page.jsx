@@ -1,16 +1,16 @@
 "use client";
-import {notFound} from "next/navigation";
+import {notFound, useRouter} from "next/navigation";
 import {useEffect, useState} from "react";
-import Link from "next/link";
 import {Heart,Share2,Minus,Plus} from "lucide-react";
 import {useProducts} from "@/components/useProducts";
 import {useStore} from "@/components/StoreProvider";
 import ProductGrid from "@/components/ProductGrid";
 
 export default function ProductPage({params}){
+  const router = useRouter();
   const {products,loading}=useProducts();
   const p=products.find(x=>x.slug===params.slug);
-  const {add,wishlist,toggleWish}=useStore();
+  const {add,buyNow,wishlist,toggleWish}=useStore();
   const defaultSize=(pkgList)=>pkgList&&pkgList.length?pkgList[Math.min(1,pkgList.length-1)].size:"";
   const [size,setSize]=useState(()=>defaultSize(p?.packages));
   const [qty,setQty]=useState(1);
@@ -82,8 +82,8 @@ export default function ProductPage({params}){
             </div>
           </div>
           <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
-            <button className="btn btn-primary" onClick={()=>add(p,size,qty)}>Add to Cart</button>
-            <Link className="btn btn-gold" href="/checkout" onClick={()=>add(p,size,qty)}>Buy Now</Link>
+            <button className="btn btn-primary" onClick={()=>add(p,size,qty,current)}>Add to Cart</button>
+            <button className="btn btn-gold" onClick={()=>{buyNow(p,size,qty,current);router.push("/checkout");}}>Buy Now</button>
             <button className="iconbtn" onClick={()=>toggleWish(p.slug)}><Heart fill={wishlist.includes(p.slug)?"currentColor":"none"}/></button>
             <button className="iconbtn"><Share2/></button>
           </div>

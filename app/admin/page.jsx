@@ -592,7 +592,7 @@ export default function AdminPage() {
           statusFilter={statusFilter}
           setStatusFilter={setStatusFilter}
           onStatus={updateStatus}
-          onOrder={setSelected}
+          history={data?.statusHistory || []}
           onExport={exportOrdersCSV}
           password={sessionPassword}
         />

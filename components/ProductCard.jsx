@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Heart, Plus, Loader2 } from "lucide-react";
 import { useStore } from "./StoreProvider";
@@ -19,7 +20,8 @@ function orbClass(category) {
 }
 
 export default function ProductCard({ product }) {
-  const { add, wishlist, toggleWish, showToast } = useStore();
+  const router = useRouter();
+  const { add, buyNow, wishlist, toggleWish, showToast } = useStore();
   const active = wishlist.includes(product.slug);
   const packages = Array.isArray(product.packages) && product.packages.length
     ? product.packages
@@ -110,9 +112,13 @@ export default function ProductCard({ product }) {
 
       <div className="fp-actions">
         {inStock ? (
-          <Link className="btn btn-primary fp-buy" href="/checkout" onClick={() => add(product, selected.size)}>
+          <button
+            type="button"
+            className="btn btn-primary fp-buy"
+            onClick={() => { buyNow(product, selected.size, 1); router.push("/checkout"); }}
+          >
             Buy Now
-          </Link>
+          </button>
         ) : (
           <button type="button" className="btn btn-primary fp-buy" disabled title="Out of stock">
             Out of Stock

@@ -225,6 +225,23 @@ export default function Payment() {
           )}
 
           <div className="pm-summary" aria-label="Order summary">
+            <h3 style={{ margin: "0 0 6px", fontSize: 16 }}>Items ({cart.length})</h3>
+            {cart.map((x) => (
+              <div className="pm-sumline pm-sumitem" key={x.key}>
+                <span className="pm-sumname">
+                  <span className="co-sumthumb" aria-hidden="true">
+                    {x.image ? <img src={x.image} alt="" /> : <span className="orb nut" />}
+                  </span>
+                  <span>
+                    <strong>{x.name}</strong>
+                    <small style={{ display: "block" }}>
+                      {x.size} · ৳{Number(x.price || 0).toLocaleString()} × {x.qty}
+                    </small>
+                  </span>
+                </span>
+                <span>৳{(Number(x.price || 0) * Number(x.qty || 1)).toLocaleString()}</span>
+              </div>
+            ))}
             <div className="pm-sumline">
               <span>Subtotal</span>
               <span>৳{total.toLocaleString()}</span>

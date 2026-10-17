@@ -1893,6 +1893,41 @@
   color: var(--a-ink-2);
 }
 
+.order-line {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.order-thumb {
+  width: 44px;
+  height: 44px;
+  flex: none;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid var(--a-line-soft);
+  background: #f4f6f4;
+  display: block;
+}
+
+.order-thumb-empty {
+  display: grid;
+  place-items: center;
+  font-size: 20px;
+}
+
+.order-line-name {
+  display: block;
+  color: var(--a-ink);
+  font-weight: 700;
+}
+
+.order-line-meta {
+  display: block;
+  font-size: 12px;
+}
+
 .detail-items b {
   font-weight: 700;
   color: var(--a-ink);
@@ -2523,4 +2558,103 @@ button.pill { display: inline-flex; align-items: center; gap: 4px; border: 0; cu
   .toolbar-row { flex-direction: column; align-items: stretch; }
   .area-chart { height: 140px; }
   .matrix { display: block; overflow-x: auto; white-space: nowrap; }
+}
+
+/* ============================================================
+   ORDERS — EXPANDABLE CARDS (FAQ style)
+   ============================================================ */
+
+.orders-hint { margin: 6px 0 0; font-size: 12.5px; color: var(--a-muted); }
+
+.order-cards { display: grid; gap: 12px; }
+
+.order-card {
+  background: var(--a-panel);
+  border: 1px solid var(--a-line);
+  border-radius: 13px;
+  box-shadow: 0 1px 2px rgba(14, 36, 24, 0.04);
+  overflow: hidden;
+  transition: border-color 0.18s, box-shadow 0.18s;
+}
+
+.order-card.is-open { border-color: var(--a-brand-2); box-shadow: var(--a-shadow); }
+
+.order-card-head {
+  display: grid;
+  grid-template-columns: minmax(150px, 1.15fr) minmax(150px, 1.15fr) minmax(120px, 0.95fr) minmax(70px, 0.55fr) minmax(100px, 0.75fr) minmax(112px, 0.85fr) 28px;
+  gap: 14px;
+  align-items: center;
+  width: 100%;
+  padding: 14px 18px;
+  background: none;
+  border: 0;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.order-card-head:hover { background: #fafcfa; }
+.order-card.is-open .order-card-head { background: #fafcfa; border-bottom: 1px solid var(--a-line-soft); }
+
+.oc-cell { display: grid; gap: 2px; min-width: 0; }
+.oc-cell strong { color: var(--a-ink); font-size: 13px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.oc-cell small { color: var(--a-muted); font-size: 11.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.oc-order strong, .oc-total strong { font-variant-numeric: tabular-nums; }
+.oc-status { justify-items: start; }
+
+.oc-chevron { color: var(--a-muted); justify-self: center; flex: none; transition: transform 0.25s ease, color 0.2s; }
+.order-card.is-open .oc-chevron { transform: rotate(180deg); color: var(--a-brand); }
+
+.order-card-body {
+  display: grid;
+  grid-template-rows: 0fr;
+  visibility: hidden;
+  transition: grid-template-rows 0.3s ease, visibility 0s linear 0.3s;
+}
+
+.order-card.is-open .order-card-body {
+  grid-template-rows: 1fr;
+  visibility: visible;
+  transition: grid-template-rows 0.3s ease, visibility 0s;
+}
+
+.oc-inner { overflow: hidden; min-height: 0; }
+.oc-pad { padding: 16px 18px 18px; }
+
+.order-card-grid { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 18px; }
+
+.oc-section h4 { margin: 16px 0 10px; font-size: 11px; letter-spacing: 1.2px; text-transform: uppercase; color: var(--a-muted); font-weight: 700; }
+.oc-section > h4:first-child { margin-top: 0; }
+
+.order-card .timeline { display: block; margin-left: 6px; padding-left: 18px; }
+
+.oc-totals { margin-top: 12px; border: 1px solid var(--a-line); border-radius: 11px; background: #fff; padding: 12px 14px; display: grid; gap: 8px; }
+.oc-totals > div { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 13px; color: var(--a-ink-2); }
+.oc-totals b { color: var(--a-ink); font-variant-numeric: tabular-nums; }
+.oc-totals .oc-total-row { border-top: 1px dashed var(--a-line); padding-top: 8px; }
+.oc-totals .oc-total-row span { font-weight: 700; color: var(--a-ink); }
+.oc-totals .oc-total-row b { font-size: 15px; }
+
+.oc-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--a-line-soft); }
+.oc-actions > span:first-child { font-size: 12px; font-weight: 700; color: var(--a-ink-2); }
+.oc-actions .oc-ref { margin-left: auto; font-size: 12px; color: var(--a-muted); }
+.oc-actions .oc-delete { color: #b4392f; border-color: #efd2ce; }
+.oc-actions .oc-delete:hover:not(:disabled) { background: #fdf1ef; border-color: #e6bdb7; color: #8f2a21; }
+
+.orders-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 12px; font-size: var(--a-fs-sm); color: var(--a-muted); font-weight: 500; }
+
+@media (max-width: 1100px) {
+  .order-card-head { grid-template-columns: minmax(130px, 1.1fr) minmax(130px, 1.1fr) minmax(70px, 0.55fr) minmax(100px, 0.75fr) minmax(112px, 0.85fr) 28px; }
+  .order-card-head .oc-payment { display: none; }
+}
+
+@media (max-width: 860px) {
+  .order-card-grid { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (max-width: 760px) {
+  .order-card-head { grid-template-columns: minmax(0, 1.3fr) minmax(0, 1.2fr) minmax(0, 0.9fr) auto 26px; gap: 10px; padding: 12px 14px; }
+  .order-card-head .oc-items { display: none; }
+  .oc-pad { padding: 14px; }
+  .oc-actions .oc-ref { margin-left: 0; width: 100%; }
 }

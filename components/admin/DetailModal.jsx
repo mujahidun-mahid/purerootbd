@@ -124,16 +124,30 @@ export default function DetailModal({ item, history = [], onClose, onStatus }) {
           {c.notes && <div className="note">Customer Note: {c.notes}</div>}
         </div>
 
-        <h3>Ordered Items</h3>
+        <h3>Ordered Items ({(o.items || []).length})</h3>
         <div className="detail-items">
-          {(o.items || []).map((x, i) => (
-            <div key={i}>
-              <span>
-                {x.name} • {x.size} × {x.qty}
-              </span>
-              <b>{money(Number(x.price) * Number(x.qty))}</b>
-            </div>
-          ))}
+          {(o.items || []).map((x, i) => {
+            const unit = Number(x.price) || 0;
+            const qty = Number(x.qty) || 1;
+            return (
+              <div key={i}>
+                <span className="order-line">
+                  {x.image ? (
+                    <img className="order-thumb" src={x.image} alt={x.name || 'Ordered product'} />
+                  ) : (
+                    <span className="order-thumb order-thumb-empty" aria-hidden="true">📦</span>
+                  )}
+                  <span>
+                    <strong className="order-line-name">{x.name}</strong>
+                    <small className="order-line-meta">
+                      {x.size} · ৳{unit.toLocaleString('en-BD')} × {qty}
+                    </small>
+                  </span>
+                </span>
+                <b>{money(unit * qty)}</b>
+              </div>
+            );
+          })}
         </div>
 
         <h3>Status Timeline</h3>
