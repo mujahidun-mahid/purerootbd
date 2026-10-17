@@ -2605,6 +2605,9 @@ button.pill { display: inline-flex; align-items: center; gap: 4px; border: 0; cu
 .oc-single.oc-total { font-weight: 800; color: var(--a-ink); }
 .oc-status { justify-items: start; }
 
+.order-card .status-pill { background: transparent; padding: 0; gap: 7px; font-size: 12.5px; font-weight: 700; }
+.order-card .status-pill::before { width: 8px; height: 8px; opacity: 1; }
+
 .oc-chevron {
   justify-self: center;
   width: 28px;
@@ -2635,7 +2638,7 @@ button.pill { display: inline-flex; align-items: center; gap: 4px; border: 0; cu
 .oc-inner { overflow: hidden; min-height: 0; }
 .oc-pad { padding: 14px 16px 15px; background: linear-gradient(180deg, #fbfdfc, #fff); }
 
-.order-card-grid { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+.oc-cols { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 16px; align-items: start; margin-top: 16px; }
 
 .oc-sec-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
 .oc-sec-head h4 { margin: 0; font-size: 10.5px; letter-spacing: 1.1px; text-transform: uppercase; color: var(--a-muted); font-weight: 800; }
@@ -2643,14 +2646,17 @@ button.pill { display: inline-flex; align-items: center; gap: 4px; border: 0; cu
 
 .oc-chip { font-size: 11px; font-weight: 700; color: var(--a-ink-2); background: #f1f5f2; border: 1px solid var(--a-line-soft); padding: 2px 8px; border-radius: 99px; }
 
-.oc-itemlist { border: 1px solid var(--a-line-soft); border-radius: 10px; background: #fff; overflow: hidden auto; max-height: 238px; }
-.oc-itemlist::-webkit-scrollbar { width: 8px; }
-.oc-itemlist::-webkit-scrollbar-thumb { background: #e0e7e2; border-radius: 99px; }
-.oc-item { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 9px 12px; border-bottom: 1px solid var(--a-line-soft); }
-.oc-item:last-child { border-bottom: 0; }
-.oc-item:nth-child(odd) { background: #fafcfa; }
-.oc-item-total { font-weight: 700; color: var(--a-ink); font-variant-numeric: tabular-nums; white-space: nowrap; }
-.oc-item .order-thumb { width: 38px; height: 38px; }
+.oc-itemgrid { display: grid; grid-template-columns: repeat(auto-fill, 168px); gap: 10px; max-height: 360px; overflow-y: auto; padding: 2px; }
+.oc-itemgrid::-webkit-scrollbar { width: 8px; }
+.oc-itemgrid::-webkit-scrollbar-thumb { background: #e0e7e2; border-radius: 99px; }
+.oc-tile { border: 1px solid var(--a-line-soft); border-radius: 12px; background: #fff; padding: 8px; display: grid; gap: 5px; align-content: start; transition: border-color 0.15s, box-shadow 0.15s; }
+.oc-tile:hover { border-color: #cdd8d0; box-shadow: 0 3px 10px rgba(14, 36, 24, 0.06); }
+.oc-tile-img { width: 100%; aspect-ratio: 1 / 1; border-radius: 9px; overflow: hidden; background: #f4f6f4; display: grid; place-items: center; }
+.oc-tile-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.oc-tile-empty { font-size: 30px; }
+.oc-tile-name { font-size: 12.5px; font-weight: 700; color: var(--a-ink); line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.oc-tile-meta { font-size: 11.5px; color: var(--a-muted); }
+.oc-tile-price { font-size: 13px; font-weight: 800; color: var(--a-ink); font-variant-numeric: tabular-nums; }
 
 .oc-sumrow { display: flex; align-items: center; justify-content: flex-end; gap: 14px; flex-wrap: wrap; margin-top: 10px; font-size: 12.5px; color: var(--a-muted); }
 .oc-sumrow b { color: var(--a-ink); font-weight: 700; margin-left: 3px; font-variant-numeric: tabular-nums; }
@@ -2661,15 +2667,18 @@ button.pill { display: inline-flex; align-items: center; gap: 4px; border: 0; cu
 .oc-delivery strong { color: var(--a-ink); }
 .oc-delivery .oc-note { font-style: italic; color: var(--a-muted); }
 
-.oc-timeline { border-left: 2px solid var(--a-line); margin-left: 5px; padding-left: 16px; max-height: 168px; overflow-y: auto; }
+.oc-timeline { display: grid; gap: 0; max-height: 170px; overflow-y: auto; padding-right: 2px; }
 .oc-timeline::-webkit-scrollbar { width: 8px; }
 .oc-timeline::-webkit-scrollbar-thumb { background: #e0e7e2; border-radius: 99px; }
-.oc-timeline .timeline-row { padding-bottom: 10px; }
-.oc-timeline .timeline-row > i { left: -22px; width: 10px; height: 10px; }
+.oc-timeline .timeline-row { display: grid; grid-template-columns: auto 1fr; align-items: start; gap: 9px; padding: 0 0 10px; }
+.oc-timeline .timeline-row:last-child { padding-bottom: 0; }
+.oc-timeline .timeline-row > i { position: static; left: auto; top: auto; margin-top: 4px; width: 9px; height: 9px; background: #d7dfd9; border-color: #d7dfd9; }
+.oc-timeline .timeline-row > i.current { background: var(--a-brand-2); border-color: var(--a-brand-2); box-shadow: 0 0 0 3px var(--a-brand-soft); }
 .oc-timeline .timeline-row strong { font-size: 12.5px; }
-.oc-timeline .timeline-row small { font-size: 11px; }
+.oc-timeline .timeline-row small { font-size: 11px; display: block; }
 
 .oc-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--a-line-soft); }
+.oc-actions .status-select { width: auto; min-width: 200px; }
 .oc-actions > span:first-child { font-size: 12px; font-weight: 700; color: var(--a-ink-2); }
 .oc-actions .oc-ref { margin-left: auto; font-size: 12px; color: var(--a-muted); }
 .oc-actions .oc-delete { color: #b4392f; border-color: #efd2ce; }
@@ -2683,12 +2692,14 @@ button.pill { display: inline-flex; align-items: center; gap: 4px; border: 0; cu
 }
 
 @media (max-width: 860px) {
-  .order-card-grid { grid-template-columns: minmax(0, 1fr); }
+  .oc-cols { grid-template-columns: minmax(0, 1fr); }
 }
 
 @media (max-width: 760px) {
   .order-card-head { grid-template-columns: minmax(0, 1.3fr) minmax(0, 1.2fr) minmax(0, 0.9fr) auto 28px; gap: 10px; padding: 11px 14px; }
   .order-card-head .oc-items { display: none; }
   .oc-pad { padding: 13px 14px 14px; }
+  .oc-itemgrid { grid-template-columns: repeat(auto-fill, minmax(128px, 1fr)); }
+  .oc-actions .status-select { width: 100%; min-width: 0; }
   .oc-actions .oc-ref { margin-left: 0; width: 100%; }
 }

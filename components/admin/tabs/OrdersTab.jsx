@@ -182,60 +182,52 @@ export default function OrdersTab({
                   <div className="order-card-body" id={`order-body-${o.id}`}>
                     <div className="oc-inner">
                       <div className="oc-pad">
-                        <div className="order-card-grid">
-                          <div className="oc-section">
-                            <div className="oc-sec-head">
-                              <h4>Ordered Items</h4>
-                              <span className="oc-chip">
-                                {items.length} {items.length === 1 ? 'item' : 'items'}
-                              </span>
-                            </div>
+                        <div className="oc-sec-head">
+                          <h4>Ordered Items</h4>
+                          <span className="oc-chip">
+                            {items.length} {items.length === 1 ? 'item' : 'items'}
+                          </span>
+                        </div>
 
-                            <div className="oc-itemlist">
-                              {items.map((x, i) => {
-                                const unit = Number(x.price) || 0;
-                                const qty = Number(x.qty) || 1;
-                                return (
-                                  <div className="oc-item" key={i}>
-                                    <span className="order-line">
-                                      {x.image ? (
-                                        <img
-                                          className="order-thumb"
-                                          src={x.image}
-                                          alt={x.name || 'Ordered product'}
-                                        />
-                                      ) : (
-                                        <span className="order-thumb order-thumb-empty" aria-hidden="true">
-                                          📦
-                                        </span>
-                                      )}
-                                      <span>
-                                        <strong className="order-line-name">{x.name}</strong>
-                                        <small className="order-line-meta">
-                                          {x.size} · ৳{unit.toLocaleString('en-BD')} × {qty}
-                                        </small>
-                                      </span>
+                        <div className="oc-itemgrid">
+                          {items.map((x, i) => {
+                            const unit = Number(x.price) || 0;
+                            const qty = Number(x.qty) || 1;
+                            return (
+                              <div className="oc-tile" key={i}>
+                                <div className="oc-tile-img">
+                                  {x.image ? (
+                                    <img src={x.image} alt={x.name || 'Ordered product'} />
+                                  ) : (
+                                    <span className="oc-tile-empty" aria-hidden="true">
+                                      📦
                                     </span>
-                                    <b className="oc-item-total">{money(unit * qty)}</b>
-                                  </div>
-                                );
-                              })}
-                            </div>
+                                  )}
+                                </div>
+                                <strong className="oc-tile-name">{x.name}</strong>
+                                <span className="oc-tile-meta">
+                                  {x.size} · ৳{unit.toLocaleString('en-BD')} × {qty}
+                                </span>
+                                <b className="oc-tile-price">{money(unit * qty)}</b>
+                              </div>
+                            );
+                          })}
+                        </div>
 
-                            <div className="oc-sumrow">
-                              <span>
-                                Subtotal <b>{money(o.subtotal)}</b>
-                              </span>
-                              <span>
-                                Delivery <b>{money(o.delivery_fee)}</b>
-                              </span>
-                              <span className="oc-sumtotal">
-                                Total <b>{money(o.total)}</b>
-                              </span>
-                            </div>
-                          </div>
+                        <div className="oc-sumrow">
+                          <span>
+                            Subtotal <b>{money(o.subtotal)}</b>
+                          </span>
+                          <span>
+                            Delivery <b>{money(o.delivery_fee)}</b>
+                          </span>
+                          <span className="oc-sumtotal">
+                            Total <b>{money(o.total)}</b>
+                          </span>
+                        </div>
 
-                          <div className="oc-section">
+                        <div className="oc-cols">
+                          <div>
                             <div className="oc-sec-head">
                               <h4>Delivery</h4>
                             </div>
@@ -252,8 +244,10 @@ export default function OrdersTab({
                               </div>
                               {c.notes && <div className="oc-note">Note: {c.notes}</div>}
                             </div>
+                          </div>
 
-                            <div className="oc-sec-head oc-mt">
+                          <div>
+                            <div className="oc-sec-head">
                               <h4>Status Timeline</h4>
                             </div>
                             <div className="oc-timeline">
