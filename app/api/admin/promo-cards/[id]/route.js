@@ -18,6 +18,7 @@ const FIELDS = [
 
 export async function PUT(request, { params }) {
   if (!adminAuthorized(request)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const { id } = await params;
   const supabase = getSupabaseAdmin();
   if (!supabase) return NextResponse.json({ error: 'Database is not configured.' }, { status: 503 });
   try {
@@ -39,7 +40,7 @@ export async function PUT(request, { params }) {
     const { data, error } = await supabase
       .from('promo_cards')
       .update(row)
-      .eq('id', params.id)
+      .eq('id', id)
       .select()
       .single();
     if (error) {
@@ -55,10 +56,11 @@ export async function PUT(request, { params }) {
 
 export async function DELETE(request, { params }) {
   if (!adminAuthorized(request)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const { id } = await params;
   const supabase = getSupabaseAdmin();
   if (!supabase) return NextResponse.json({ error: 'Database is not configured.' }, { status: 503 });
   try {
-    const { error } = await supabase.from('promo_cards').delete().eq('id', params.id);
+    const { error } = await supabase.from('promo_cards').delete().eq('id', id);
     if (error) throw error;
     return NextResponse.json({ ok: true });
   } catch (error) {

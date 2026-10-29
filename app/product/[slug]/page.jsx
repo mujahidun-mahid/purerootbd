@@ -1,5 +1,5 @@
 "use client";
-import {notFound, useRouter} from "next/navigation";
+import {notFound, useRouter, useParams} from "next/navigation";
 import {useEffect, useState} from "react";
 import {Heart,Share2,Minus,Plus} from "lucide-react";
 import {useProducts} from "@/components/useProducts";
@@ -60,17 +60,19 @@ function ProductReviews({ slug }) {
   </section>;
 }
 
-export default function ProductPage({params}){
+export default function ProductPage(){
   const router = useRouter();
+  const routeParams = useParams();
+  const slug = Array.isArray(routeParams?.slug) ? routeParams.slug[0] : routeParams?.slug || "";
   const {products,loading}=useProducts();
-  const p=products.find(x=>x.slug===params.slug);
+  const p=products.find(x=>x.slug===slug);
   const {add,buyNow,wishlist,toggleWish}=useStore();
   const defaultSize=(pkgList)=>pkgList&&pkgList.length?pkgList[Math.min(1,pkgList.length-1)].size:"";
   const [size,setSize]=useState(()=>defaultSize(p?.packages));
   const [qty,setQty]=useState(1);
   const [photo,setPhoto]=useState(0);
 
-  useEffect(()=>{ setPhoto(0); },[params.slug]);
+  useEffect(()=>{ setPhoto(0); },[slug]);
 
   const gallery = p && Array.isArray(p.images) && p.images.length ? p.images : (p?.image ? [p.image] : []);
   const current = gallery[Math.min(photo, Math.max(0, gallery.length - 1))];

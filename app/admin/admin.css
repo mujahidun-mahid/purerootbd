@@ -2184,6 +2184,33 @@
   font-size: 14.5px;
 }
 
+.admin-login-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.admin-login-link {
+  background: transparent;
+  border: 0;
+  padding: 6px 0;
+  color: var(--a-brand-2);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.admin-login-link:hover:not(:disabled) {
+  text-decoration: underline;
+}
+
+.admin-login-link:disabled {
+  color: var(--a-muted);
+  cursor: not-allowed;
+}
+
 /* ============================================================
    RESPONSIVE
    ============================================================ */

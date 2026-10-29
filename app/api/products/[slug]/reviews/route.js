@@ -5,13 +5,14 @@ import { loadProduct } from '@/lib/products-server';
 export const dynamic = 'force-dynamic';
 
 export async function GET(_request, { params }) {
-  const product = await loadProduct(params.slug);
+  const { slug } = await params;
+  const product = await loadProduct(slug);
   if (!product) return NextResponse.json({ error: 'Product not found.' }, { status: 404 });
   const supabase = getSupabaseAdmin();
   if (!supabase) return NextResponse.json({ reviews: [] }, { headers: { 'cache-control': 'no-store' } });
   const { data, error } = await supabase.from('product_reviews')
     .select('id,name,rating,body,created_at')
-    .eq('product_slug', params.slug).eq('approved', true).order('created_at', { ascending: false });
+    .eq('product_slug', slug).eq('approved', true).order('created_at', { ascending: false });
   if (error) {
     console.error('Product reviews read error:', error);
     return NextResponse.json({ error: 'Unable to load reviews.' }, { status: 503 });
@@ -20,7 +21,8 @@ export async function GET(_request, { params }) {
 }
 
 export async function POST(request, { params }) {
-  const product = await loadProduct(params.slug);
+  const { slug } = await params;
+  const product = await loadProduct(slug);
   if (!product) return NextResponse.json({ error: 'Product not found.' }, { status: 404 });
   const body = await request.json().catch(() => ({}));
   const name = String(body.name || '').trim();
@@ -32,7 +34,7 @@ export async function POST(request, { params }) {
   const supabase = getSupabaseAdmin();
   if (!supabase) return NextResponse.json({ error: 'Reviews are not configured yet.' }, { status: 503 });
   const { error } = await supabase.from('product_reviews').insert({
-    product_slug: params.slug, name, rating, body: reviewBody, approved: false
+    product_slug: slug, name, rating, body: reviewBody, approved: false
   });
   if (error) {
     console.error('Product review submission error:', error);

@@ -21,7 +21,8 @@ async function getPage(slug) {
 }
 
 export async function generateMetadata({ params }) {
-  const page = await getPage(params.slug);
+  const { slug } = await params;
+  const page = await getPage(slug);
   if (!page) {
     return { title: "Page not found" };
   }
@@ -52,7 +53,8 @@ export async function generateMetadata({ params }) {
 // markup and can break hydration. This page renders only its content and uses
 // generateMetadata for the head fields.
 export default async function Page({ params }) {
-  const page = await getPage(params.slug);
+  const { slug } = await params;
+  const page = await getPage(slug);
 
   if (!page) {
     notFound();

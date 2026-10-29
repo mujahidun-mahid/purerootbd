@@ -80,6 +80,8 @@ Before enabling HSTS with `includeSubDomains` or a long `max-age`:
 | Rate limit | `/api/orders` POST | 30 req/min per IP |
 | Rate limit | `/api/orders/track` POST | 30 req/min per IP |
 | Rate limit | `/api/admin/login` POST | 10 req/10min per IP |
+| Rate limit | `/api/admin/login/verify` POST | 30 req/10min per IP |
+| Rate limit | `/api/admin/login/resend` POST | 10 req/10min per IP |
 | WAF managed rules | All traffic | Challenge on high-risk scores |
 | Block | Known bots/scanners | Block or JS challenge |
 

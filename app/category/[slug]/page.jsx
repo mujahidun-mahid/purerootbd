@@ -3,7 +3,8 @@ import {notFound} from "next/navigation"; import Link from "next/link"; import P
 export const dynamic = "force-dynamic";
 
 export default async function Category({params}){
-  const c=await loadCategory(params.slug);
+  const { slug } = await params;
+  const c=await loadCategory(slug);
   if(!c) notFound();
   const all=await loadProducts();
   const items=all.filter(p=>p.category===c.slug);

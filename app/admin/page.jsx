@@ -63,6 +63,10 @@ const IDENTITY_KEYS = [
 
 export default function AdminPage() {
   const [password, setPassword] = useState('');
+  const [step, setStep] = useState('password');
+  const [otp, setOtp] = useState('');
+  const [otpInfo, setOtpInfo] = useState(null);
+  const [resendIn, setResendIn] = useState(0);
   const [csrfToken, setCsrfToken] = useState('');
   const [logged, setLogged] = useState(false);
   const [data, setData] = useState(null);
@@ -119,6 +123,13 @@ export default function AdminPage() {
     if (token) setCsrfToken(token);
   }, []);
 
+  // Resend cooldown ticker for the OTP step.
+  useEffect(() => {
+    if (resendIn <= 0) return undefined;
+    const timer = setTimeout(() => setResendIn((value) => Math.max(0, value - 1)), 1000);
+    return () => clearTimeout(timer);
+  }, [resendIn]);
+
   const headers = useCallback(
     () => {
       const token = csrfToken || getCsrfTokenFromCookie();
@@ -165,6 +176,10 @@ export default function AdminPage() {
           setLogged(false);
           setCsrfToken('');
           setPassword('');
+          setStep('password');
+          setOtp('');
+          setOtpInfo(null);
+          setResendIn(0);
           setError(showLoading || logged ? 'Session expired. Please sign in again.' : '');
           return;
         }
@@ -252,11 +267,19 @@ export default function AdminPage() {
         body: JSON.stringify({ password })
       });
       const j = await res.json().catch(() => ({}));
-      if (res.ok) {
+      if (res.ok && j.otpRequired) {
         setPassword('');
-        setCsrfToken(j.csrfToken || getCsrfTokenFromCookie());
-        setLogged(true);
-        await load(true);
+        setOtp('');
+        setOtpInfo({
+          recipients: Array.isArray(j.recipients) ? j.recipients : [],
+          expiresInSeconds: j.expiresInSeconds || 300
+        });
+        setResendIn(j.resendCooldownSeconds || 60);
+        setStep('otp');
+      } else if (res.ok) {
+        // Defensive: email verification is always required now. A bare success
+        // response must never be treated as an authenticated session.
+        setError('Email verification is required. Please try again.');
       } else {
         setError(j.error || 'Invalid admin password');
       }
@@ -264,6 +287,87 @@ export default function AdminPage() {
       setError('Could not connect to authentication service.');
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function verifyOtp() {
+    if (otp.length !== 6) return;
+    setLoading(true);
+    setError('');
+    setMessage('');
+    try {
+      const res = await fetch('/api/admin/login/verify', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ otp })
+      });
+      const j = await res.json().catch(() => ({}));
+      if (res.ok) {
+        setOtp('');
+        setOtpInfo(null);
+        setResendIn(0);
+        setStep('password');
+        setCsrfToken(j.csrfToken || getCsrfTokenFromCookie());
+        setLogged(true);
+        await load(true);
+      } else {
+        setError(j.error || 'Invalid or expired verification code.');
+        setOtp('');
+        if (res.status === 401 && /sign in again/i.test(j.error || '')) {
+          setStep('password');
+          setOtpInfo(null);
+          setResendIn(0);
+        }
+      }
+    } catch {
+      setError('Could not connect to authentication service.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function resendOtp() {
+    if (resendIn > 0) return;
+    setLoading(true);
+    setError('');
+    setMessage('');
+    try {
+      const res = await fetch('/api/admin/login/resend', { method: 'POST' });
+      const j = await res.json().catch(() => ({}));
+      if (res.ok) {
+        setOtp('');
+        setMessage('A new verification code was sent.');
+        setResendIn(j.resendCooldownSeconds || j.retryAfterSeconds || 60);
+        if (j.expiresInSeconds) {
+          setOtpInfo((prev) => ({ ...(prev || {}), expiresInSeconds: j.expiresInSeconds }));
+        }
+      } else {
+        setError(j.error || 'Could not resend the verification code.');
+        if (j.retryAfterSeconds) setResendIn(j.retryAfterSeconds);
+        if (res.status === 401) {
+          setStep('password');
+          setOtp('');
+          setOtpInfo(null);
+        }
+      }
+    } catch {
+      setError('Could not connect to authentication service.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function cancelOtp() {
+    setStep('password');
+    setOtp('');
+    setOtpInfo(null);
+    setResendIn(0);
+    setError('');
+    setMessage('');
+    try {
+      await fetch('/api/admin/login', { method: 'DELETE' });
+    } catch {
+      // best effort: the challenge cookie expires on its own
     }
   }
 
@@ -276,6 +380,10 @@ export default function AdminPage() {
     }
     setCsrfToken('');
     setPassword('');
+    setStep('password');
+    setOtp('');
+    setOtpInfo(null);
+    setResendIn(0);
     setLogged(false);
     setData(null);
     seededRef.current = false;
@@ -525,45 +633,134 @@ export default function AdminPage() {
         </section>
 
         <section className="admin-login-form">
-          <div className="admin-kicker">Welcome back</div>
-          <h1>Sign in to the console</h1>
-          <p>Enter your admin password to access orders, customers and site controls.</p>
+          {step === 'otp' ? (
+            <>
+              <div className="admin-kicker">Two-step verification</div>
+              <h1>Check your inbox</h1>
+              <p>
+                We sent a 6-digit code to{' '}
+                <strong>
+                  {(otpInfo?.recipients || []).join(' and ') || 'the approved admin inboxes'}
+                </strong>. It expires in{' '}
+                {Math.max(1, Math.round((otpInfo?.expiresInSeconds || 300) / 60))} minute
+                {Math.max(1, Math.round((otpInfo?.expiresInSeconds || 300) / 60)) === 1
+                  ? ''
+                  : 's'}.
+              </p>
 
-          <label>Admin password</label>
-          <div className="admin-password">
-            <Lock size={17} />
-            <input
-              autoFocus
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && login()}
-              placeholder="Enter admin password"
-            />
-            <button type="button" onClick={login} disabled={loading} title="Sign In">
-              <LogIn size={17} />
-            </button>
-          </div>
+              <label>Verification code</label>
+              <div className="admin-password">
+                <ShieldCheck size={17} />
+                <input
+                  autoFocus
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  maxLength={6}
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  onKeyDown={(e) => e.key === 'Enter' && verifyOtp()}
+                  placeholder="000000"
+                />
+                <button
+                  type="button"
+                  onClick={verifyOtp}
+                  disabled={loading || otp.length !== 6}
+                  title="Verify code"
+                >
+                  <ShieldCheck size={17} />
+                </button>
+              </div>
 
-          {error && (
-            <Alert type="error" onClose={() => setError('')}>
-              {error}
-            </Alert>
+              {error && (
+                <Alert type="error" onClose={() => setError('')}>
+                  {error}
+                </Alert>
+              )}
+              {message && (
+                <Alert onClose={() => setMessage('')}>{message}</Alert>
+              )}
+
+              <button
+                type="button"
+                className="btn btn-primary admin-login-submit"
+                onClick={verifyOtp}
+                disabled={loading || otp.length !== 6}
+              >
+                {loading ? <RefreshCw size={16} className="spin" /> : <ShieldCheck size={16} />}
+                {loading ? 'Verifying…' : 'Verify & Enter'}
+              </button>
+
+              <div className="admin-login-actions">
+                <button
+                  type="button"
+                  className="admin-login-link"
+                  onClick={resendOtp}
+                  disabled={loading || resendIn > 0}
+                >
+                  {resendIn > 0 ? `Resend code in ${resendIn}s` : 'Resend code'}
+                </button>
+                <button
+                  type="button"
+                  className="admin-login-link"
+                  onClick={cancelOtp}
+                  disabled={loading}
+                >
+                  Use a different password
+                </button>
+              </div>
+
+              <div className="admin-login-foot">
+                <Eye size={14} /> Codes are single-use and expire after five minutes.
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="admin-kicker">Welcome back</div>
+              <h1>Sign in to the console</h1>
+              <p>
+                Enter your admin password. We will email a verification code to the approved
+                inboxes.
+              </p>
+
+              <label>Admin password</label>
+              <div className="admin-password">
+                <Lock size={17} />
+                <input
+                  autoFocus
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && login()}
+                  placeholder="Enter admin password"
+                />
+                <button type="button" onClick={login} disabled={loading} title="Continue">
+                  <LogIn size={17} />
+                </button>
+              </div>
+
+              {error && (
+                <Alert type="error" onClose={() => setError('')}>
+                  {error}
+                </Alert>
+              )}
+
+              <button
+                type="button"
+                className="btn btn-primary admin-login-submit"
+                onClick={login}
+                disabled={loading}
+              >
+                {loading ? <RefreshCw size={16} className="spin" /> : <LogIn size={16} />}
+                {loading ? 'Checking…' : 'Continue'}
+              </button>
+
+              <div className="admin-login-foot">
+                <ShieldCheck size={14} /> Password + email verification. Sessions expire
+                automatically.
+              </div>
+            </>
           )}
-
-          <button
-            type="button"
-            className="btn btn-primary admin-login-submit"
-            onClick={login}
-            disabled={loading}
-          >
-            {loading ? <RefreshCw size={16} className="spin" /> : <LogIn size={16} />}
-            {loading ? 'Verifying…' : 'Enter Console'}
-          </button>
-
-          <div className="admin-login-foot">
-            <Eye size={14} /> Sessions expire automatically. Activity is logged to Supabase.
-          </div>
         </section>
       </main>
     );

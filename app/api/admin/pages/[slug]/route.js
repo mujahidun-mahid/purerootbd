@@ -21,7 +21,7 @@ export async function GET(request, { params }) {
 
   try {
     const supabase = getSupabaseAdmin();
-    const slug = params.slug;
+    const { slug } = await params;
     const { data, error } = await supabase.from('site_pages').select('*').eq('slug', slug).single();
     if (error) {
       if (error.code === 'PGRST116') return NextResponse.json({ error: 'Page not found' }, { status: 404 });
@@ -39,7 +39,7 @@ export async function PUT(request, { params }) {
 
   try {
     const body = await request.json().catch(() => ({}));
-    const slug = params.slug;
+    const { slug } = await params;
     if (!slug) return NextResponse.json({ error: 'Slug is required' }, { status: 400 });
 
     const supabase = getSupabaseAdmin();
@@ -70,7 +70,7 @@ export async function DELETE(request, { params }) {
   if (!adminAuthorized(request)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   try {
-    const slug = params.slug;
+    const { slug } = await params;
     if (!slug) return NextResponse.json({ error: 'Slug is required' }, { status: 400 });
 
     const supabase = getSupabaseAdmin();

@@ -10,14 +10,14 @@
 
 | Component | Detail |
 |---|---|
-| Framework | Next.js 14.2.35 App Router |
-| Runtime | Node.js 20 LTS (`.nvmrc` set to `20`) |
+| Framework | Next.js 16.4.3 App Router |
+| Runtime | Node.js 22.12+ required; `.nvmrc` is `22.12.0` and `engines` is `>=22.12.0` |
 | Package manager | npm, lockfile v3 |
 | Start command | `node server.js` (custom production server) |
 | Alternative start | `next start` (`npm run start:next`) |
 | Database | Supabase (external, REST via `@supabase/supabase-js`) |
 | Storage | Supabase Storage (site-assets bucket) |
-| Auth | Custom admin password + HttpOnly cookie (`pr_admin`) |
+| Auth | Admin password + emailed OTP, then HttpOnly cookie (`pr_admin`) |
 | Payments | COD, bKash, Nagad, bank transfer — manual verification, no gateway callbacks |
 | Build output | `.next/` (Next.js production build) |
 | Port | Configurable via `PORT` env var (default `3000`) |
@@ -54,7 +54,7 @@ The following must be confirmed with HostSeba support or via the hosting panel b
 
 | Item | Status | Notes |
 |---|---|---|
-| Exact Node.js version available | Unverified | `.nvmrc` specifies `20` |
+| Exact Node.js version available | Unverified | Node.js 22.12+ is required; confirm the panel provides 22.12+ or 24.x. Local tests ran on Node.js 24.22.2 and 26.8.1, not HostSeba |
 | Webuzo Application Manager behavior | Unverified | How Node.js apps are registered/started |
 | Persistent process support | Unverified | Whether `node server.js` keeps running after SSH session ends |
 | Restart policy | Unverified | Auto-restart on crash/reboot |
@@ -62,7 +62,7 @@ The following must be confirmed with HostSeba support or via the hosting panel b
 | Outbound Supabase connectivity | Unverified | Firewall/egress rules for `https://*.supabase.co` |
 | Custom `server.js` as startup file | Unverified | Panel may expect `npm start` or a specific entry point |
 | `.env` / environment variable injection | Unverified | Where to set `NODE_ENV`, `PORT`, `HOST`, Supabase keys, `ADMIN_PASSWORD` |
-| `next build` memory headroom | Unverified | 2 GB RAM may be tight with Next.js 14 build |
+| `next build` memory headroom | Unverified | 2 GB RAM may be tight with the Next.js 16/Turbopack build; test on the actual plan |
 
 ---
 
@@ -76,7 +76,13 @@ Set these in the HostSeba panel (Webuzo/cPanel application environment) or in a 
 | `NEXT_PUBLIC_SUPABASE_URL` | Yes | Supabase project URL |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Yes | Supabase anon/public key |
 | `SUPABASE_SERVICE_ROLE_KEY` | Yes | Supabase service-role secret (server-side only) |
-| `ADMIN_PASSWORD` | Yes | Admin dashboard master password |
+| `ADMIN_PASSWORD` | Yes | Admin dashboard master password (20+ random chars, enforced in production) |
+| `RESEND_API_KEY` | Yes | Resend API key for admin OTP email (server-only) |
+| `RESEND_FROM_EMAIL` | Yes | Sender on a domain verified in Resend |
+| `ADMIN_OTP_RECIPIENTS` | Yes | Comma-separated OTP recipient allowlist |
+| `ADMIN_SESSION_SECRET` | Yes | 32+ random HMAC secret; production does not fall back to the password |
+| `ADMIN_OTP_HASH_SECRET` | Yes | 32+ random OTP HMAC secret, different from the session secret |
+| `ADMIN_OTP_STORE` | Optional | `supabase` (recommended/default) or `memory` on a single long-running process |
 | `NODE_ENV` | Recommended | `production` |
 | `PORT` | Recommended | `3000` (or panel-assigned port) |
 | `HOST` | Recommended | `0.0.0.0` or `127.0.0.1` depending on proxy |
@@ -85,15 +91,18 @@ Set these in the HostSeba panel (Webuzo/cPanel application environment) or in a 
 
 ### Admin authentication model (important for hosting)
 
-- Login posts `ADMIN_PASSWORD` once to `POST /api/admin/login`. The password is compared in constant time and is **never** stored in the browser or sent again.
-- On success the server issues:
+- Login is two-step. `POST /api/admin/login` checks `ADMIN_PASSWORD` in constant time, then emails a six-digit code to every address in `ADMIN_OTP_RECIPIENTS`. A correct password alone **never** returns a session.
+- `POST /api/admin/login/verify` checks the code and only then issues:
   - `pr_admin` — `HttpOnly`, `SameSite=Strict`, `Secure` (in production), 12-hour sliding expiry.
   - `csrf_token` — JS-readable, `SameSite=Strict`, `Secure` (in production). Every mutating admin request must echo it in `X-CSRF-Token`.
+- Codes are stored only as a keyed hash, expire after 5 minutes, allow 5 attempts, and are single-use. Resends replace the previous code (60-second cooldown, 3 max).
+- Pending challenges are stored in Supabase (`admin_login_challenges`) so they survive serverless invocations. On a single long-running HostSeba process you may set `ADMIN_OTP_STORE=memory`, but `supabase` is safer and required on Vercel. Run `supabase/migrations/20261029120000_admin_login_challenges.sql` first.
+- The Resend API key and sender must be configured; if they are missing, admin login fails closed with `503` instead of skipping email verification.
 - Sessions use one of two backends:
   - `memory` (default off-Vercel): revocable on logout, requires a **single long-running Node process** (`node server.js` on HostSeba). Do not run multiple instances behind a load balancer in this mode.
-  - `stateless` (automatic on Vercel, or `ADMIN_SESSION_MODE=stateless`): HMAC-signed 12-hour token that works across serverless instances. Logout clears the cookie but cannot revoke the token before it expires. Signing secret is `ADMIN_SESSION_SECRET`, falling back to `ADMIN_PASSWORD`.
+  - `stateless` (automatic on Vercel, or `ADMIN_SESSION_MODE=stateless`): HMAC-signed 12-hour token that works across serverless instances. Logout clears the cookie but cannot revoke the token before it expires. Production requires a dedicated `ADMIN_SESSION_SECRET`; the `ADMIN_PASSWORD` fallback is development-only.
 - Login attempts are limited to 10 per 10 minutes per IP (in-memory; resets on restart).
-- `ADMIN_PASSWORD` must be a long random value. Rotating it invalidates stateless sessions immediately (and you should restart the process to clear memory sessions).
+- Production requires `ADMIN_PASSWORD` to be 20+ characters, `ADMIN_SESSION_SECRET` and `ADMIN_OTP_HASH_SECRET` to be 32+ characters, and the two secrets to be different. If not, login fails closed with `503` before email is sent. Rotating `ADMIN_SESSION_SECRET` invalidates all stateless sessions and pending OTP challenges immediately; changing `ADMIN_PASSWORD` only prevents new password logins. Restart the process to clear memory sessions.
 
 ---
 
@@ -102,9 +111,9 @@ Set these in the HostSeba panel (Webuzo/cPanel application environment) or in a 
 On the HostSeba server (via SSH or Webuzo terminal):
 
 ```bash
-# 1. Install Node.js 20 (if not already available via Webuzo)
-nvm install 20
-nvm use 20
+# 1. Install Node.js 22.12+ (if not already available via Webuzo)
+nvm install 22.12.0
+nvm use 22.12.0
 
 # 2. Clone or pull the repository
 git clone https://github.com/mujahidun-mahid/purerootbd.git
@@ -163,7 +172,7 @@ A `503` means the app is running but Supabase is unreachable — check outbound 
 ## 8. Pre-Flight Checklist
 
 - [ ] Confirm HostSeba plan: MERN Starter (2 GB RAM, 10 GB NVMe)
-- [ ] Confirm Node.js version supports Next.js 14.2.35 (Node ≥ 18.17.0)
+- [ ] Confirm Node.js 22.12+ or 24.x is selected and matches `.nvmrc`/`engines`
 - [ ] Confirm Webuzo can run a persistent `node server.js` process
 - [ ] Confirm port/proxy setup for external HTTP(S) → Node.js
 - [ ] Confirm outbound HTTPS to Supabase (`*.supabase.co`) is allowed
@@ -184,7 +193,7 @@ Do not proceed with HostSeba deployment if:
 - `npm run build` fails on the server
 - `/api/health` returns `503` after deployment
 - Outbound Supabase connectivity is blocked
-- Node.js version is below 18.17.0
+- Node.js version is below 22.12.0
 - No persistent process management is available
 
 Keep Vercel as the fallback. If using HostSeba only for the domain, point DNS to Vercel instead (see `CLOUDFLARE_SETUP.md`).
