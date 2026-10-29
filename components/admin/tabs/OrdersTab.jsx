@@ -42,7 +42,6 @@ export default function OrdersTab({
   onStatus,
   onExport,
   history = [],
-  password
 }) {
   const [dateRange, setDateRange] = useState('all');
   const [openIds, setOpenIds] = useState(() => new Set());
@@ -72,11 +71,20 @@ export default function OrdersTab({
     });
   }
 
+  function getCsrfTokenFromCookie() {
+    if (typeof document === 'undefined') return '';
+    const match = document.cookie.match(/(?:^|; )csrf_token=([^;]+)/);
+    return match ? match[1] : '';
+  }
+
   function deleteOrder(o) {
     if (!window.confirm(`Delete order ${o.order_number}? This cannot be undone.`)) return;
+    const csrf = getCsrfTokenFromCookie();
+    const headers = { 'content-type': 'application/json' };
+    if (csrf) headers['X-CSRF-Token'] = csrf;
     fetch('/api/admin/orders?id=' + encodeURIComponent(o.id), {
       method: 'DELETE',
-      headers: { 'x-admin-password': password || '' }
+      headers
     }).then(() => window.location.reload());
   }
 

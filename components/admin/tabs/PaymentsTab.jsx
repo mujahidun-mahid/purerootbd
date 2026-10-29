@@ -30,7 +30,7 @@ const readForm = (settings) => {
   );
 };
 
-export default function PaymentsTab({ password, data, saveSetting }) {
+export default function PaymentsTab({ data, saveSetting }) {
   const [form, setForm] = useState(() => readForm(data?.siteSettings));
   const [saving, setSaving] = useState(false);
   const [notice, setNotice] = useState(null);

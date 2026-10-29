@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Plus, Trash2, ImageIcon } from 'lucide-react';
 import useCategories from '@/components/useCategories';
 import { Field } from './ui';
+import { adminHeaders } from './csrf';
 
 function galleryOf(product) {
   if (!product) return [];
@@ -147,7 +148,11 @@ export default function ProductEditor({ product, saving, onClose, onSave, error 
       for (const file of list) {
         const fd = new FormData();
         fd.append('file', file);
-        const res = await fetch('/api/admin/images', { method: 'POST', body: fd });
+        const res = await fetch('/api/admin/images', {
+          method: 'POST',
+          headers: adminHeaders({ json: false }),
+          body: fd
+        });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(data.error || `Upload failed for ${file.name}.`);
         if (data.url) urls.push(data.url);

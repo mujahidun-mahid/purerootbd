@@ -1,9 +1,22 @@
 import { ImageResponse } from 'next/og';
+import { SITE_URL } from '@/lib/site-defaults';
 
+// Keep the Edge runtime: @vercel/og's Node build currently fails during
+// prerender on Windows self-hosted builds. On HostSeba this route is emitted
+// as a static image at build time, so it does not require an Edge worker at
+// runtime.
 export const runtime = 'edge';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 export const alt = 'Pure Roots | Premium Nutrition & Natural Foods';
+
+function siteHost() {
+  try {
+    return new URL(SITE_URL).host;
+  } catch {
+    return 'purerootbd.shop';
+  }
+}
 
 export default function OpengraphImage() {
   return new ImageResponse(
@@ -57,7 +70,7 @@ export default function OpengraphImage() {
         </div>
 
         <div style={{ display: 'flex', fontSize: 26, color: '#86efac', letterSpacing: 1 }}>
-          purerootsbd.vercel.app
+          {siteHost()}
         </div>
       </div>
     ),

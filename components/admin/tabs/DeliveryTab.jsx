@@ -11,7 +11,7 @@ const DAYS = ['Every day', 'Friday', 'Saturday', 'Sunday', 'Weekdays'];
 const blankSlot = { day: 'Every day', window: '09:00 – 12:00', fee: 80, capacity: 20, active: true };
 const blankZone = { name: '', areas: '', fee: 40, eta: 'Same day', active: true };
 
-export default function DeliveryTab({ password }) {
+export default function DeliveryTab() {
   const { items: slots, save: saveSlot, remove: removeSlot } = useLocalCollection('deliverySlots', seedSlots);
   const { items: zones, save: saveZone, remove: removeZone } = useLocalCollection('deliveryZones', seedZones);
 

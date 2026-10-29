@@ -5,8 +5,12 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
+    "start": "node server.js",
+    "start:next": "next start",
     "lint": "next lint"
+  },
+  "engines": {
+    "node": ">=18.17.0"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.58.0",
@@ -14,7 +18,8 @@
     "next": "14.2.35",
     "react": "18.3.1",
     "react-dom": "18.3.1",
-    "sanitize-html": "^2.18.0"
+    "sanitize-html": "^2.18.0",
+    "server-only": "^0.0.1"
   },
   "devDependencies": {
     "typescript": "^7.0.2"

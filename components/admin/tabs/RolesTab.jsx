@@ -32,7 +32,7 @@ const blankRole = {
   permissions: { orders: 'none', catalog: 'none', settings: 'none', refunds: 'none', reports: 'none' }
 };
 
-export default function RolesTab({ password }) {
+export default function RolesTab() {
   const { items: roles, save, patch, remove } = useLocalCollection('roles', seedRoles);
   const [notice, setNotice] = useState(null);
   const [editing, setEditing] = useState(null);

@@ -31,8 +31,8 @@ function expiryBadge(date) {
 const blankWarehouse = { name: '', location: '', manager: '', capacity: 500, used: 0, active: true };
 const blankBatch = { product: '', batch: '', qty: 0, expiry: '', warehouse: seedWarehouses[0].name };
 
-export default function InventoryTab({ password }) {
-  const { items, loading, saving, error, setError, save, reload } = useAdminProducts(password);
+export default function InventoryTab() {
+  const { items, loading, saving, error, setError, save, reload } = useAdminProducts();
   const { items: warehouses, save: saveWh, remove: removeWh } = useLocalCollection('warehouses', seedWarehouses);
   const { items: batches, save: saveBatch, remove: removeBatch } = useLocalCollection('batches', seedBatches);
 

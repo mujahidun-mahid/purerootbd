@@ -18,7 +18,7 @@ const blankDriver = {
   active: true
 };
 
-export default function DriversTab({ password, orders = [], onStatus }) {
+export default function DriversTab({ orders = [], onStatus }) {
   const { items: drivers, save: saveDriver, remove: removeDriver } = useLocalCollection('drivers', seedDrivers);
   const { items: assignments, save: saveAssign, remove: removeAssign } = useLocalCollection('dispatch', []);
 

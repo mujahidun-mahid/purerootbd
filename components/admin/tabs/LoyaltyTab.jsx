@@ -8,7 +8,7 @@ import { seedTiers } from '../mockData';
 
 const blankTier = { name: '', minSpend: 0, pointsRate: 1, perks: '' };
 
-export default function LoyaltyTab({ password, customers }) {
+export default function LoyaltyTab({ customers }) {
   const { items: tiers, save, remove } = useLocalCollection('loyaltyTiers', seedTiers);
   const [notice, setNotice] = useState(null);
   const [editing, setEditing] = useState(null);

@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Upload } from 'lucide-react';
 import { Field } from './ui';
+import { adminHeaders } from './csrf';
 
 function buildState(category) {
   if (!category) {
@@ -62,7 +63,11 @@ export default function CategoryEditor({ category, saving, onClose, onSave, erro
     try {
       const fd = new FormData();
       fd.append('file', file);
-      const res = await fetch('/api/admin/images', { method: 'POST', body: fd });
+      const res = await fetch('/api/admin/images', {
+        method: 'POST',
+        headers: adminHeaders({ json: false }),
+        body: fd
+      });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || 'Upload failed.');
       set('image', data.url);

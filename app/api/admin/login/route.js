@@ -1,10 +1,14 @@
 import crypto from 'node:crypto';
 import { NextResponse } from 'next/server';
-import { getAdminPassword, getAdminSessionToken } from '@/lib/supabaseServer';
-
-// Brute-force throttle via the shared limiter (best-effort per instance;
-// distributed enforcement belongs in Vercel Firewall, not app code).
-import { isRateLimited, recordHit, bodyTooLarge, tooLargeResponse } from '@/lib/apiSecurity';
+import {
+  createAdminSessionCookie,
+  clearAdminSessionCookie,
+  createCsrfTokenCookie,
+  clearCsrfTokenCookie,
+  destroyAdminSession,
+  getAdminPassword,
+} from '@/lib/supabaseServer';
+import { throttle, bodyTooLarge, tooLargeResponse } from '@/lib/apiSecurity';
 
 const LOGIN_WINDOW_MS = 10 * 60 * 1000;
 const LOGIN_MAX = 10;
@@ -19,40 +23,45 @@ function passwordsMatch(a, b) {
 
 export async function POST(request) {
   if (bodyTooLarge(request, 16 * 1024)) return tooLargeResponse(16 * 1024);
-  if (isRateLimited(request, { windowMs: LOGIN_WINDOW_MS, max: LOGIN_MAX, key: 'admin-login' })) {
-    return NextResponse.json({ error: 'Too many attempts. Try again later.' }, { status: 429 });
-  }
+  // Count every login attempt (successful or not). `throttle` both checks the
+  // window and records this hit, so repeated guesses are cut off at LOGIN_MAX.
+  const limited = throttle(request, { windowMs: LOGIN_WINDOW_MS, max: LOGIN_MAX, key: 'admin-login' });
+  if (limited) return limited;
   const { password } = await request.json().catch(() => ({}));
   const expected = getAdminPassword();
   if (!expected || !password || !passwordsMatch(password, expected)) {
-    recordHit(request, { windowMs: LOGIN_WINDOW_MS, key: 'admin-login' });
     return NextResponse.json({ error: 'Invalid password' }, { status: 401 });
   }
 
-  const token = getAdminSessionToken();
-  if (!token) {
-    return NextResponse.json({ error: 'Admin session could not be created.' }, { status: 500 });
+  const { token: sessionToken, cookie: sessionCookie } = createAdminSessionCookie();
+  if (!sessionToken) {
+    // Fail closed if the session backend is not configured (e.g. stateless
+    // mode without ADMIN_PASSWORD / ADMIN_SESSION_SECRET).
+    return NextResponse.json({ error: 'Admin authentication is not configured.' }, { status: 503 });
   }
+  const { token: csrfToken, cookie: csrfCookie } = createCsrfTokenCookie();
 
-  const response = NextResponse.json({ ok: true });
-  response.cookies.set('pr_admin', token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
-    path: '/',
-    maxAge: 60 * 60 * 12
+  const response = NextResponse.json({
+    ok: true,
+    csrfToken,
   });
+
+  // Set both cookies. The session cookie is HttpOnly; the CSRF cookie is
+  // readable by JavaScript for the double-submit pattern.
+  response.headers.set('set-cookie', [sessionCookie, csrfCookie]);
   return response;
 }
 
-export async function DELETE() {
+export async function DELETE(request) {
+  // Revoke the server-side session, not just the browser cookie, so the token
+  // cannot be replayed after logout.
+  const token = request?.cookies?.get?.('pr_admin')?.value;
+  destroyAdminSession(token);
+
   const response = NextResponse.json({ ok: true });
-  response.cookies.set('pr_admin', '', {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
-    path: '/',
-    maxAge: 0
-  });
+  response.headers.set(
+    'set-cookie',
+    [clearAdminSessionCookie(), clearCsrfTokenCookie()]
+  );
   return response;
 }

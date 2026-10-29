@@ -10,6 +10,10 @@ import NewsletterForm from "@/components/NewsletterForm";
 
 export const dynamic = 'force-dynamic';
 
+export const metadata = {
+  alternates: { canonical: '/' }
+};
+
 function parseIds(raw) {
   if (Array.isArray(raw)) return raw;
   return String(raw || "").split(",").map((s) => s.trim()).filter(Boolean);

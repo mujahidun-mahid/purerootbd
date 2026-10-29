@@ -13,7 +13,6 @@ export async function generateMetadata() {
     description,
     applicationName: s.site_name || "Pure Roots",
     keywords: ["Pure Roots","buy nuts online Bangladesh","almonds","cashew nuts","walnuts","chia seeds","pumpkin seeds","natural honey","organic spices","dry fruits Dhaka","premium nutrition","healthy snacks"],
-    alternates: { canonical: "/" },
     openGraph: {
       type: "website",
       locale: "en_US",

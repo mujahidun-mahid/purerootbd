@@ -1,3 +1,4 @@
+import crypto from 'node:crypto';
 import { NextResponse } from 'next/server';
 import { getSupabaseAdmin, getSupabaseConfig } from '@/lib/supabaseServer';
 import { redactOrderForTracking } from '@/lib/orderPrivacy';
@@ -61,6 +62,9 @@ export async function POST(request) {
     if (!address) {
       return NextResponse.json({ error: 'Delivery address is required.' }, { status: 400 });
     }
+    if (name.length > 120 || phone.length > 20 || address.length > 1000) {
+      return NextResponse.json({ error: 'One or more delivery fields are too long.' }, { status: 400 });
+    }
     if (!ALLOWED_PAYMENT_METHODS.has(paymentMethod)) {
       return NextResponse.json({ error: 'Unsupported payment method.' }, { status: 400 });
     }
@@ -84,20 +88,33 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Failed to initialize database connection.' }, { status: 500 });
     }
 
-    const orderNumber = body.order || body.order_number || `PR-${Math.floor(10000000 + Math.random() * 90000000)}`;
+    // Accept a client retry key only when it is a sane, bounded value.
+    // Otherwise generate a cryptographically random order number.
+    const requestedOrder = String(body.order || body.order_number || '').trim();
+    if (requestedOrder && !/^[A-Za-z0-9-]{4,40}$/.test(requestedOrder)) {
+      return NextResponse.json({ error: 'Invalid order number.' }, { status: 400 });
+    }
+    const orderNumber = requestedOrder || `PR-${crypto.randomInt(10000000, 100000000)}`;
 
-    // Idempotency: retried submissions with the same order number
-    // return the original order instead of creating a duplicate.
+    // Idempotency: retried submissions with the same order number AND phone
+    // return the original order. Never return another customer's order when
+    // only the (enumerable) order number matches.
     const { data: existing } = await supabase
       .from('orders')
       .select('*')
       .eq('order_number', String(orderNumber).trim())
       .maybeSingle();
     if (existing) {
+      if (normalizePhone(existing.phone) !== phone) {
+        return NextResponse.json(
+          { error: 'That order number is already in use.' },
+          { status: 409 }
+        );
+      }
       return NextResponse.json({
         order: { ...existing, order: existing.order_number, method: existing.payment_method },
         duplicate: true
-      });
+      }, { headers: NO_STORE });
     }
 
     // Server-side catalog verification: every line must match a real,
@@ -207,7 +224,7 @@ export async function POST(request) {
         method: data.payment_method,
         date: new Date(data.placed_at).toLocaleDateString('en-BD')
       }
-    }, { status: 201 });
+    }, { status: 201, headers: NO_STORE });
   } catch (error) {
     return safeError(error, 'Unable to create order right now.');
   }
@@ -215,52 +232,45 @@ export async function POST(request) {
 
 export async function GET(request) {
   try {
+    const limited = throttle(request, { windowMs: 60_000, max: 30, key: 'orders-get' });
+    if (limited) return limited;
+
     const supabase = getSupabaseAdmin();
     if (!supabase) return NextResponse.json({ error: 'Database is not configured.' }, { status: 503 });
 
     const searchParams = request.nextUrl.searchParams;
-    const phone = searchParams.get('phone');
-    const orderNumber = searchParams.get('order');
+    const rawPhone = searchParams.get('phone');
+    const rawOrder = searchParams.get('order');
+    const cleanPhone = rawPhone ? normalizePhone(rawPhone) : '';
+    const orderNumber = rawOrder ? rawOrder.trim() : '';
+
+    if (!cleanPhone && !orderNumber) {
+      return NextResponse.json({ error: 'phone or order parameter required' }, { status: 400 });
+    }
+    if (cleanPhone && cleanPhone.replace(/\D/g, '').length < 10) {
+      return NextResponse.json({ error: 'A valid phone number is required.' }, { status: 400 });
+    }
+    if (orderNumber && orderNumber.length > 40) {
+      return NextResponse.json({ error: 'Invalid order number.' }, { status: 400 });
+    }
 
     let query = supabase.from('orders').select('*').order('placed_at', { ascending: false });
-
-    if (phone) {
-      const cleanPhone = normalizePhone(phone);
+    if (cleanPhone && orderNumber) {
+      query = query.eq('phone', cleanPhone).eq('order_number', orderNumber);
+    } else if (cleanPhone) {
       query = query.eq('phone', cleanPhone);
-    } else if (orderNumber) {
-      query = query.eq('order_number', orderNumber.trim());
     } else {
-      return NextResponse.json({ error: 'phone or order parameter required' }, { status: 400 });
+      query = query.eq('order_number', orderNumber);
     }
 
     const { data, error } = await query.limit(50);
     if (error) throw error;
 
-    // Order-number-only lookups are redacted: order numbers are enumerable,
-    // so full customer PII is only returned when the phone number matches.
-    const phoneVerified = Boolean(phone);
-    const formatted = (data || []).map(row => {
-      if (!phoneVerified) return redactOrderForTracking(row);
-      return {
-        id: row.id,
-        order: row.order_number,
-        order_number: row.order_number,
-        phone: row.phone,
-        method: row.payment_method,
-        payment_method: row.payment_method,
-        subtotal: Number(row.subtotal || 0),
-        delivery: Number(row.delivery_fee || 0),
-        delivery_fee: Number(row.delivery_fee || 0),
-        total: Number(row.total || 0),
-        status: row.status,
-        payment_status: row.payment_status || 'pending',
-        customer: row.customer,
-        items: row.items,
-        date: new Date(row.placed_at).toLocaleDateString('en-BD'),
-        placed_at: row.placed_at,
-        updated_at: row.updated_at
-      };
-    });
+    // This endpoint is public and is used by the order-confirmation page.
+    // Always return the redacted tracking shape: even a phone number is low
+    // entropy and must not unlock names and delivery addresses over an
+    // unauthenticated GET request.
+    const formatted = (data || []).map(redactOrderForTracking);
 
     return NextResponse.json({ orders: formatted }, { headers: NO_STORE });
   } catch (error) {
@@ -278,6 +288,9 @@ export async function PATCH(request) {
 
     if (!order_number || !phone) {
       return NextResponse.json({ error: 'Order number and phone are required.' }, { status: 400 });
+    }
+    if (String(order_number).trim().length > 40) {
+      return NextResponse.json({ error: 'Invalid order number.' }, { status: 400 });
     }
     if (status !== 'Cancelled') {
       return NextResponse.json({ error: 'Only cancellation is supported.' }, { status: 400 });
@@ -319,7 +332,9 @@ export async function PATCH(request) {
       .insert({ order_id: order.id, status: 'Cancelled' });
     if (historyError) console.warn('Status history insert error:', historyError.message);
 
-    return NextResponse.json({ order: updated }, { headers: NO_STORE });
+    // The tracking page reloads after cancellation; it does not need the
+    // customer's name/address back from this public endpoint.
+    return NextResponse.json({ order: redactOrderForTracking(updated) }, { headers: NO_STORE });
   } catch (error) {
     return safeError(error, 'Unable to cancel order.');
   }

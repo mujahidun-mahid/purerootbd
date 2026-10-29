@@ -39,9 +39,13 @@ export async function POST(request) {
       return NextResponse.json({ error: 'No matching orders found.' }, { status: 404 });
     }
 
-    const phoneVerified = Boolean(phone && normalizePhone(phone));
+    // Full customer details require BOTH the order number and the matching
+    // phone. A phone-only lookup may return several orders, so those are
+    // redacted; the tracking UI only needs status/totals/items for that view.
+    const phoneVerified = Boolean(order_number && phone && normalizePhone(phone));
     const shape = (row) => (phoneVerified ? row : redactOrderForTracking(row));
-    const primaryOrder = shape(data[0]);
+    const shapedOrders = data.map(shape);
+    const primaryOrder = shapedOrders[0];
 
     // Fetch status history for this order
     const { data: history } = await supabase
@@ -52,7 +56,7 @@ export async function POST(request) {
 
     return NextResponse.json({
       order: primaryOrder,
-      orders: phoneVerified ? data : [primaryOrder],
+      orders: shapedOrders,
       history: history || []
     }, { headers: NO_STORE });
   } catch (e) {

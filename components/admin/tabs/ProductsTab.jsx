@@ -7,8 +7,8 @@ import { catIcon, money } from '../constants';
 import useAdminProducts from '../useAdminProducts';
 import ProductEditor from '../ProductEditor';
 
-export default function ProductsTab({ password }) {
-  const { items, loading, saving, error, setError, save, remove, reorder } = useAdminProducts(password);
+export default function ProductsTab() {
+  const { items, loading, saving, error, setError, save, remove, reorder } = useAdminProducts();
   const [query, setQuery] = useState('');
   const [editing, setEditing] = useState(null);
   const [notice, setNotice] = useState('');

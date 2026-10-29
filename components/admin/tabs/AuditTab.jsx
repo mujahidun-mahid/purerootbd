@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Package, RefreshCw, Save, ScrollText, Zap } from 'lucide-react';
 import { Alert, Chip, EmptyState, StatCard } from '../ui';
 import { formatDateTime } from '../constants';
+import { adminHeaders } from '../csrf';
 
 const detailText = (detail) => {
   if (detail && typeof detail === 'object') {
@@ -14,7 +15,7 @@ const detailText = (detail) => {
 
 const prefixOf = (event) => String(event?.metadata?.action || '').split('.')[0];
 
-export default function AuditTab({ password }) {
+export default function AuditTab() {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -25,7 +26,7 @@ export default function AuditTab({ password }) {
     setError('');
     try {
       const res = await fetch('/api/admin/audit', {
-        headers: { 'x-admin-password': password },
+        headers: adminHeaders({ json: false }),
         cache: 'no-store'
       });
       if (res.status === 401) {
@@ -40,7 +41,7 @@ export default function AuditTab({ password }) {
     } finally {
       setLoading(false);
     }
-  }, [password]);
+  }, []);
 
   useEffect(() => {
     load();

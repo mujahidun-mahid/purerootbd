@@ -18,5 +18,9 @@ export function useProducts() {
     };
   }, []);
 
-  return { products: items || fallbackProducts, loading: items === null };
+  // Demo products are only a development fallback. In production show the
+  // real API result (including an empty catalog while data loads) so demo
+  // items never appear on the live storefront.
+  const fallback = process.env.NODE_ENV === "production" ? [] : fallbackProducts;
+  return { products: items || fallback, loading: items === null };
 }

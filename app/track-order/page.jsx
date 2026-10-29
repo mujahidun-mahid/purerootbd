@@ -47,6 +47,10 @@ export default function Track() {
   const [cancelling, setCancelling] = useState(null);
 
   async function cancelOrder(orderNum, phoneNum) {
+    if (!phoneNum) {
+      alert('Enter the mobile number used for this order to cancel it.');
+      return;
+    }
     if (!window.confirm('Cancel this order?')) return;
     setCancelling(orderNum);
     try {
@@ -222,12 +226,12 @@ export default function Track() {
                         <span className="muted">{o.customer?.address || 'Delivery address on record'}</span>
                       </div>
                       <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                        {isCancellable(o.status) && (
+                        {isCancellable(o.status) && phone && (
                           <button
                             type="button"
                             className="btn btn-outline danger"
                             style={{ padding: '8px 14px', fontSize: 13 }}
-                            onClick={() => cancelOrder(o.order_number, o.phone)}
+                            onClick={() => cancelOrder(o.order_number, phone)}
                             disabled={cancelling === o.order_number}
                           >
                             {cancelling === o.order_number ? 'Cancelling…' : <><X size={14} /> Cancel</>}

@@ -38,7 +38,7 @@ const DEFAULT_PAGE_DATA = {
   nav_order: 0,
 };
 
-export default function PagesTab({ password }) {
+export default function PagesTab() {
   const [pages, setPages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -54,12 +54,23 @@ export default function PagesTab({ password }) {
   const [sectionForm, setSectionForm] = useState({ type: '', data: {} });
   const [dragSectionId, setDragSectionId] = useState(null);
 
-  const authHeaders = () => ({ 'x-admin-password': password, 'content-type': 'application/json' });
+  function getCsrfTokenFromCookie() {
+    if (typeof document === 'undefined') return '';
+    const match = document.cookie.match(/(?:^|; )csrf_token=([^;]+)/);
+    return match ? match[1] : '';
+  }
+
+  const authHeaders = () => {
+    const csrf = getCsrfTokenFromCookie();
+    const h = { 'content-type': 'application/json' };
+    if (csrf) h['X-CSRF-Token'] = csrf;
+    return h;
+  };
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/admin/pages', { headers: { 'x-admin-password': password } });
+      const res = await fetch('/api/admin/pages', { headers: authHeaders(), cache: 'no-store' });
       if (res.ok) {
         const data = await res.json();
         setPages(data.pages || []);
@@ -69,7 +80,7 @@ export default function PagesTab({ password }) {
     } finally {
       setLoading(false);
     }
-  }, [password]);
+  }, []);
 
   useEffect(() => { load(); }, [load]);
 

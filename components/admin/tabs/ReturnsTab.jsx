@@ -8,7 +8,7 @@ import { seedReturns } from '../mockData';
 
 const PENDING_STATUSES = ['Requested', 'Approved'];
 
-export default function ReturnsTab({ password, orders = [], onStatus }) {
+export default function ReturnsTab({ orders = [], onStatus }) {
   const { items: refunds, save, patch, remove } = useLocalCollection('returns', seedReturns);
   const [view, setView] = useState('refunds');
   const [notice, setNotice] = useState('');

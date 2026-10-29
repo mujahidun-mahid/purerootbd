@@ -1,6 +1,10 @@
-import { products, categories } from '@/lib/products';
+import { loadProducts, loadCategories } from '@/lib/products-server';
+import { SITE_URL } from '@/lib/site-defaults';
 
-const BASE = 'https://purerootsbd.vercel.app';
+// Generate the sitemap from the live catalog, never from the demo registry.
+// A dynamic sitemap also means products added through the admin dashboard
+// appear without rebuilding the whole application.
+export const dynamic = 'force-dynamic';
 
 const pages = [
   ['/', 1, 'daily'],
@@ -16,24 +20,37 @@ const pages = [
   ['/terms', 0.4, 'yearly'],
 ];
 
-export default function sitemap() {
+export default async function sitemap() {
   const lastModified = new Date();
+
+  // `allowFallback: false` is important: if Supabase is unavailable we would
+  // rather omit catalog URLs than publish dead demo-product URLs.
+  let products = [];
+  let categories = [];
+  try {
+    [products, categories] = await Promise.all([
+      loadProducts({ allowFallback: false }),
+      loadCategories({ allowFallback: false }),
+    ]);
+  } catch (error) {
+    console.error('Sitemap catalog lookup failed:', error?.message);
+  }
 
   return [
     ...pages.map(([path, priority, changeFrequency]) => ({
-      url: `${BASE}${path}`,
+      url: `${SITE_URL}${path}`,
       lastModified,
       changeFrequency,
       priority,
     })),
     ...categories.map((c) => ({
-      url: `${BASE}/category/${c.slug}`,
+      url: `${SITE_URL}/category/${c.slug}`,
       lastModified,
       changeFrequency: 'weekly',
       priority: 0.8,
     })),
     ...products.map((p) => ({
-      url: `${BASE}/product/${p.slug}`,
+      url: `${SITE_URL}/product/${p.slug}`,
       lastModified,
       changeFrequency: 'monthly',
       priority: 0.9,

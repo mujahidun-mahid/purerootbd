@@ -17,7 +17,7 @@ const blankSupplier = {
   active: true
 };
 
-export default function SuppliersTab({ password }) {
+export default function SuppliersTab() {
   const { items: suppliers, save: saveSupplier, remove: removeSupplier } = useLocalCollection(
     'suppliers',
     seedSuppliers

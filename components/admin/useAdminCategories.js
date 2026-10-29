@@ -1,17 +1,25 @@
 'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-export default function useAdminCategories(password) {
+function getCsrfTokenFromCookie() {
+  if (typeof document === 'undefined') return '';
+  const match = document.cookie.match(/(?:^|; )csrf_token=([^;]+)/);
+  return match ? match[1] : '';
+}
+
+export default function useAdminCategories() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const seq = useRef(0);
 
-  const auth = useCallback(
-    () => ({ 'x-admin-password': password || '', 'content-type': 'application/json' }),
-    [password]
-  );
+  const auth = useCallback(() => {
+    const csrf = getCsrfTokenFromCookie();
+    const h = { 'content-type': 'application/json' };
+    if (csrf) h['X-CSRF-Token'] = csrf;
+    return h;
+  }, []);
 
   const load = useCallback(async () => {
     const my = ++seq.current;

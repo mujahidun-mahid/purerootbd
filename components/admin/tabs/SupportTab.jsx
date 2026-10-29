@@ -18,7 +18,7 @@ const blankTicket = {
 const priorityClass = (p) => (p === 'Normal' ? 'pill pill-on' : 'pill pill-off');
 const statusClass = (s) => (s === 'Pending' ? 'pill pill-off' : 'pill pill-on');
 
-export default function SupportTab({ password }) {
+export default function SupportTab() {
   const { items: tickets, save, patch, remove } = useLocalCollection('tickets', seedTickets);
   const [filter, setFilter] = useState('all');
   const [notice, setNotice] = useState(null);

@@ -7,9 +7,9 @@ import { money } from '../constants';
 import useAdminCategories from '../useAdminCategories';
 import CategoryEditor from '../CategoryEditor';
 
-export default function FeaturedCategoriesTab({ password }) {
+export default function FeaturedCategoriesTab() {
   const { items, loading, saving, error, setError, save, patch, remove, reorder } =
-    useAdminCategories(password);
+    useAdminCategories();
   const [query, setQuery] = useState('');
   const [editing, setEditing] = useState(null);
   const [notice, setNotice] = useState('');

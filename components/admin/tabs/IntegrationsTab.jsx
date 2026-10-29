@@ -3,7 +3,7 @@ import { StatCard, Toggle } from '../ui';
 import { useLocalCollection } from '../useLocalData';
 import { seedIntegrations } from '../mockData';
 
-export default function IntegrationsTab({ password, data }) {
+export default function IntegrationsTab({ data }) {
   const health = data?.systemHealth || {};
   const { items: integrations, save } = useLocalCollection('integrations', seedIntegrations);
 

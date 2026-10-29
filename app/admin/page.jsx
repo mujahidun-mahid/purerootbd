@@ -63,7 +63,7 @@ const IDENTITY_KEYS = [
 
 export default function AdminPage() {
   const [password, setPassword] = useState('');
-  const [sessionPassword, setSessionPassword] = useState('');
+  const [csrfToken, setCsrfToken] = useState('');
   const [logged, setLogged] = useState(false);
   const [data, setData] = useState(null);
   const [tab, setTab] = useState('overview');
@@ -105,21 +105,40 @@ export default function AdminPage() {
     }
   }, []);
 
+  // Read CSRF token from the non-HttpOnly cookie for double-submit protection.
+  // The session cookie (pr_admin) is HttpOnly and sent automatically by the browser.
+  function getCsrfTokenFromCookie() {
+    if (typeof document === 'undefined') return '';
+    const match = document.cookie.match(/(?:^|; )csrf_token=([^;]+)/);
+    return match ? match[1] : '';
+  }
+
+  // Initialize CSRF token from cookie on mount
+  useEffect(() => {
+    const token = getCsrfTokenFromCookie();
+    if (token) setCsrfToken(token);
+  }, []);
+
   const headers = useCallback(
-    () => (sessionPassword ? { 'x-admin-password': sessionPassword } : {}),
-    [sessionPassword]
+    () => {
+      const token = csrfToken || getCsrfTokenFromCookie();
+      const h = {};
+      if (token) h['X-CSRF-Token'] = token;
+      return h;
+    },
+    [csrfToken]
   );
 
   const recordAudit = useCallback(
     (action, detail = {}) => {
-      if (!sessionPassword) return;
+      if (!csrfToken) return;
       fetch('/api/admin/audit', {
         method: 'POST',
-        headers: { 'x-admin-password': sessionPassword, 'content-type': 'application/json' },
+        headers: { 'X-CSRF-Token': csrfToken, 'content-type': 'application/json' },
         body: JSON.stringify({ action, detail })
       }).catch(() => {});
     },
-    [sessionPassword]
+    [csrfToken]
   );
 
   // Success banners fade out on their own; errors stay until dismissed.
@@ -130,21 +149,23 @@ export default function AdminPage() {
   }, [message]);
 
   const load = useCallback(
-    async (showLoading = false, pw = sessionPassword) => {
+    async (showLoading = false) => {
       if (showLoading) setLoading(true);
       setError('');
       const seq = ++sessionSeqRef.current;
       try {
+        // Session is sent automatically via the HttpOnly pr_admin cookie.
         const res = await fetch('/api/admin/dashboard', {
-          headers: pw ? { 'x-admin-password': pw } : {},
+          headers: headers(),
           cache: 'no-store'
         });
         if (seq !== sessionSeqRef.current) return;
 
         if (res.status === 401) {
           setLogged(false);
-          setSessionPassword('');
-          setError(showLoading || logged ? 'Invalid admin password or session expired.' : '');
+          setCsrfToken('');
+          setPassword('');
+          setError(showLoading || logged ? 'Session expired. Please sign in again.' : '');
           return;
         }
 
@@ -175,7 +196,7 @@ export default function AdminPage() {
         if (showLoading) setLoading(false);
       }
     },
-    [sessionPassword, logged]
+    [headers, logged]
   );
 
   // Initial session restore (cookie based) - run exactly once on mount
@@ -232,10 +253,10 @@ export default function AdminPage() {
       });
       const j = await res.json().catch(() => ({}));
       if (res.ok) {
-        setSessionPassword(password);
         setPassword('');
+        setCsrfToken(j.csrfToken || getCsrfTokenFromCookie());
         setLogged(true);
-        await load(true, password);
+        await load(true);
       } else {
         setError(j.error || 'Invalid admin password');
       }
@@ -253,7 +274,7 @@ export default function AdminPage() {
     } catch {
       // session cookie cleanup is best effort
     }
-    setSessionPassword('');
+    setCsrfToken('');
     setPassword('');
     setLogged(false);
     setData(null);
@@ -594,7 +615,6 @@ export default function AdminPage() {
           onStatus={updateStatus}
           history={data?.statusHistory || []}
           onExport={exportOrdersCSV}
-          password={sessionPassword}
         />
       )}
 
@@ -607,13 +627,13 @@ export default function AdminPage() {
         />
       )}
 
-      {tab === 'catalog' && <CatalogTab password={sessionPassword} />}
+      {tab === 'catalog' && <CatalogTab />}
 
-      {tab === 'products' && <ProductsTab password={sessionPassword} />}
+      {tab === 'products' && <ProductsTab />}
 
-      {tab === 'featured-categories' && <FeaturedCategoriesTab password={sessionPassword} />}
+      {tab === 'featured-categories' && <FeaturedCategoriesTab />}
 
-      {tab === 'promo-cards' && <PromoCardsTab password={sessionPassword} />}
+      {tab === 'promo-cards' && <PromoCardsTab />}
 
       {tab === 'analytics' && <AnalyticsTab data={data} />}
 
@@ -648,40 +668,40 @@ export default function AdminPage() {
       )}
 
       {tab === 'returns' && (
-        <ReturnsTab password={sessionPassword} orders={orders} onStatus={updateStatus} />
+        <ReturnsTab orders={orders} onStatus={updateStatus} />
       )}
 
-      {tab === 'inventory' && <InventoryTab password={sessionPassword} />}
+      {tab === 'inventory' && <InventoryTab />}
 
-      {tab === 'suppliers' && <SuppliersTab password={sessionPassword} />}
+      {tab === 'suppliers' && <SuppliersTab />}
 
       {tab === 'fulfillment' && (
         <FulfillmentTab orders={orders} onStatus={updateStatus} onOrder={setSelected} />
       )}
 
-      {tab === 'delivery' && <DeliveryTab password={sessionPassword} />}
+      {tab === 'delivery' && <DeliveryTab />}
 
       {tab === 'drivers' && (
-        <DriversTab password={sessionPassword} orders={orders} onStatus={updateStatus} />
+        <DriversTab orders={orders} onStatus={updateStatus} />
       )}
 
-      {tab === 'promotions' && <PromotionsTab password={sessionPassword} />}
+      {tab === 'promotions' && <PromotionsTab />}
 
-      {tab === 'loyalty' && <LoyaltyTab password={sessionPassword} customers={customers} />}
+      {tab === 'loyalty' && <LoyaltyTab customers={customers} />}
 
-      {tab === 'support' && <SupportTab password={sessionPassword} />}
+      {tab === 'support' && <SupportTab />}
 
       {tab === 'payments' && (
-        <PaymentsTab password={sessionPassword} data={data} saveSetting={putSettings} />
+        <PaymentsTab data={data} saveSetting={putSettings} />
       )}
 
-      {tab === 'roles' && <RolesTab password={sessionPassword} />}
+      {tab === 'roles' && <RolesTab />}
 
-      {tab === 'integrations' && <IntegrationsTab password={sessionPassword} data={data} />}
+      {tab === 'integrations' && <IntegrationsTab data={data} />}
 
-      {tab === 'audit' && <AuditTab password={sessionPassword} />}
+      {tab === 'audit' && <AuditTab />}
 
-      {tab === 'pages' && <PagesTab password={sessionPassword} />}
+      {tab === 'pages' && <PagesTab />}
     </AdminShell>
   );
 }

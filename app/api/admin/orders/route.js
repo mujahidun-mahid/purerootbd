@@ -27,7 +27,7 @@ export async function PATCH(request) {
   }
 
   try {
-    const body = await request.json();
+    const body = (await request.json().catch(() => null)) || {};
     if (!body.id || !body.status) {
       return NextResponse.json({ error: 'Order ID and status are required' }, { status: 400 });
     }

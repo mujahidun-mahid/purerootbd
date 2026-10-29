@@ -4,6 +4,7 @@ import { Eye, EyeOff, Pencil, Plus, Trash2, Upload, ArrowUp, ArrowDown } from 'l
 import DataTable from '../DataTable';
 import { Alert, Field } from '../ui';
 import { formatDateTime } from '../constants';
+import { adminHeaders } from '../csrf';
 
 const EMPTY = {
   title: '',
@@ -17,7 +18,7 @@ const EMPTY = {
   is_active: true,
 };
 
-export default function PromoCardsTab({ password }) {
+export default function PromoCardsTab() {
   const [cards, setCards] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -30,12 +31,12 @@ export default function PromoCardsTab({ password }) {
   const [carousel, setCarousel] = useState({ enabled: true, autoplay: false, interval: 6000 });
   const [carouselSaving, setCarouselSaving] = useState(false);
 
-  const authHeaders = () => ({ 'x-admin-password': password, 'content-type': 'application/json' });
+  const authHeaders = () => adminHeaders();
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/admin/promo-cards', { headers: { 'x-admin-password': password } });
+      const res = await fetch('/api/admin/promo-cards', { headers: adminHeaders({ json: false }), cache: 'no-store' });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || 'Failed to load promo cards');
       setCards(data.cards || []);
@@ -44,7 +45,7 @@ export default function PromoCardsTab({ password }) {
     } finally {
       setLoading(false);
     }
-  }, [password]);
+  }, []);
 
   useEffect(() => { load(); }, [load]);
 
@@ -52,7 +53,7 @@ export default function PromoCardsTab({ password }) {
     (async () => {
       try {
         const res = await fetch('/api/admin/dashboard', {
-          headers: { 'x-admin-password': password },
+          headers: adminHeaders({ json: false }),
           cache: 'no-store',
         });
         if (!res.ok) return;
@@ -65,7 +66,7 @@ export default function PromoCardsTab({ password }) {
         });
       } catch {}
     })();
-  }, [password]);
+  }, []);
 
   const saveCarousel = async () => {
     setCarouselSaving(true);
@@ -137,7 +138,7 @@ export default function PromoCardsTab({ password }) {
   const deleteCard = async (card) => {
     if (!window.confirm(`Delete promo card "${card.title}"? This cannot be undone.`)) return;
     try {
-      const res = await fetch(`/api/admin/promo-cards/${card.id}`, { method: 'DELETE', headers: { 'x-admin-password': password } });
+      const res = await fetch(`/api/admin/promo-cards/${card.id}`, { method: 'DELETE', headers: adminHeaders({ json: false }) });
       if (!res.ok) throw new Error('Failed to delete promo card');
       setNotice({ type: 'success', text: 'Promo card deleted.' });
       load();
@@ -192,7 +193,11 @@ export default function PromoCardsTab({ password }) {
     try {
       const fd = new FormData();
       fd.append('file', file);
-      const res = await fetch('/api/admin/images', { method: 'POST', body: fd });
+      const res = await fetch('/api/admin/images', {
+        method: 'POST',
+        headers: adminHeaders({ json: false }),
+        body: fd
+      });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || 'Upload failed.');
       setForm((f) => ({ ...f, background_image: data.url }));
