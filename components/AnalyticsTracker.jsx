@@ -20,8 +20,8 @@ export default function AnalyticsTracker() {
   const pathname = usePathname();
 
   useEffect(() => {
-    // Exclude admin pages from visitor tracking
-    if (!pathname || pathname.startsWith('/admin')) return;
+    // Exclude administrator pages from visitor tracking.
+    if (!pathname || pathname.startsWith('/ayc')) return;
 
     const sessionId = getSession();
 
@@ -40,9 +40,11 @@ export default function AnalyticsTracker() {
 
     send('page_view');
 
+    // Reduced heartbeat frequency: every 60 seconds instead of 20 seconds.
+    // This cuts analytics API calls by 2/3 while still capturing session activity.
     const heartbeat = setInterval(() => {
       send('heartbeat');
-    }, 20000);
+    }, 60000);
 
     return () => clearInterval(heartbeat);
   }, [pathname]);

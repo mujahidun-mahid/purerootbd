@@ -3,12 +3,14 @@ import FeaturedProducts from "@/components/FeaturedProducts";
 import CategoryStrip from "@/components/CategoryStrip";
 import PromoGrid, { parsePromoBanners } from "@/components/PromoGrid";
 import PromoCards from "@/components/PromoCards";
-import { loadProducts, loadCategories } from "@/lib/products-server";
+import { loadProducts, loadCategories, LIST_COLUMNS } from "@/lib/products-server";
 import { loadPromoCards } from "@/lib/promo-cards";
 import { getSiteSettings } from "@/lib/site-settings";
 import NewsletterForm from "@/components/NewsletterForm";
 
-export const dynamic = 'force-dynamic';
+// ISR: revalidate public homepage every 60 seconds so admin content updates
+// become visible without a redeploy, while serving cached HTML to visitors.
+export const revalidate = 60;
 
 export const metadata = {
   alternates: { canonical: '/' }
@@ -20,10 +22,12 @@ function parseIds(raw) {
 }
 
 export default async function Home() {
-  const settings = await getSiteSettings();
-  const products = await loadProducts();
-  const categories = await loadCategories({ featuredOnly: true });
-  const promoCards = await loadPromoCards();
+  const [settings, products, categories, promoCards] = await Promise.all([
+    getSiteSettings(),
+    loadProducts({ columns: LIST_COLUMNS }),
+    loadCategories({ featuredOnly: true }),
+    loadPromoCards()
+  ]);
   const promoCarousel = {
     enabled: (settings.promo_carousel_enabled ?? "true") !== "false",
     autoplay: (settings.promo_autoplay ?? "false") === "true",

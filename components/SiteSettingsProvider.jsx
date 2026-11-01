@@ -14,7 +14,7 @@ export default function SiteSettingsProvider({ children }) {
   const [settings, setSettings] = useState(SETTINGS_DEFAULTS);
   const [ready, setReady] = useState(false);
   const pathname = usePathname();
-  const isAdmin = pathname?.startsWith('/admin');
+  const isAdmin = pathname?.startsWith('/ayc');
   const debounceRef = useRef(null);
 
   const refresh = useCallback(async () => {
@@ -82,10 +82,11 @@ export default function SiteSettingsProvider({ children }) {
 
     attachRealtime();
 
-    // Safety net: refresh at most every 20s while the tab is visible.
+    // Safety net: refresh at most every 60s while the tab is visible.
+    // Realtime channel handles instant updates; polling is only a fallback.
     pollId = setInterval(() => {
       if (typeof document === 'undefined' || document.visibilityState === 'visible') refresh();
-    }, 20000);
+    }, 60000);
 
     return () => {
       cancelled = true;
