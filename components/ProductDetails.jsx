@@ -12,6 +12,13 @@ function orbClass(category) {
   return "nut";
 }
 
+function prettyCategory(slug) {
+  return String(slug || "")
+    .split("-")
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
+}
+
 export default function ProductDetails({ product, related }) {
   const router = useRouter();
   const { add, buyNow, wishlist, toggleWish } = useStore();
@@ -59,7 +66,7 @@ export default function ProductDetails({ product, related }) {
           )}
         </div>
         <div>
-          <div className="kicker">{product.category}</div>
+          <div className="kicker">{prettyCategory(product.category)}</div>
           <h1 className="serif">{product.name}</h1>
           <div className="detail-price">৳{pkg.price.toLocaleString()} {product.oldPrice && <span className="old">৳{product.oldPrice.toLocaleString()}</span>}</div>
           <p className="muted">{product.short}</p>

@@ -3,7 +3,8 @@ import { useMemo, useRef, useState } from 'react';
 import { Pencil, Plus, Trash2 } from 'lucide-react';
 import DataTable from '../DataTable';
 import { Alert, SearchField } from '../ui';
-import { catIcon, money, categories } from '../constants';
+import { catIcon, money } from '../constants';
+import { categories } from '@/lib/products';
 import useAdminProducts from '../useAdminProducts';
 import ProductEditor from '../ProductEditor';
 
@@ -14,8 +15,6 @@ export default function CatalogTab() {
   const [notice, setNotice] = useState('');
   const [sortOrder, setSortOrder] = useState([]);
   const dragId = useRef(null);
-
-  const categories = useMemo(() => [...new Set(items.map((p) => p.category))].length, [items]);
 
   const sorted = useMemo(() => {
     if (sortOrder.length) {

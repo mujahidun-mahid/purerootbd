@@ -4,6 +4,7 @@ import { Pencil, Plus, Trash2 } from 'lucide-react';
 import DataTable from '../DataTable';
 import { Alert, SearchField } from '../ui';
 import { catIcon, money } from '../constants';
+import { categories } from '@/lib/products';
 import useAdminProducts from '../useAdminProducts';
 import ProductEditor from '../ProductEditor';
 
@@ -135,7 +136,14 @@ export default function ProductsTab() {
     {
       key: 'category',
       header: 'Category',
-      render: (p) => <span className="cell-muted">{catIcon(p.category)} {p.category}</span>
+      render: (p) => {
+        const cat = categories.find((c) => c.slug === p.category);
+        return (
+          <span className="cell-muted">
+            {catIcon(p.category)} {cat?.name || p.category}
+          </span>
+        );
+      }
     },
     {
       key: 'packages',
