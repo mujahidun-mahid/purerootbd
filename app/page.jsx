@@ -64,7 +64,7 @@ export default async function Home() {
         <div className="container">
           <div className="feat-cat-head">
             <h2 id="feat-cat-h">Featured Categories</h2>
-            <Link className="feat-cat-all" href="/shop">
+            <Link className="feat-cat-all" href="/category">
               View All Category
             </Link>
           </div>

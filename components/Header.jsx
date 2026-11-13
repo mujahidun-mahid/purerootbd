@@ -14,15 +14,15 @@ export default function Header() {
   const [open, setOpen] = useState(false);
   const close = () => setOpen(false);
 
-  // Keep admin dashboard dedicated and full-screen without storefront header
-  if (pathname?.startsWith("/admin")) {
+  // Keep the administrator workspace dedicated and full-screen.
+  if (pathname?.startsWith("/ayc")) {
     return null;
   }
 
   const links = [
     ["Home", "/"],
     ["Shop", "/shop"],
-    ["Categories", "/category/nuts"],
+    ["Categories", "/category"],
     ["About", "/about"],
     ["Reviews", "/reviews"],
     ["FAQ", "/faq"],
