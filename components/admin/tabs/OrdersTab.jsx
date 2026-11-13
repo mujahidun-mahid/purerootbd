@@ -1,5 +1,14 @@
-import { useEffect, useState } from 'react';
-import { ChevronDown, Download, Trash2 } from 'lucide-react';
+'use client';
+
+import { useEffect, useMemo, useState } from 'react';
+import {
+  ChevronRight,
+  Download,
+  CreditCard,
+  Clock,
+  Trash2,
+  X
+} from 'lucide-react';
 import { EmptyState, SearchField, StatusPill } from '../ui';
 import { statuses, money, formatDateTime, formatDate } from '../constants';
 
@@ -32,6 +41,11 @@ function fullAddress(c) {
   return [c.address, c.area, c.district, c.division].filter(Boolean).join(', ');
 }
 
+function paymentIcon(method) {
+  if (!method) return <CreditCard size={14} />;
+  return <CreditCard size={14} />;
+}
+
 export default function OrdersTab({
   orders,
   allOrdersCount,
@@ -41,11 +55,11 @@ export default function OrdersTab({
   setStatusFilter,
   onStatus,
   onExport,
-  history = [],
+  history = []
 }) {
   const [dateRange, setDateRange] = useState('all');
-  const [openIds, setOpenIds] = useState(() => new Set());
   const [page, setPage] = useState(1);
+  const [selectedOrderId, setSelectedOrderId] = useState(null);
 
   const rows = orders.filter((o) => inDateRange(o, dateRange));
   const filtered = Boolean(query) || statusFilter !== 'all' || dateRange !== 'all';
@@ -62,14 +76,8 @@ export default function OrdersTab({
   const start = (page - 1) * PAGE_SIZE;
   const view = rows.slice(start, start + PAGE_SIZE);
 
-  function toggle(id) {
-    setOpenIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  }
+  const selectedOrder = view.find((o) => o.id === selectedOrderId) ||
+    (selectedOrderId ? rows.find((o) => o.id === selectedOrderId) : null);
 
   function getCsrfTokenFromCookie() {
     if (typeof document === 'undefined') return '';
@@ -85,44 +93,58 @@ export default function OrdersTab({
     fetch('/api/admin/orders?id=' + encodeURIComponent(o.id), {
       method: 'DELETE',
       headers
-    }).then(() => window.location.reload());
+    }).then(() => {
+      setSelectedOrderId(null);
+      window.location.reload();
+    });
   }
 
+  function handleStatusChange(id, newStatus) {
+    onStatus(id, newStatus);
+  }
+
+  const hasFilters = Boolean(query) || statusFilter !== 'all' || dateRange !== 'all';
+  const isEmpty = rows.length === 0;
+
   return (
-    <div className="admin-content">
-      <div className="admin-toolbar">
-        <div>
-          <div className="admin-kicker">Orders Database</div>
-          <h2>
-            All Orders <em>({rows.length} of {allOrdersCount})</em>
-          </h2>
-          <p className="orders-hint">Click an order to expand its items, delivery info and timeline.</p>
+    <div className="orders-page">
+      {/* ============================================================
+         HEADER TOOLBAR
+         ============================================================ */}
+      <div className="orders-toolbar">
+        <div className="orders-toolbar-left">
+          <div className="orders-kicker">Orders Database</div>
+          <h1 className="orders-title">
+            Orders <span className="orders-count">({rows.length} of {allOrdersCount})</span>
+          </h1>
+          {hasFilters && (
+            <p className="orders-hint">
+              {view.length} order{view.length !== 1 ? 's' : ''} matching current filters
+            </p>
+          )}
         </div>
 
-        <div className="admin-toolbar-right">
+        <div className="orders-toolbar-right">
           <select
-            className="filter"
+            className="orders-filter"
             value={dateRange}
-            onChange={(e) => setDateRange(e.target.value)}
+            onChange={(e) => { setDateRange(e.target.value); setPage(1); }}
             aria-label="Date range"
           >
             {DATE_RANGES.map(([id, label]) => (
-              <option key={id} value={id}>
-                {label}
-              </option>
+              <option key={id} value={id}>{label}</option>
             ))}
           </select>
 
           <select
-            className="filter"
+            className="orders-filter"
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
+            onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
+            aria-label="Status filter"
           >
             <option value="all">All Statuses</option>
             {statuses.map((s) => (
-              <option key={s} value={s}>
-                {s}
-              </option>
+              <option key={s} value={s}>{s}</option>
             ))}
           </select>
 
@@ -130,249 +152,359 @@ export default function OrdersTab({
             value={query}
             onChange={setQuery}
             placeholder="Search order #, customer, phone…"
+            className="orders-search"
           />
 
-          <button type="button" className="btn btn-outline" onClick={onExport} title="Download CSV for couriers">
+          <button
+            type="button"
+            className="btn btn-outline"
+            onClick={onExport}
+            title="Download CSV for couriers"
+          >
             <Download size={15} /> Export CSV
           </button>
         </div>
       </div>
 
-      {rows.length === 0 ? (
-        <div className="table-card">
+      {/* ============================================================
+         EMPTY STATE
+         ============================================================ */}
+      {isEmpty && (
+        <div className="orders-empty">
           <EmptyState
             text={
-              filtered
+              hasFilters
                 ? 'No matching orders found. Try clearing the search, status, or date filter.'
                 : 'No orders in database yet.'
             }
           />
         </div>
-      ) : (
-        <>
-          <div className="order-cards">
-            {view.map((o) => {
-              const c = o.customer || {};
-              const items = o.items || [];
-              const itemCount = items.reduce((s, x) => s + Number(x.qty || 1), 0);
-              const open = openIds.has(o.id);
-              const relatedHistory = history
-                .filter((x) => x.order_id === o.id)
-                .sort((a, b) => new Date(a.changed_at) - new Date(b.changed_at));
-              const timelineRows = relatedHistory.length
-                ? relatedHistory
-                : [{ status: o.status, changed_at: o.updated_at || o.placed_at }];
+      )}
 
-              return (
-                <article key={o.id} className={`order-card${open ? ' is-open' : ''}`}>
-                  <button
-                    type="button"
-                    className="order-card-head"
-                    onClick={() => toggle(o.id)}
-                    aria-expanded={open}
-                    aria-controls={`order-body-${o.id}`}
-                  >
-                    <span className="oc-cell oc-order">
-                      <strong>{o.order_number}</strong>
-                      <small>{formatDate(o.placed_at)}</small>
-                    </span>
-                    <span className="oc-cell oc-customer">
-                      <strong>{c.name || 'Customer'}</strong>
-                      <small>{o.phone}</small>
-                    </span>
-                    <span className="oc-cell oc-product">
-                      {items.length ? (
-                        <span className="oc-prod">
-                          <span className="oc-prod-thumbs">
-                            {items.slice(0, 3).map((x, i) =>
-                              x.image ? (
-                                <img key={i} src={x.image} alt="" />
-                              ) : (
-                                <span key={i} className="oc-prod-ph" aria-hidden="true">
-                                  📦
-                                </span>
-                              )
-                            )}
-                          </span>
-                          <span className="oc-prod-info">
-                            <strong>
-                              {items[0].name}
-                              {items.length > 1 ? ` +${items.length - 1} more` : ''}
-                            </strong>
-                            <small>
-                              {items.length > 1
-                                ? `${items.length} items · ${money(o.total)}`
-                                : `${items[0].size} × ${items[0].qty} · ${money(
-                                    (Number(items[0].price) || 0) * (Number(items[0].qty) || 1)
-                                  )}`}
-                            </small>
-                          </span>
-                        </span>
-                      ) : (
-                        <small>No items</small>
-                      )}
-                    </span>
-                    <span className="oc-cell oc-single oc-payment">{paymentLabel(o.payment_method)}</span>
-                    <span className="oc-cell oc-single oc-total">{money(o.total)}</span>
-                    <span className="oc-cell oc-status">
-                      <StatusPill status={o.status} />
-                    </span>
-                    <ChevronDown size={18} className="oc-chevron" aria-hidden="true" />
-                  </button>
+      {/* ============================================================
+         ORDER LIST + DETAIL PANEL
+         ============================================================ */}
+      {!isEmpty && (
+        <div className="orders-body">
+          {/* Orders List */}
+          <div className="orders-list-wrap">
+            <ul className="orders-list">
+              {view.map((o) => {
+                const c = o.customer || {};
+                const items = o.items || [];
+                const itemCount = items.reduce((s, x) => s + Number(x.qty || 1), 0);
+                const isSelected = selectedOrderId === o.id;
+                const firstItem = items[0];
+                const mainImage = firstItem?.image || '';
+                const mainName = firstItem?.name || 'No items';
 
-                  <div className="order-card-body" id={`order-body-${o.id}`}>
-                    <div className="oc-inner">
-                      <div className="oc-pad">
-                        <div className="oc-top">
-                          <div className="oc-col">
-                            <h3 className="oc-title">Order &amp; Items Detail</h3>
-                            <div className="oc-items-flex">
-                              <div className="oc-itemgrid">
-                                {items.map((x, i) => {
-                                  const unit = Number(x.price) || 0;
-                                  const qty = Number(x.qty) || 1;
-                                  return (
-                                    <div className="oc-tile" key={i}>
-                                      <div className="oc-tile-img">
-                                        {x.image ? (
-                                          <img src={x.image} alt={x.name || 'Ordered product'} />
-                                        ) : (
-                                          <span className="oc-tile-empty" aria-hidden="true">
-                                            📦
-                                          </span>
-                                        )}
-                                      </div>
-                                      <strong className="oc-tile-name">{x.name}</strong>
-                                      <span className="oc-tile-meta">
-                                        {x.size} · ৳{unit.toLocaleString('en-BD')} × {qty}
-                                      </span>
-                                      <b className="oc-tile-price">{money(unit * qty)}</b>
-                                    </div>
-                                  );
-                                })}
-                              </div>
-
-                              <div className="oc-count" aria-label={`${itemCount} item(s)`}>
-                                <b>{itemCount}</b>
-                                <span>item(s)</span>
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="oc-col">
-                            <h3 className="oc-title">Payment &amp; Logistics Summary</h3>
-                            <div className="oc-card">{paymentLabel(o.payment_method)}</div>
-                            <div className="oc-card">
-                              <strong>{c.name || 'Customer'}</strong>
-                              <div>{o.phone}</div>
-                              {c.email && <div>{c.email}</div>}
-                              <div className="oc-addr">{fullAddress(c)}</div>
-                            </div>
-                          </div>
-
-                          <div className="oc-col">
-                            <h3 className="oc-title">Totals</h3>
-                            <div className="oc-card oc-totals">
-                              <div>
-                                <span>Subtotal:</span>
-                                <b>{money(o.subtotal)}</b>
-                              </div>
-                              <div>
-                                <span>Delivery:</span>
-                                <b>{money(o.delivery_fee)}</b>
-                              </div>
-                              <div className="oc-grand">
-                                <span>Total:</span>
-                                <b>{money(o.total)}</b>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="oc-bottom">
-                          <h3 className="oc-title">Status and Timeline</h3>
-
-                          <div>
-                            <div className="oc-sub">Delivery</div>
-                            <div className="oc-card">
-                              <div>
-                                <strong>{c.name || 'Customer'}</strong> · {o.phone}
-                                {c.email ? ` · ${c.email}` : ''}
-                              </div>
-                              <div className="oc-addr">{fullAddress(c)}</div>
-                              {c.notes && <div className="oc-note">Note: {c.notes}</div>}
-                            </div>
-                          </div>
-
-                          <div>
-                            <div className="oc-sub">Status Timeline</div>
-                            <div className="oc-timeline">
-                              {timelineRows.map((x, i) => (
-                                <div className="timeline-row" key={i}>
-                                  <i className={i === timelineRows.length - 1 ? 'current' : ''} />
-                                  <div>
-                                    <strong>{x.status}</strong>
-                                    <small>{formatDate(x.changed_at)}</small>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="oc-actions">
-                          <span>Update Status</span>
-                          <select
-                            className="status-select"
-                            value={o.status}
-                            onChange={(e) => onStatus(o.id, e.target.value)}
-                          >
-                            {statuses.map((s) => (
-                              <option key={s} value={s}>
-                                {s}
-                              </option>
-                            ))}
-                            {!statuses.includes(o.status) && (
-                              <option value={o.status || ''}>{o.status || 'Unknown'}</option>
-                            )}
-                          </select>
-
-                          <button
-                            type="button"
-                            className="btn btn-outline btn-sm danger oc-delete"
-                            onClick={() => deleteOrder(o)}
-                            title="Delete Order"
-                          >
-                            <Trash2 size={14} /> Delete Order
-                          </button>
-
-                          <span className="oc-ref">Placed {formatDateTime(o.placed_at)}</span>
+                return (
+                  <li key={o.id} className={`orders-row ${isSelected ? 'is-selected' : ''}`}>
+                    <button
+                      type="button"
+                      className="orders-row-head"
+                      onClick={() => setSelectedOrderId(o.id)}
+                    >
+                      <div className="orders-thumb">
+                        {mainImage ? (
+                          <img src={mainImage} alt={mainName} />
+                        ) : (
+                          <span className="orders-thumb-empty">📦</span>
+                        )}
+                      </div>
+                      <div className="orders-order-col">
+                        <div className="orders-order-number">{o.order_number}</div>
+                        <div className="orders-order-date">{formatDateTime(o.placed_at)}</div>
+                      </div>
+                      <div className="orders-customer-col">
+                        <div className="orders-customer-name">{c.name || 'Customer'}</div>
+                        <div className="orders-customer-phone">{o.phone}</div>
+                      </div>
+                      <div className="orders-product-col">
+                        <div className="orders-product-name">{mainName}</div>
+                        {items.length > 1 && (
+                          <div className="orders-product-more">+{items.length - 1} more</div>
+                        )}
+                        <div className="orders-product-qty">
+                          {itemCount} item{itemCount !== 1 ? 's' : ''}
                         </div>
                       </div>
-                    </div>
-                  </div>
-                </article>
-              );
-            })}
+                      <div className="orders-payment-col">
+                        <div className="orders-payment-badge">
+                          <span className="orders-payment-icon">
+                            <CreditCard size={12} />
+                          </span>
+                          {paymentLabel(o.payment_method)}
+                        </div>
+                      </div>
+                      <div className="orders-total-col">
+                        <div className="orders-total-value">{money(o.total)}</div>
+                      </div>
+                      <div className="orders-status-col">
+                        <StatusPill status={o.status} />
+                      </div>
+                      <div className="orders-action-col">
+                        <button
+                          type="button"
+                          className="orders-view-btn"
+                          onClick={(e) => { e.stopPropagation(); setSelectedOrderId(o.id); }}
+                          aria-label={`View order ${o.order_number}`}
+                        >
+                          <ChevronRight size={14} />
+                        </button>
+                      </div>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
           </div>
 
-          {pageCount > 1 && (
-            <div className="orders-foot">
-              <span>
-                {rows.length.toLocaleString()} orders · page {page} / {pageCount}
-              </span>
-              <span className="pager">
-                <button type="button" disabled={page <= 1} onClick={() => setPage(page - 1)}>
-                  Prev
-                </button>
-                <button type="button" disabled={page >= pageCount} onClick={() => setPage(page + 1)}>
-                  Next
-                </button>
+          {/* Right-Side Detail Panel */}
+          <div className="orders-detail-panel-wrap">
+            {selectedOrder ? (
+              <OrderDetailPanel
+                order={selectedOrder}
+                history={history}
+                onStatus={handleStatusChange}
+                onClose={() => setSelectedOrderId(null)}
+                onDelete={() => {
+                  deleteOrder(selectedOrder);
+                  setSelectedOrderId(null);
+                }}
+              />
+            ) : (
+              <div className="orders-detail-empty">
+                <div className="orders-detail-empty-icon">
+                  <Clock size={24} />
+                </div>
+                <h3 className="orders-detail-empty-title">Select an order</h3>
+                <p className="orders-detail-empty-desc">
+                  Click an order in the list to view its details, items, delivery address, and timeline.
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ============================================================
+   ORDER DETAIL PANEL COMPONENT
+   Shared between desktop side panel and mobile drawer overlay
+   ============================================================ */
+
+function OrderDetailPanel({ order, history, onStatus, onClose, onDelete }) {
+  const c = order.customer || {};
+  const items = order.items || [];
+  const itemCount = items.reduce((s, x) => s + Number(x.qty || 1), 0);
+  const relatedHistory = history
+    .filter((x) => x.order_id === order.id)
+    .sort((a, b) => new Date(a.changed_at) - new Date(b.changed_at));
+  const timelineRows = relatedHistory.length
+    ? relatedHistory
+    : [{ status: order.status, changed_at: order.updated_at || order.placed_at }];
+
+  return (
+    <div className="orders-detail-panel">
+      <div className="orders-detail-panel-header">
+        <button
+          type="button"
+          className="orders-detail-panel-close"
+          onClick={onClose}
+          aria-label="Close order details"
+        >
+          <X size={16} />
+        </button>
+        <div className="orders-detail-panel-head">
+          <div className="orders-detail-panel-kicker">Order Details</div>
+          <h2>{order.order_number}</h2>
+          <div className="orders-detail-panel-meta">
+            <StatusPill status={order.status} className="orders-detail-panel-status" />
+            <span className="orders-detail-panel-date">{formatDateTime(order.placed_at)}</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="orders-detail-panel-scroll">
+        <div className="orders-detail-panel-body">
+
+          {/* Order Summary */}
+          <div className="orders-detail-section">
+            <div className="orders-detail-section-head">
+              <span className="orders-detail-section-label">Order Summary</span>
+            </div>
+            <div className="orders-detail-grid">
+              <div className="orders-detail-item">
+                <span className="orders-detail-item-label">Order Date</span>
+                <span className="orders-detail-item-value">{formatDate(order.placed_at)}</span>
+              </div>
+              <div className="orders-detail-item">
+                <span className="orders-detail-item-label">Payment Method</span>
+                <span className="orders-detail-item-value">
+                  {order.payment_method === 'cod' ? 'Cash on Delivery' : order.payment_method}
+                </span>
+              </div>
+              <div className="orders-detail-item">
+                <span className="orders-detail-item-label">Items</span>
+                <span className="orders-detail-item-value">
+                  {itemCount} item{itemCount !== 1 ? 's' : ''}
+                </span>
+              </div>
+              <div className="orders-detail-item">
+                <span className="orders-detail-item-label">Order Total</span>
+                <span className="orders-detail-item-value orders-detail-item-total">
+                  {money(order.total)}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Customer Information */}
+          <div className="orders-detail-section">
+            <div className="orders-detail-section-head">
+              <span className="orders-detail-section-label">Customer Information</span>
+            </div>
+            <div className="orders-detail-grid">
+              <div className="orders-detail-item orders-detail-item-full">
+                <span className="orders-detail-item-label">Name</span>
+                <span className="orders-detail-item-value orders-detail-item-value-bold">
+                  {c.name || 'Customer'}
+                </span>
+              </div>
+              <div className="orders-detail-item orders-detail-item-full">
+                <span className="orders-detail-item-label">Phone</span>
+                <span className="orders-detail-item-value">
+                  <a href={`tel:${order.phone}`} className="orders-detail-item-link">
+                    {order.phone}
+                  </a>
+                </span>
+              </div>
+              {c.email && (
+                <div className="orders-detail-item orders-detail-item-full">
+                  <span className="orders-detail-item-label">Email</span>
+                  <span className="orders-detail-item-value">
+                    <a href={`mailto:${c.email}`} className="orders-detail-item-link">
+                      {c.email}
+                    </a>
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Delivery Address */}
+          <div className="orders-detail-section">
+            <div className="orders-detail-section-head">
+              <span className="orders-detail-section-label">Delivery Address</span>
+            </div>
+            <div className="orders-detail-address">
+              <div className="orders-detail-address-lines">
+                <span className="orders-detail-address-name">{c.name || 'Customer'}</span>
+                <span className="orders-detail-address-phone">{order.phone}</span>
+                {c.email && <span className="orders-detail-address-email">{c.email}</span>}
+                <div className="orders-detail-address-street">{fullAddress(c)}</div>
+                {c.notes && (
+                  <div className="orders-detail-address-note">
+                    <span className="orders-detail-address-note-label">Customer Note:</span>
+                    <span>{c.notes}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Ordered Items */}
+          <div className="orders-detail-section">
+            <div className="orders-detail-section-head">
+              <span className="orders-detail-section-label">
+                Ordered Items ({items.length})
               </span>
             </div>
-          )}
-        </>
-      )}
+            <div className="orders-detail-items-list">
+              {items.map((x, i) => {
+                const unit = Number(x.price) || 0;
+                const qty = Number(x.qty) || 1;
+                return (
+                  <div key={i} className="orders-detail-item-row">
+                    <div className="orders-detail-item-thumb">
+                      {x.image ? (
+                        <img src={x.image} alt={x.name || 'Ordered product'} />
+                      ) : (
+                        <span className="orders-detail-item-thumb-empty">📦</span>
+                      )}
+                    </div>
+                    <div className="orders-detail-item-info">
+                      <div className="orders-detail-item-name">{x.name}</div>
+                      <div className="orders-detail-item-meta">
+                        {x.size} · ৳{unit.toLocaleString('en-BD')} × {qty}
+                      </div>
+                    </div>
+                    <div className="orders-detail-item-price">{money(unit * qty)}</div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Status & Timeline */}
+          <div className="orders-detail-section">
+            <div className="orders-detail-section-head">
+              <span className="orders-detail-section-label">Status &amp; Timeline</span>
+            </div>
+            <div className="orders-detail-status-select">
+              <span className="orders-detail-status-label">Update Status</span>
+              <select
+                className="orders-detail-status-select-input"
+                value={order.status}
+                onChange={(e) => onStatus(order.id, e.target.value)}
+              >
+                {statuses.map((s) => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+                {!statuses.includes(order.status) && (
+                  <option value={order.status || ''}>{order.status || 'Unknown'}</option>
+                )}
+              </select>
+            </div>
+            <div className="orders-detail-timeline">
+              {timelineRows.map((x, i) => (
+                <div key={i} className="orders-detail-timeline-row">
+                  <div className="orders-detail-timeline-dot">
+                    <span
+                      className={
+                        i === timelineRows.length - 1
+                          ? 'orders-detail-timeline-dot-current'
+                          : ''
+                      }
+                    />
+                  </div>
+                  <div className="orders-detail-timeline-content">
+                    <div className="orders-detail-timeline-status">{x.status}</div>
+                    <div className="orders-detail-timeline-date">
+                      {formatDate(x.changed_at)}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div className="orders-detail-actions">
+            <button
+              type="button"
+              className="btn btn-outline btn-sm orders-detail-delete-btn"
+              onClick={onDelete}
+            >
+              <Trash2 size={14} /> Delete Order
+            </button>
+          </div>
+
+        </div>
+      </div>
     </div>
   );
 }
